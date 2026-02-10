@@ -1,0 +1,44 @@
+import type { MaterialInfo } from "@/types/database";
+
+interface MaterialBreakdownProps {
+  materials: MaterialInfo[];
+}
+
+export function MaterialBreakdown({ materials }: MaterialBreakdownProps) {
+  if (!materials || materials.length === 0) return null;
+
+  const sorted = [...materials].sort((a, b) => b.percentage - a.percentage);
+
+  return (
+    <div className="space-y-3">
+      <h3 className="text-sm font-semibold text-neutral-900">
+        Material Composition
+      </h3>
+      <div className="space-y-2">
+        {sorted.map((mat) => (
+          <div key={mat.material_id}>
+            <div className="flex items-center justify-between text-sm">
+              <span className="flex items-center gap-1.5 text-neutral-700">
+                {mat.name}
+                {mat.is_natural && (
+                  <span className="inline-block h-2 w-2 rounded-full bg-green-500" title="Natural fiber" />
+                )}
+              </span>
+              <span className="font-medium text-neutral-900">
+                {mat.percentage}%
+              </span>
+            </div>
+            <div className="mt-1 h-2 overflow-hidden rounded-full bg-neutral-100">
+              <div
+                className={`h-full rounded-full ${
+                  mat.is_natural ? "bg-primary" : "bg-neutral-400"
+                }`}
+                style={{ width: `${mat.percentage}%` }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
