@@ -1,21 +1,26 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Space_Grotesk, DM_Sans } from "next/font/google";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
+  subsets: ["latin"],
+});
+
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
   title: {
-    default: "Terra Threads — Natural Fiber Activewear",
-    template: "%s | Terra Threads",
+    default: "FIBER — Natural Fiber Clothing",
+    template: "%s | FIBER",
   },
   description:
-    "Discover women's activewear made from natural fibers. Browse merino wool, organic cotton, cashmere, and hemp clothing from trusted brands.",
+    "Discover clothing made from natural fibers. No polyester, no nylon, no compromise. Browse curated brands that put natural materials first.",
 };
 
 export default function RootLayout({
@@ -25,7 +30,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} antialiased`}>
+      <body
+        className={`${spaceGrotesk.variable} ${dmSans.variable} antialiased`}
+      >
         <Header />
         <main className="min-h-screen">{children}</main>
         <Footer />

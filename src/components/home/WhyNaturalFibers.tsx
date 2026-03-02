@@ -1,49 +1,42 @@
-const reasons = [
-  {
-    title: "Temperature Regulation",
-    description:
-      "Merino wool and silk naturally regulate body temperature, keeping you cool during workouts and warm during rest.",
-  },
-  {
-    title: "Odor Resistant",
-    description:
-      "Natural fibers like merino wool resist odor-causing bacteria, so you stay fresh longer between washes.",
-  },
-  {
-    title: "Sustainable",
-    description:
-      "Organic cotton, hemp, and Tencel are renewable, biodegradable, and have a lower environmental footprint than synthetics.",
-  },
-  {
-    title: "Gentle on Skin",
-    description:
-      "Free from petrochemical-based fabrics that can irritate skin. Natural fibers are breathable and hypoallergenic.",
-  },
+const stats = [
+  { value: "60%", label: "of clothing contains polyester" },
+  { value: "700K", label: "microfibers per wash cycle" },
+  { value: "200+", label: "years for polyester to decompose" },
 ];
 
 export function WhyNaturalFibers() {
   return (
-    <section className="bg-surface px-4 py-16 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <h2 className="text-2xl font-bold text-neutral-900">
-          Why Natural Fibers?
-        </h2>
-        <p className="mt-2 text-neutral-500">
-          Performance meets sustainability. Here&apos;s why natural fibers are the
-          future of activewear.
-        </p>
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {reasons.map((reason) => (
-            <div
-              key={reason.title}
-              className="rounded-xl bg-white p-6 shadow-sm"
-            >
-              <h3 className="font-semibold text-neutral-900">{reason.title}</h3>
-              <p className="mt-2 text-sm text-neutral-500">
-                {reason.description}
-              </p>
-            </div>
-          ))}
+    <section className="px-20 py-20">
+      <div className="mx-auto flex max-w-[1280px] items-start gap-20">
+        <div className="w-[400px] shrink-0">
+          <p className="font-body text-[13px] font-medium uppercase leading-[16px] tracking-[0.08em] text-secondary">
+            Why it matters
+          </p>
+          <h2 className="mt-3 font-display text-[28px] font-semibold leading-[36px] tracking-[-0.01em] text-text">
+            Your activewear is probably made of plastic.
+          </h2>
+        </div>
+
+        <div className="max-w-[800px]">
+          <p className="max-w-[560px] font-body text-[18px] leading-[30px] text-secondary">
+            Over 60% of all clothing produced today contains polyester — a
+            plastic derived from petroleum. Every wash releases microplastics
+            into our waterways. Natural fibers biodegrade, breathe better, and
+            perform just as well.
+          </p>
+
+          <div className="mt-10 flex gap-16">
+            {stats.map((stat) => (
+              <div key={stat.value}>
+                <p className="font-display text-[36px] font-bold leading-[44px] tracking-[-0.02em] text-accent">
+                  {stat.value}
+                </p>
+                <p className="mt-1.5 max-w-[140px] font-body text-[14px] leading-[18px] text-muted">
+                  {stat.label}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

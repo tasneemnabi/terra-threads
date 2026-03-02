@@ -1,18 +1,30 @@
-# Natural Fiber Clothing Aggregator — MVP Plan
+# FIBER — Natural Fiber Clothing Aggregator
 
 ## Vision
 
-A website that aggregates clothing made from natural fibers (no polyester/plastics). Some brands are fully natural (e.g., Naadam) and all their products qualify. Others (e.g., Gap) have mixed catalogs and only specific products qualify. The site helps consumers find plastic-free clothing, especially in categories where polyester is hardest to avoid.
+A website that aggregates clothing made from natural fibers (no polyester/plastics). Some brands are fully natural (e.g., Naadam) and all their products qualify. Others (e.g., Allbirds) have mixed catalogs and only specific products qualify. The site helps consumers find plastic-free clothing, especially in categories where polyester is hardest to avoid. See `CURATION.md` for the full curation policy (100% Natural vs Nearly Natural tiers).
 
 ## MVP Scope
 
 - **10-20 brands** at launch, manually curated
+- **Brands-first approach** — first iteration centers on brand discovery, not individual products
 - **1 launch category**: activewear (where polyester is hardest to avoid)
-- **Extensible category system** — easy to add outerwear, swimwear, etc. later
 - **Women's only** for launch
-- **Product-level tagging** — every product lists its fiber composition
+- **Product-level tagging** — every product lists its fiber composition with percentages
+- **Two curation tiers**: 100% Natural (zero synthetics) and Nearly Natural (≤10% elastane)
 - **Affiliate monetization** — users click through to buy on the brand's site
 - **Browse + filter only** — no accounts, wishlists, or price tracking
+
+---
+
+## Branding & Design
+
+- **Name**: FIBER
+- **Design system**: See `memory/design-system.md` for full spec
+- **Palette**: warm cream (#FAF7F2), surface (#F0EBE3), surface-dark (#E8E0D5), text (#2C2420), muted (#9C8E82), muted-light (#C8BDB1), accent/dusty rose (#B5636A), secondary/cool slate (#5A6B6E)
+- **Typography**: Space Grotesk (display/headings) + DM Sans (body/UI)
+- **Direction**: warm minimal, Swiss-editorial, organic warmth
+- **Nav**: FIBER logo + Activewear / Brands / About
 
 ---
 
@@ -20,9 +32,9 @@ A website that aggregates clothing made from natural fibers (no polyester/plasti
 
 | Layer          | Choice                     | Rationale                                                        |
 | -------------- | -------------------------- | ---------------------------------------------------------------- |
-| Framework      | Next.js 15 + TypeScript    | SSG for SEO, React ecosystem, great DX                           |
+| Framework      | Next.js 16 + TypeScript    | SSG for SEO, React ecosystem, great DX                           |
 | Database       | Supabase (Postgres)        | Free tier, admin dashboard, auto-generated API, auth if needed later |
-| Styling        | Tailwind CSS               | Rapid UI development, responsive out of the box                  |
+| Styling        | Tailwind CSS v4            | Rapid UI development, responsive out of the box                  |
 | Hosting        | Vercel                     | Zero-config Next.js deploys, free tier sufficient for MVP        |
 | Admin          | Supabase dashboard + seeds | Good enough for 10-20 brands; build a proper admin panel later   |
 | Affiliate      | Direct brand programs + networks (ShareASale, CJ, Rakuten) | Most clothing brands have affiliate programs |
@@ -31,150 +43,158 @@ A website that aggregates clothing made from natural fibers (no polyester/plasti
 
 ---
 
-## Data Model
+## Data Model (as implemented in `supabase/schema.sql`)
 
 ### `brands`
 
-| Column           | Type    | Notes                                      |
-| ---------------- | ------- | ------------------------------------------ |
-| id               | uuid    | Primary key                                |
-| name             | text    | e.g., "Naadam"                             |
-| slug             | text    | URL-safe, unique, e.g., "naadam"           |
-| description      | text    | Short brand bio                            |
-| website_url      | text    | Brand's homepage                           |
-| logo_url         | text    | Brand logo image                           |
-| is_fully_natural | boolean | True if the entire catalog is natural fiber |
-| created_at       | timestamptz | Auto-set                               |
+| Column      | Type        | Notes                                      |
+| ----------- | ----------- | ------------------------------------------ |
+| id          | uuid        | Primary key                                |
+| name        | text        | e.g., "Naadam"                             |
+| slug        | text        | URL-safe, unique, e.g., "naadam"           |
+| description | text        | Short brand bio                            |
+| website_url | text        | Brand's homepage                           |
+| logo_url    | text        | Brand logo image                           |
+| created_at  | timestamptz | Auto-set                                   |
+
+**TODO**: Add `is_fully_natural boolean` column to match curation policy.
 
 ### `products`
 
-| Column        | Type     | Notes                                          |
-| ------------- | -------- | ---------------------------------------------- |
-| id            | uuid     | Primary key                                    |
-| brand_id      | uuid     | FK → brands.id                                 |
-| name          | text     | Product name                                   |
-| slug          | text     | URL-safe, unique per brand                     |
-| description   | text     | Product description                            |
-| price         | decimal  | Current price                                  |
-| currency      | text     | Default "USD"                                  |
-| affiliate_url | text     | Click-through link with affiliate tracking     |
-| image_urls    | text[]   | Array of product image URLs                    |
-| category      | text     | e.g., "activewear" — not a fixed enum, new categories added freely |
-| created_at    | timestamptz | Auto-set                                    |
-
-### `product_materials`
-
-| Column     | Type    | Notes                                    |
-| ---------- | ------- | ---------------------------------------- |
-| id         | uuid    | Primary key                              |
-| product_id | uuid    | FK → products.id                         |
-| material   | text    | e.g., "merino wool", "organic cotton"    |
-| percentage | integer | Optional — e.g., 95 for "95% merino"     |
+| Column            | Type     | Notes                                          |
+| ----------------- | -------- | ---------------------------------------------- |
+| id                | uuid     | Primary key                                    |
+| brand_id          | uuid     | FK → brands.id                                 |
+| name              | text     | Product name                                   |
+| slug              | text     | URL-safe, unique                               |
+| description       | text     | Product description                            |
+| category          | text     | e.g., "activewear"                             |
+| price             | numeric  | Current price                                  |
+| currency          | text     | Default "USD"                                  |
+| image_url         | text     | Primary product image                          |
+| additional_images | text[]   | Extra product images                           |
+| affiliate_url     | text     | Click-through link with affiliate tracking     |
+| is_featured       | boolean  | Show on homepage                               |
+| created_at        | timestamptz | Auto-set                                    |
 
 ### `materials` (lookup/taxonomy)
 
-| Column     | Type    | Notes                                    |
-| ---------- | ------- | ---------------------------------------- |
-| id         | uuid    | Primary key                              |
-| name       | text    | e.g., "Merino Wool"                      |
-| is_natural | boolean | True for natural fibers                  |
-| fiber_type | text    | enum: animal, plant — for future tiering |
+| Column      | Type    | Notes                                    |
+| ----------- | ------- | ---------------------------------------- |
+| id          | uuid    | Primary key                              |
+| name        | text    | e.g., "Merino Wool"                      |
+| description | text    | Brief explainer                          |
+| is_natural  | boolean | True for natural fibers, false for elastane etc. |
+
+### `product_materials` (join table)
+
+| Column      | Type    | Notes                                    |
+| ----------- | ------- | ---------------------------------------- |
+| id          | uuid    | Primary key                              |
+| product_id  | uuid    | FK → products.id                         |
+| material_id | uuid    | FK → materials.id                        |
+| percentage  | integer | 1-100                                    |
+
+### View: `products_with_materials`
+
+Joins products + brands + materials into a single queryable view.
+
+### RPC: `filter_products`
+
+Server-side filtering by category, brand slugs, material names, price range with pagination.
 
 ---
 
 ## Pages
 
-### 1. Homepage (`/`)
+### 1. Homepage (`/`) — DONE ✅
 
-- Hero section: tagline + mission statement
-- Category cards (activewear at launch, more added over time)
-- Featured products grid (curated selection)
-- "Why natural fibers?" brief explainer section
+- Hero: "Clothing without the plastic." headline, "Browse Brands" CTA
+- Featured Brands: 3 brand cards from DB
+- Why It Matters: headline + paragraph + 3 stats (60%, 700K, 200+)
+- Browse by Fiber: 4 material cards (Merino Wool, Organic Cotton, Linen, Silk)
+- Brand Strip: "Trusted by brands who care" with 6 brand names
+- Footer: FIBER + tagline, Shop/Learn/Connect columns
 
-### 2. Category Page (`/category/[slug]`)
+### 2. Brands Page (`/brands`) — TODO 🔲
 
-- Product grid with filters sidebar
-- Pagination or infinite scroll
-- Filter by: fiber type, brand, price range
+- Header: "Brands that never use plastic"
+- Filter pills: All / Fully Natural / by fiber type
+- Brand cards grid (3-col): name, description, fiber type tags, product count, "Fully Natural" badge, "View brand" link
+- Design is 90% done in Paper
 
-### 3. Product Page (`/product/[slug]`)
+### 3. Brand Detail Page (`/brand/[slug]`) — TODO 🔲
 
-- Product images (carousel or gallery)
-- Material composition breakdown (with percentages)
-- Price display
-- "Shop at [Brand Name]" affiliate CTA button
-- Related products from same brand or category
+- Brand name, description, website link
+- "Fully Natural" badge if applicable
+- Fiber types used
+- Grid of their qualifying products
+- Code exists but needs FIBER restyle
 
-### 4. Brand Page (`/brand/[slug]`)
+### 4. Category Page (`/category/[slug]`) — needs restyle 🔲
 
-- Brand logo, description, website link
-- Badge if fully-natural brand
-- Grid of all their products on the site
+- Sidebar filters (fiber type, brand, price range)
+- 3-col product grid with pagination
+- Code exists but uses old Terra Threads styling
 
-### 5. About Page (`/about`)
+### 5. Product Page (`/product/[slug]`) — needs restyle 🔲
 
-- Mission statement
-- Why avoiding polyester matters
-- How products are selected/vetted
+- Product images, material breakdown, price, affiliate CTA
+- Code exists but uses old Terra Threads styling
 
----
+### 6. About Page (`/about`) — needs restyle 🔲
 
-## Filters
-
-| Filter     | Type         | Options                                           |
-| ---------- | ------------ | ------------------------------------------------- |
-| Fiber type | Multi-select | Cotton, Linen, Wool/Merino, Silk, Cashmere, Hemp  |
-| Brand      | Multi-select | All brands in current category                    |
-| Price      | Range slider | Min/max with preset buckets                       |
-| Category   | Tabs/select  | Activewear (more added over time)                 |
+- Mission, why natural fibers matter, curation policy
+- Code exists but uses old Terra Threads styling
 
 ---
 
-## Data Entry Workflow (Manual Phase)
+## Current State
 
-1. Identify a brand and check their material disclosures
-2. For each qualifying product, record:
-   - Name, description, category
-   - Full material composition with percentages
-   - Current price
-   - Product page URL → convert to affiliate link
-   - Product images (hotlink or download)
-3. Enter into Supabase via dashboard or CSV import
-4. Redeploy (or use Next.js ISR for incremental updates without full redeploy)
+### Done ✅
+- [x] Next.js project initialized with TypeScript + Tailwind v4
+- [x] Supabase project + database schema created
+- [x] Supabase client configured (server + client)
+- [x] TypeScript types for data model
+- [x] Data-fetching queries (brands, products, materials)
+- [x] Seed data: 3 brands (Naadam, Icebreaker, prAna), 10 products, 7 materials
+- [x] Homepage — fully restyled to FIBER design system
+- [x] Header + Footer — FIBER branding, correct nav links
+- [x] Color palette + typography in globals.css + layout.tsx
 
----
+### TODO 🔲
+- [ ] Add `is_fully_natural` column to brands table
+- [ ] Expand seed data: add Tracksmith, Allbirds, Vuori, Wool&Prince + more products
+- [ ] Build `/brands` page (route doesn't exist yet)
+- [ ] Design + build brand detail page
+- [ ] Restyle category page to FIBER design system
+- [ ] Restyle product page to FIBER design system
+- [ ] Restyle about page to FIBER design system
+- [ ] Responsive design pass (currently desktop-only with hardcoded px-20)
+- [ ] Clean up unused components (old `CategoryCards.tsx`, `FeaturedProducts.tsx`)
 
-## Implementation Order
-
-### Phase 1: Project Setup
-- [ ] Initialize Next.js project with TypeScript + Tailwind
-- [ ] Set up Supabase project and create database schema
-- [ ] Configure Supabase client in Next.js
-- [ ] Set up Vercel deployment
-
-### Phase 2: Data Layer
-- [ ] Create TypeScript types matching the data model
-- [ ] Build data-fetching functions (Supabase queries)
-- [ ] Create seed script with sample data (2-3 brands, 10-15 products)
-
-### Phase 3: Core Pages
-- [ ] Layout: header with nav, footer
-- [ ] Homepage with hero, category cards, featured products
-- [ ] Category page with product grid
-- [ ] Product detail page
-- [ ] Brand page
-
-### Phase 4: Filtering & Search
-- [ ] Filter sidebar component (fiber type, brand, price, category)
-- [ ] URL-based filter state (shareable filtered views)
-- [ ] Client-side filtering with Supabase queries
-
-### Phase 5: Polish & Launch
-- [ ] SEO: meta tags, Open Graph, structured data (Product schema)
-- [ ] Responsive design pass
-- [ ] Populate real data for 10-20 brands
+### Polish & Launch (later)
+- [ ] SEO: meta tags, Open Graph, structured data
+- [ ] Responsive design for mobile + tablet
+- [ ] Populate real product data for 10-20 brands
 - [ ] Set up affiliate links
-- [ ] Deploy to production
+- [ ] Deploy to production on Vercel
+
+---
+
+## Seed Data Guide
+
+When adding brands + products, follow the curation policy in `CURATION.md`:
+
+- **Accepted fibers**: Merino Wool, Organic Cotton, Cashmere, Silk, Linen, Hemp, Tencel/Lyocell, Modal
+- **Allowed in small amounts**: Elastane/Spandex ≤10% (product qualifies as "Nearly Natural")
+- **Never allowed**: Polyester, Nylon, Acrylic in any amount
+- **Materials already in DB**: Merino Wool, Organic Cotton, Cashmere, Hemp, Tencel Lyocell, Silk, Elastane
+- **Materials to add**: Linen, Modal, Alpaca, Yak, Mohair (as needed for new products)
+
+Existing brand IDs follow pattern: `b1000000-0000-0000-0000-00000000000X`
+Existing product IDs: `c1000000-0000-0000-0000-00000000000X`
+Existing material IDs: `a1000000-0000-0000-0000-00000000000X`
 
 ---
 
@@ -183,7 +203,7 @@ A website that aggregates clothing made from natural fibers (no polyester/plasti
 - **User accounts & wishlists** — add when there's repeat traffic
 - **Price tracking & sale alerts** — requires scheduled scraping jobs
 - **Brand quality tiers** — Gold/Silver/Bronze scoring system
-- **Marketplace / checkout** — buying directly on-site (requires brand partnerships, payments, logistics)
+- **Marketplace / checkout** — buying directly on-site
 - **Scraping pipeline** — automated product ingestion from brand sites
 - **Blog / content marketing** — "best natural fiber running shorts" type SEO content
 - **Email newsletter** — new products, sale alerts

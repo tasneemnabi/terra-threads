@@ -1,33 +1,29 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/Button";
 
 export function Hero() {
   return (
-    <section className="bg-gradient-to-br from-primary-dark to-primary px-4 py-24 text-white sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-4xl text-center">
-        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-          Activewear that&apos;s better for you{" "}
-          <span className="text-accent-light">&amp; the planet</span>
-        </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-white/80">
-          Discover women&apos;s activewear made from merino wool, organic cotton,
-          cashmere, and hemp. Curated from brands that put natural fibers first.
+    <section className="px-20 pb-[120px] pt-[100px]">
+      <div className="mx-auto max-w-[1280px]">
+        <p className="font-body text-[13px] font-medium uppercase leading-[16px] tracking-[0.08em] text-accent">
+          Natural Fiber Clothing
         </p>
-        <div className="mt-10 flex items-center justify-center gap-4">
-          <Link href="/category/activewear">
-            <Button variant="secondary" size="lg">
-              Shop Activewear
-            </Button>
+        <h1 className="mt-6 max-w-[800px] font-display text-[72px] font-bold leading-[76px] tracking-[-0.03em] text-text">
+          Clothing without the plastic.
+        </h1>
+        <p className="mt-7 max-w-[480px] font-body text-[18px] leading-[28px] text-muted">
+          Curated brands making clothing from natural fibers. No polyester, no
+          nylon, no compromises — just merino, cotton, linen, and silk.
+        </p>
+        <div className="mt-[86px] flex items-center gap-6">
+          <Link
+            href="/brands"
+            className="inline-flex items-center justify-center rounded-lg bg-text px-8 py-3.5 font-body text-[15px] font-semibold text-background transition-opacity hover:opacity-90"
+          >
+            Browse Brands
           </Link>
-          <Link href="/about">
-            <Button
-              variant="outline"
-              size="lg"
-              className="border-white/30 text-white hover:bg-white/10"
-            >
-              Learn More
-            </Button>
-          </Link>
+          <span className="font-body text-[15px] leading-[18px] text-muted">
+            20+ brands, 100% natural
+          </span>
         </div>
       </div>
     </section>
