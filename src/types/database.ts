@@ -4,7 +4,7 @@ export interface Brand {
   slug: string;
   description: string | null;
   website_url: string | null;
-  logo_url: string | null;
+  is_fully_natural: boolean;
   created_at: string;
 }
 
@@ -48,12 +48,23 @@ export interface MaterialInfo {
 export interface ProductWithBrand extends Product {
   brand_name: string;
   brand_slug: string;
-  brand_logo_url: string | null;
   materials: MaterialInfo[];
 }
 
 export interface ProductWithBrandAndCount extends ProductWithBrand {
   total_count: number;
+}
+
+export interface BrandWithDetails {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  website_url: string | null;
+  product_count: number;
+  fiber_types: string[];
+  is_fully_natural: boolean;
+  categories: string[];
 }
 
 export interface FilterState {

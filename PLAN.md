@@ -116,12 +116,13 @@ Server-side filtering by category, brand slugs, material names, price range with
 - Brand Strip: "Trusted by brands who care" with 6 brand names
 - Footer: FIBER + tagline, Shop/Learn/Connect columns
 
-### 2. Brands Page (`/brands`) — TODO 🔲
+### 2. Brands Page (`/brands`) — DONE ✅
 
-- Header: "Brands that never use plastic"
-- Filter pills: All / Fully Natural / by fiber type
-- Brand cards grid (3-col): name, description, fiber type tags, product count, "Fully Natural" badge, "View brand" link
-- Design is 90% done in Paper
+- Header: "Brands that never use plastic" + "Our Curation" eyebrow
+- Filter pills: Tier (All / 100% Natural / Nearly Natural), Fiber type, Category
+- Brand cards grid (3-col): name, natural/nearly badge, description, fiber type pills, product count, "View brand" link
+- Tier explainer footer (100% Natural vs Nearly Natural definitions)
+- Client-side filtering via BrandsContent component
 
 ### 3. Brand Detail Page (`/brand/[slug]`) — TODO 🔲
 
@@ -165,7 +166,7 @@ Server-side filtering by category, brand slugs, material names, price range with
 ### TODO 🔲
 - [ ] Add `is_fully_natural` column to brands table
 - [ ] Expand seed data: add Tracksmith, Allbirds, Vuori, Wool&Prince + more products
-- [ ] Build `/brands` page (route doesn't exist yet)
+- [x] Build `/brands` page with filters, brand cards, tier explainer
 - [ ] Design + build brand detail page
 - [ ] Restyle category page to FIBER design system
 - [ ] Restyle product page to FIBER design system

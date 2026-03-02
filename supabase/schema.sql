@@ -10,7 +10,7 @@ create table brands (
   slug text not null unique,
   description text,
   website_url text,
-  logo_url text,
+  is_fully_natural boolean not null default true,
   created_at timestamptz default now()
 );
 
@@ -66,7 +66,6 @@ select
   p.*,
   b.name as brand_name,
   b.slug as brand_slug,
-  b.logo_url as brand_logo_url,
   coalesce(
     json_agg(
       json_build_object(
@@ -83,7 +82,7 @@ from products p
 join brands b on b.id = p.brand_id
 left join product_materials pm on pm.product_id = p.id
 left join materials m on m.id = pm.material_id
-group by p.id, b.name, b.slug, b.logo_url;
+group by p.id, b.name, b.slug;
 
 -- =============================================
 -- RPC: filter_products
@@ -113,7 +112,6 @@ returns table (
   created_at timestamptz,
   brand_name text,
   brand_slug text,
-  brand_logo_url text,
   materials json,
   total_count bigint
 )
@@ -158,7 +156,6 @@ as $$
     pwm.created_at,
     pwm.brand_name,
     pwm.brand_slug,
-    pwm.brand_logo_url,
     pwm.materials,
     counted.cnt as total_count
   from products_with_materials pwm

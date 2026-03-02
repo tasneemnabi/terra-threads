@@ -29,6 +29,18 @@ export function isAllNatural(materials: MaterialInfo[]): boolean {
   return materials.length > 0 && materials.every((m) => m.is_natural);
 }
 
+export function brandLogoUrl(websiteUrl: string | null, size = 64): string | null {
+  if (!websiteUrl) return null;
+  const token = process.env.NEXT_PUBLIC_LOGO_DEV_TOKEN;
+  if (!token) return null;
+  try {
+    const domain = new URL(websiteUrl).hostname.replace(/^www\./, "");
+    return `https://img.logo.dev/${domain}?token=${token}&size=${size}&format=png`;
+  } catch {
+    return null;
+  }
+}
+
 export function naturalPercentage(materials: MaterialInfo[]): number {
   if (!materials || materials.length === 0) return 0;
   return materials
