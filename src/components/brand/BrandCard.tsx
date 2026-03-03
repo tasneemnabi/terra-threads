@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 import type { BrandWithDetails } from "@/types/database";
 import { brandLogoUrl } from "@/lib/utils";
 
@@ -11,8 +10,13 @@ export function BrandCard({ brand }: BrandCardProps) {
   const logoUrl = brandLogoUrl(brand.website_url, 128);
 
   return (
-    <div className="flex flex-col gap-4 rounded-[12px] bg-surface p-7">
-      {/* Header: name + badge */}
+    <a
+      href={brand.website_url || "#"}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group flex flex-col gap-4 rounded-[12px] bg-surface p-7 transition-shadow hover:shadow-md"
+    >
+      {/* Header: logo + name + badge */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           {logoUrl && (
@@ -47,8 +51,8 @@ export function BrandCard({ brand }: BrandCardProps) {
         )}
       </div>
 
-      {/* Description */}
-      <p className="font-body text-[14px] leading-[22px] text-secondary">
+      {/* Description — clamped to 2 lines */}
+      <p className="line-clamp-2 font-body text-[14px] leading-[22px] text-secondary">
         {brand.description || "Natural fiber clothing"}
       </p>
 
@@ -66,18 +70,25 @@ export function BrandCard({ brand }: BrandCardProps) {
         </div>
       )}
 
-      {/* Bottom: product count + view link */}
-      <div className="mt-auto flex items-center justify-between">
-        <span className="font-body text-[13px] leading-[16px] text-muted">
-          {brand.product_count} product{brand.product_count !== 1 ? "s" : ""}
+      {/* Bottom: visit CTA */}
+      <div className="mt-auto flex items-center justify-end">
+        <span className="inline-flex items-center gap-1.5 font-body text-[13px] font-medium leading-[16px] text-accent group-hover:text-accent/80">
+          Visit website
+          <svg
+            className="h-3 w-3"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2.5}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+            />
+          </svg>
         </span>
-        <Link
-          href={`/brand/${brand.slug}`}
-          className="font-body text-[13px] font-medium leading-[16px] text-accent hover:text-accent/80"
-        >
-          View brand &rarr;
-        </Link>
       </div>
-    </div>
+    </a>
   );
 }

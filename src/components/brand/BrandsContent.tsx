@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useCallback } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import type { BrandWithDetails } from "@/types/database";
 import { BrandCard } from "./BrandCard";
 
@@ -11,9 +12,39 @@ interface BrandsContentProps {
 }
 
 export function BrandsContent({ brands }: BrandsContentProps) {
-  const [tier, setTier] = useState<TierFilter>("all");
-  const [selectedFiber, setSelectedFiber] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Read filter state from URL
+  const tier = (searchParams.get("tier") as TierFilter) || "all";
+  const selectedFiber = searchParams.get("fiber") || null;
+  const selectedCategory = searchParams.get("category") || null;
+
+  // Update URL params without full navigation
+  const setParam = useCallback(
+    (key: string, value: string | null) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (value && value !== "all") {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+      const qs = params.toString();
+      router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+    },
+    [searchParams, router, pathname]
+  );
+
+  const setTier = (t: TierFilter) => setParam("tier", t);
+  const setSelectedFiber = (f: string | null) => setParam("fiber", f);
+  const setSelectedCategory = (c: string | null) => setParam("category", c);
+
+  const clearAllFilters = () => {
+    router.replace(pathname, { scroll: false });
+  };
+
+  const hasActiveFilters = tier !== "all" || selectedFiber || selectedCategory;
 
   // Derive available fibers and categories from all brands
   const allFibers = useMemo(() => {
@@ -171,9 +202,19 @@ export function BrandsContent({ brands }: BrandsContentProps) {
             <BrandCard key={brand.id} brand={brand} />
           ))}
           {filtered.length === 0 && (
-            <p className="col-span-full py-12 text-center font-body text-[16px] text-muted">
-              No brands match the selected filters.
-            </p>
+            <div className="col-span-full flex flex-col items-center gap-4 py-16">
+              <p className="font-body text-[16px] text-muted">
+                No brands match the selected filters.
+              </p>
+              {hasActiveFilters && (
+                <button
+                  onClick={clearAllFilters}
+                  className="rounded-full border border-surface-dark px-5 py-2.5 font-body text-[14px] font-medium text-text transition-colors hover:bg-surface"
+                >
+                  Clear all filters
+                </button>
+              )}
+            </div>
           )}
         </div>
       </section>

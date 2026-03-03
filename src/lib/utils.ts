@@ -41,6 +41,15 @@ export function brandLogoUrl(websiteUrl: string | null, size = 64): string | nul
   }
 }
 
+export function brandDomain(websiteUrl: string | null): string | null {
+  if (!websiteUrl) return null;
+  try {
+    return new URL(websiteUrl).hostname.replace(/^www\./, "");
+  } catch {
+    return null;
+  }
+}
+
 export function naturalPercentage(materials: MaterialInfo[]): number {
   if (!materials || materials.length === 0) return 0;
   return materials

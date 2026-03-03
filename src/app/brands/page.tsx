@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { getBrandsWithDetails } from "@/lib/queries/brands";
 import { BrandsContent } from "@/components/brand/BrandsContent";
@@ -33,7 +34,9 @@ export default async function BrandsPage() {
       </section>
 
       {/* Filters + Grid */}
-      <BrandsContent brands={brands} />
+      <Suspense>
+        <BrandsContent brands={brands} />
+      </Suspense>
 
       {/* Tier Explainer */}
       <section className="px-20 pb-16 pt-12">

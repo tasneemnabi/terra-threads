@@ -46,7 +46,7 @@ export async function getBrandsWithDetails(): Promise<BrandWithDetails[]> {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data || []).map((brand: any) => {
+  const result = (data || []).map((brand: any) => {
     const products = brand.products || [];
     const fiberSet = new Set<string>();
     const categorySet = new Set<string>();
@@ -71,6 +71,14 @@ export async function getBrandsWithDetails(): Promise<BrandWithDetails[]> {
       is_fully_natural: brand.is_fully_natural,
       categories: Array.from(categorySet).sort(),
     };
+  });
+
+  // Sort: 100% Natural first, then Nearly Natural, alphabetical within each
+  return result.sort((a, b) => {
+    if (a.is_fully_natural !== b.is_fully_natural) {
+      return a.is_fully_natural ? -1 : 1;
+    }
+    return a.name.localeCompare(b.name);
   });
 }
 

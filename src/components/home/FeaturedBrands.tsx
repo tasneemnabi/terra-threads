@@ -30,9 +30,11 @@ export function FeaturedBrands({ brands }: FeaturedBrandsProps) {
 
         <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {brands.slice(0, 3).map((brand) => (
-            <Link
+            <a
               key={brand.slug}
-              href={`/brand/${brand.slug}`}
+              href={brand.website_url || `/brand/${brand.slug}`}
+              target={brand.website_url ? "_blank" : undefined}
+              rel={brand.website_url ? "noopener noreferrer" : undefined}
               className="group flex flex-col"
             >
               <div className="flex h-[370px] items-end rounded-[14px] bg-surface-dark p-4">
@@ -51,10 +53,10 @@ export function FeaturedBrands({ brands }: FeaturedBrandsProps) {
                     : "Natural fiber clothing"}
                 </p>
                 <p className="mt-2 font-body text-[14px] font-medium text-accent">
-                  View brand &rarr;
+                  Shop {brand.name} &rarr;
                 </p>
               </div>
-            </Link>
+            </a>
           ))}
         </div>
       </div>

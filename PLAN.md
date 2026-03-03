@@ -120,17 +120,20 @@ Server-side filtering by category, brand slugs, material names, price range with
 
 - Header: "Brands that never use plastic" + "Our Curation" eyebrow
 - Filter pills: Tier (All / 100% Natural / Nearly Natural), Fiber type, Category
-- Brand cards grid (3-col): name, natural/nearly badge, description, fiber type pills, product count, "View brand" link
+- **Filters persisted in URL params** (`?tier=natural&fiber=Merino+Wool`) — shareable, back-button friendly
+- Brand cards grid (3-col): clickable cards linking to brand's external website (new tab)
+  - Logo, name, natural/nearly badge, description (2-line clamp), fiber type pills
+  - Footer: brand domain (e.g. "allbirds.com") + "Shop {name}" CTA with external link icon
+  - Hover shadow transition
+- **Sort**: 100% Natural brands first, then Nearly Natural, alphabetical within each group
+- Empty filter state includes "Clear all filters" button
 - Tier explainer footer (100% Natural vs Nearly Natural definitions)
-- Client-side filtering via BrandsContent component
 
-### 3. Brand Detail Page (`/brand/[slug]`) — TODO 🔲
+### 3. Brand Detail Page (`/brand/[slug]`) — DEFERRED
 
-- Brand name, description, website link
-- "Fully Natural" badge if applicable
-- Fiber types used
-- Grid of their qualifying products
-- Code exists but needs FIBER restyle
+- Not needed for brands-first iteration — brand cards link directly to external websites
+- Code exists as fallback (breadcrumb, brand info, product grid) but not actively used
+- Will revisit if/when individual product pages are added
 
 ### 4. Category Page (`/category/[slug]`) — needs restyle 🔲
 
@@ -158,16 +161,17 @@ Server-side filtering by category, brand slugs, material names, price range with
 - [x] Supabase client configured (server + client)
 - [x] TypeScript types for data model
 - [x] Data-fetching queries (brands, products, materials)
-- [x] Seed data: 3 brands (Naadam, Icebreaker, prAna), 10 products, 7 materials
+- [x] Seed data: 28 brands, products, 7+ materials
 - [x] Homepage — fully restyled to FIBER design system
 - [x] Header + Footer — FIBER branding, correct nav links
 - [x] Color palette + typography in globals.css + layout.tsx
+- [x] `/brands` page with filters, brand cards, tier explainer
+- [x] Brand cards link to external websites (not internal detail pages)
+- [x] Filter state persisted in URL search params
+- [x] Brands sorted by tier (100% Natural first) then alphabetically
+- [x] Homepage featured brands also link to external websites
 
 ### TODO 🔲
-- [ ] Add `is_fully_natural` column to brands table
-- [ ] Expand seed data: add Tracksmith, Allbirds, Vuori, Wool&Prince + more products
-- [x] Build `/brands` page with filters, brand cards, tier explainer
-- [ ] Design + build brand detail page
 - [ ] Restyle category page to FIBER design system
 - [ ] Restyle product page to FIBER design system
 - [ ] Restyle about page to FIBER design system
