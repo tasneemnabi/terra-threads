@@ -5,6 +5,9 @@ export interface Brand {
   description: string | null;
   website_url: string | null;
   is_fully_natural: boolean;
+  audience: string[];
+  fiber_types: string[];
+  categories: string[];
   created_at: string;
 }
 
@@ -65,6 +68,7 @@ export interface BrandWithDetails {
   fiber_types: string[];
   is_fully_natural: boolean;
   categories: string[];
+  audience: string[];
 }
 
 export interface FilterState {

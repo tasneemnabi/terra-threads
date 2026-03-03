@@ -11,6 +11,9 @@ create table brands (
   description text,
   website_url text,
   is_fully_natural boolean not null default true,
+  audience text[] default '{}',
+  fiber_types text[] default '{}',
+  categories text[] default '{}',
   created_at timestamptz default now()
 );
 
@@ -61,7 +64,8 @@ create index idx_product_materials_material on product_materials(material_id);
 -- =============================================
 -- View: products with brand + materials
 -- =============================================
-create or replace view products_with_materials as
+create or replace view products_with_materials
+with (security_invoker = on) as
 select
   p.*,
   b.name as brand_name,

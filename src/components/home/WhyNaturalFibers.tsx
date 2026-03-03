@@ -31,7 +31,7 @@ export function WhyNaturalFibers() {
                 <p className="font-display text-[36px] font-bold leading-[44px] tracking-[-0.02em] text-accent">
                   {stat.value}
                 </p>
-                <p className="mt-1.5 max-w-[140px] font-body text-[14px] leading-[18px] text-muted">
+                <p className="mt-1.5 max-w-[140px] font-body text-[14px] leading-[18px] text-secondary">
                   {stat.label}
                 </p>
               </div>

@@ -1,0 +1,35 @@
+{
+  "name": "Example Brand",
+  "website_url": "https://example.com",
+  "description": "A short description of what the brand does and their fiber philosophy.",
+  "audience": ["Women"],
+  "fiber_types": ["Organic Cotton"],
+  "categories": ["Activewear", "Basics"],
+  "products": [
+    {
+      "name": "Organic Cotton Tee",
+      "description": "A classic tee made from 100% organic cotton.",
+      "category": "activewear",
+      "price": 45.00,
+      "affiliate_url": "https://example.com/products/organic-tee",
+      "image_url": "/products/example-organic-tee.jpg",
+      "is_featured": false,
+      "materials": {
+        "Organic Cotton": 100
+      }
+    },
+    {
+      "name": "Stretch Yoga Pant",
+      "description": "Yoga pant with a touch of stretch for movement.",
+      "category": "activewear",
+      "price": 89.00,
+      "affiliate_url": "https://example.com/products/yoga-pant",
+      "image_url": "/products/example-yoga-pant.jpg",
+      "is_featured": true,
+      "materials": {
+        "Organic Cotton": 93,
+        "Elastane": 7
+      }
+    }
+  ]
+}

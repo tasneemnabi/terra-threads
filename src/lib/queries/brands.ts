@@ -48,16 +48,29 @@ export async function getBrandsWithDetails(): Promise<BrandWithDetails[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const result = (data || []).map((brand: any) => {
     const products = brand.products || [];
-    const fiberSet = new Set<string>();
-    const categorySet = new Set<string>();
 
-    for (const product of products) {
-      categorySet.add(product.category);
-      for (const pm of product.product_materials || []) {
-        if (pm.materials?.is_natural) {
-          fiberSet.add(pm.materials.name);
+    // Prefer brand-level metadata; fall back to product-derived if empty
+    let fiberTypes: string[] = brand.fiber_types || [];
+    let categories: string[] = brand.categories || [];
+    const audience: string[] = brand.audience || [];
+
+    if (fiberTypes.length === 0 || categories.length === 0) {
+      const fiberSet = new Set<string>(fiberTypes);
+      const categorySet = new Set<string>(categories);
+
+      for (const product of products) {
+        if (categories.length === 0) categorySet.add(product.category);
+        if (fiberTypes.length === 0) {
+          for (const pm of product.product_materials || []) {
+            if (pm.materials?.is_natural) {
+              fiberSet.add(pm.materials.name);
+            }
+          }
         }
       }
+
+      if (fiberTypes.length === 0) fiberTypes = Array.from(fiberSet).sort();
+      if (categories.length === 0) categories = Array.from(categorySet).sort();
     }
 
     return {
@@ -67,9 +80,10 @@ export async function getBrandsWithDetails(): Promise<BrandWithDetails[]> {
       description: brand.description,
       website_url: brand.website_url,
       product_count: products.length,
-      fiber_types: Array.from(fiberSet).sort(),
+      fiber_types: fiberTypes,
       is_fully_natural: brand.is_fully_natural,
-      categories: Array.from(categorySet).sort(),
+      categories,
+      audience,
     };
   });
 

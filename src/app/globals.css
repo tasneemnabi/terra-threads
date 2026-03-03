@@ -2,13 +2,13 @@
 
 @theme inline {
   --color-background: #FAF7F2;
-  --color-surface: #F0EBE3;
-  --color-surface-dark: #E8E0D5;
+  --color-surface: #EAE3D8;
+  --color-surface-dark: #D6CBBD;
   --color-text: #2C2420;
-  --color-muted: #9C8E82;
-  --color-muted-light: #C8BDB1;
-  --color-accent: #B5636A;
-  --color-secondary: #5A6B6E;
+  --color-muted: #8A7B6E;
+  --color-muted-light: #B8AA9C;
+  --color-accent: #A3535A;
+  --color-secondary: #475658;
 
   --font-display: var(--font-space-grotesk);
   --font-body: var(--font-dm-sans);

@@ -1,0 +1,74 @@
+{
+  "name": "Layere",
+  "website_url": "https://layere.com",
+  "description": "Clean, non-toxic organic wear for women. Layere uses 100% organic cotton for essentials and organic cotton-spandex blends for activewear, with no polyester, nylon, or acrylic in any garment.",
+  "audience": ["Women"],
+  "fiber_types": ["Organic Cotton"],
+  "categories": ["Activewear"],
+  "products": [
+    {
+      "name": "Organic Cotton Sports Bra",
+      "description": "Longline sports bra in 95% organic cotton with built-in inner bra and removable pads, designed for light-to-medium support during pilates, walking, and strength training.",
+      "category": "activewear",
+      "price": 64.00,
+      "affiliate_url": "https://layere.com/products/organic-cotton-sports-bra-black",
+      "image_url": "/products/layere-organic-cotton-sports-bra.jpg",
+      "is_featured": true,
+      "materials": {
+        "Organic Cotton": 95,
+        "Elastane": 5
+      }
+    },
+    {
+      "name": "Organic Cotton Leggings",
+      "description": "Full-length mid-to-high rise leggings in 95% organic cotton with a no-front-seam design and back waistband pocket, ideal for yoga and pilates.",
+      "category": "activewear",
+      "price": 118.00,
+      "affiliate_url": "https://layere.com/products/organic-cotton-leggings-navy-blue",
+      "image_url": "/products/layere-organic-cotton-leggings.jpg",
+      "is_featured": true,
+      "materials": {
+        "Organic Cotton": 95,
+        "Elastane": 5
+      }
+    },
+    {
+      "name": "Organic Cotton Flare Leggings",
+      "description": "Full-length flare leggings in 95% organic cotton with a mid-to-high rise, back waistband pocket, and no-front-seam design for yoga and everyday wear.",
+      "category": "activewear",
+      "price": 124.00,
+      "affiliate_url": "https://layere.com/products/organic-cotton-flare-leggings-black",
+      "image_url": "/products/layere-organic-cotton-flare-leggings.jpg",
+      "is_featured": false,
+      "materials": {
+        "Organic Cotton": 95,
+        "Elastane": 5
+      }
+    },
+    {
+      "name": "Organic Cotton Cami Top with Built-in Bra",
+      "description": "Longline cami top in 95% organic cotton with a built-in shelf bra, adjustable straps, and removable pads for medium support during everyday wear and light activity.",
+      "category": "activewear",
+      "price": 78.00,
+      "affiliate_url": "https://layere.com/products/organic-cotton-built-in-bra-top-black",
+      "image_url": "/products/layere-organic-cotton-cami-top-with-built-in-bra.jpg",
+      "is_featured": false,
+      "materials": {
+        "Organic Cotton": 95,
+        "Elastane": 5
+      }
+    },
+    {
+      "name": "100% Organic Cotton Tank",
+      "description": "Minimal full-length tank top in 100% organic cotton with a scoop neckline and wide straps, designed as a breathable everyday base layer.",
+      "category": "activewear",
+      "price": 68.00,
+      "affiliate_url": "https://layere.com/products/100-organic-cotton-tank",
+      "image_url": "/products/layere-100-organic-cotton-tank.jpg",
+      "is_featured": false,
+      "materials": {
+        "Organic Cotton": 100
+      }
+    }
+  ]
+}

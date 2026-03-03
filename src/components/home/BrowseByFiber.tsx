@@ -52,7 +52,7 @@ export function BrowseByFiber() {
               <h3 className="font-display text-[20px] font-semibold leading-[24px] tracking-[-0.01em] text-text">
                 {fiber.name}
               </h3>
-              <p className="flex-1 font-body text-[15px] leading-[24px] text-muted">
+              <p className="flex-1 font-body text-[15px] leading-[24px] text-secondary">
                 {fiber.description}
               </p>
               <p className="pt-1 font-body text-[14px] font-medium leading-[18px] text-accent group-hover:text-accent/80">

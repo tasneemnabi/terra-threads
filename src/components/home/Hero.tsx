@@ -10,7 +10,7 @@ export function Hero() {
         <h1 className="mt-6 max-w-[800px] font-display text-[72px] font-bold leading-[76px] tracking-[-0.03em] text-text">
           Clothing without the plastic.
         </h1>
-        <p className="mt-7 max-w-[480px] font-body text-[18px] leading-[28px] text-muted">
+        <p className="mt-7 max-w-[480px] font-body text-[18px] leading-[28px] text-secondary">
           Curated brands making clothing from natural fibers. No polyester, no
           nylon, no compromises — just merino, cotton, linen, and silk.
         </p>

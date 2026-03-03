@@ -26,7 +26,7 @@ export function Footer() {
           <span className="font-display text-[22px] font-bold leading-[28px] tracking-[-0.02em] text-text">
             FIBER
           </span>
-          <p className="mt-4 font-body text-[14px] leading-[22px] text-muted">
+          <p className="mt-4 font-body text-[14px] leading-[22px] text-secondary">
             Helping you find clothing made from natural fibers. No polyester,
             no compromise.
           </p>

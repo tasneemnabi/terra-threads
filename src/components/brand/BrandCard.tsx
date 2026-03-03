@@ -8,86 +8,80 @@ interface BrandCardProps {
 
 export function BrandCard({ brand }: BrandCardProps) {
   const logoUrl = brandLogoUrl(brand.website_url, 128);
+  const tierLabel = brand.is_fully_natural ? "100% Natural" : "Nearly Natural";
+  const dotColor = brand.is_fully_natural ? "bg-[#4A7A3D]" : "bg-[#C4960C]";
+
+  const formatCategory = (cat: string) =>
+    cat
+      .split("-")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
+
+  const metaParts = [
+    ...brand.audience,
+    ...brand.categories.map(formatCategory),
+  ];
 
   return (
     <a
       href={brand.website_url || "#"}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex flex-col gap-4 rounded-[12px] bg-surface p-7 transition-shadow hover:shadow-md"
+      className="group relative flex flex-col gap-5 rounded-[14px] border border-surface-dark bg-white p-7 transition-all duration-200 hover:-translate-y-0.5 hover:border-muted hover:shadow-lg"
     >
-      {/* Header: logo + name + badge */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          {logoUrl && (
-            <Image
-              src={logoUrl}
-              alt={`${brand.name} logo`}
-              width={40}
-              height={40}
-              className="rounded-[6px]"
-              unoptimized
-            />
-          )}
-          <h3 className="font-display text-[22px] font-semibold leading-[28px] tracking-[-0.01em] text-text">
-            {brand.name}
-          </h3>
-        </div>
-        {brand.product_count > 0 && (
-          <span
-            className={`inline-flex shrink-0 items-center gap-[5px] rounded-[4px] px-[10px] py-1 font-body text-[12px] font-medium leading-[16px] ${
-              brand.is_fully_natural
-                ? "bg-[#4A7C591A] text-[#4A7C59]"
-                : "bg-[#C4963C1A] text-[#C4963C]"
-            }`}
-          >
-            <span
-              className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-                brand.is_fully_natural ? "bg-[#4A7C59]" : "bg-[#C4963C]"
-              }`}
-            />
-            {brand.is_fully_natural ? "100% Natural" : "Nearly Natural"}
-          </span>
+      {/* Top row: Logo + Name */}
+      <div className="flex items-center gap-3">
+        {logoUrl && (
+          <Image
+            src={logoUrl}
+            alt={`${brand.name} logo`}
+            width={48}
+            height={48}
+            className="shrink-0 rounded-[10px]"
+            unoptimized
+          />
         )}
+        <h3 className="font-display text-[28px] font-semibold leading-[32px] tracking-[-0.02em] text-text">
+          {brand.name}
+        </h3>
       </div>
 
-      {/* Description — clamped to 2 lines */}
-      <p className="line-clamp-2 font-body text-[14px] leading-[22px] text-secondary">
-        {brand.description || "Natural fiber clothing"}
-      </p>
-
-      {/* Fiber type pills */}
-      {brand.fiber_types.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {brand.fiber_types.map((fiber) => (
-            <span
-              key={fiber}
-              className="rounded-[4px] bg-background px-[10px] py-1 font-body text-[12px] leading-[16px] text-secondary"
-            >
-              {fiber}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {/* Bottom: visit CTA */}
-      <div className="mt-auto flex items-center justify-end">
-        <span className="inline-flex items-center gap-1.5 font-body text-[13px] font-medium leading-[16px] text-accent group-hover:text-accent/80">
-          Visit website
-          <svg
-            className="h-3 w-3"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2.5}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-            />
-          </svg>
+      {/* Tier badge + Fiber type pills */}
+      <div className="flex flex-wrap gap-2">
+        <span className="flex items-center gap-1.5 rounded-full border border-muted-light px-3 py-1">
+          <span className={`h-[6px] w-[6px] rounded-full ${dotColor}`} />
+          <span className="font-body text-[13px] leading-[16px] text-secondary">
+            {tierLabel}
+          </span>
         </span>
+        {brand.fiber_types.map((fiber) => (
+          <span
+            key={fiber}
+            className="rounded-full border border-muted-light px-3 py-1 font-body text-[13px] leading-[16px] text-secondary"
+          >
+            {fiber}
+          </span>
+        ))}
+      </div>
+
+      {/* Bottom metadata */}
+      <div className="mt-auto flex items-center justify-between border-t border-muted-light pt-3">
+        <p className="font-body text-[13px] leading-[18px] text-secondary">
+          {metaParts.join(" \u00B7 ")}
+        </p>
+        <svg
+          className="h-4 w-4 shrink-0 text-muted opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M7 17L17 7M17 7H7M17 7v10"
+          />
+        </svg>
       </div>
     </a>
   );
