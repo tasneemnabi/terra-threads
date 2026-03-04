@@ -32,7 +32,7 @@ A website that aggregates clothing made from natural fibers (no polyester/plasti
 
 | Layer          | Choice                     | Rationale                                                        |
 | -------------- | -------------------------- | ---------------------------------------------------------------- |
-| Framework      | Next.js 16 + TypeScript    | SSG for SEO, React ecosystem, great DX                           |
+| Framework      | Next.js 15 + TypeScript    | SSG for SEO, React ecosystem, great DX                           |
 | Database       | Supabase (Postgres)        | Free tier, admin dashboard, auto-generated API, auth if needed later |
 | Styling        | Tailwind CSS v4            | Rapid UI development, responsive out of the box                  |
 | Hosting        | Vercel                     | Zero-config Next.js deploys, free tier sufficient for MVP        |
@@ -47,17 +47,18 @@ A website that aggregates clothing made from natural fibers (no polyester/plasti
 
 ### `brands`
 
-| Column      | Type        | Notes                                      |
-| ----------- | ----------- | ------------------------------------------ |
-| id          | uuid        | Primary key                                |
-| name        | text        | e.g., "Naadam"                             |
-| slug        | text        | URL-safe, unique, e.g., "naadam"           |
-| description | text        | Short brand bio                            |
-| website_url | text        | Brand's homepage                           |
-| logo_url    | text        | Brand logo image                           |
-| created_at  | timestamptz | Auto-set                                   |
-
-**TODO**: Add `is_fully_natural boolean` column to match curation policy.
+| Column           | Type        | Notes                                      |
+| ---------------- | ----------- | ------------------------------------------ |
+| id               | uuid        | Primary key                                |
+| name             | text        | e.g., "Naadam"                             |
+| slug             | text        | URL-safe, unique, e.g., "naadam"           |
+| description      | text        | Short brand bio                            |
+| website_url      | text        | Brand's homepage                           |
+| is_fully_natural | boolean     | True if entire catalog qualifies           |
+| audience         | text[]      | e.g., `{women, men, unisex}`               |
+| fiber_types      | text[]      | e.g., `{Merino Wool, Organic Cotton}`      |
+| categories       | text[]      | e.g., `{activewear, basics}`               |
+| created_at       | timestamptz | Auto-set                                   |
 
 ### `products`
 
@@ -157,32 +158,52 @@ Server-side filtering by category, brand slugs, material names, price range with
 
 ### Done ✅
 - [x] Next.js project initialized with TypeScript + Tailwind v4
-- [x] Supabase project + database schema created
+- [x] Supabase project + database schema created (with RLS)
 - [x] Supabase client configured (server + client)
 - [x] TypeScript types for data model
 - [x] Data-fetching queries (brands, products, materials)
-- [x] Seed data: 28 brands, products, 7+ materials
+- [x] Seed data: **28 brands**, 10 products (3 brands), 7 materials
 - [x] Homepage — fully restyled to FIBER design system
-- [x] Header + Footer — FIBER branding, correct nav links
+- [x] Header + Footer — FIBER branding, correct nav links, mobile hamburger menu
 - [x] Color palette + typography in globals.css + layout.tsx
-- [x] `/brands` page with filters, brand cards, tier explainer
-- [x] Brand cards link to external websites (not internal detail pages)
-- [x] Filter state persisted in URL search params
+- [x] `/brands` page with slide-out filter panel, tier/fiber/category filters, URL param persistence
+- [x] Brand cards link to external websites with Logo.dev logos
 - [x] Brands sorted by tier (100% Natural first) then alphabetically
-- [x] Homepage featured brands also link to external websites
+- [x] Homepage featured brands DB-driven, link to external websites
+- [x] Brand add/delete scripts (`scripts/add-brand.ts`, `scripts/delete-brand.ts`) with curation policy validation
+- [x] Agent prompt for automated brand research (`scripts/add-brand-agent.md`)
+- [x] Loading skeletons for product, category, and brand-detail routes
+- [x] 404 page (exists, needs restyle)
+- [x] Category page code (exists, needs restyle)
+- [x] Product page code with JSON-LD structured data (exists, needs restyle)
 
-### TODO 🔲
-- [ ] Restyle category page to FIBER design system
-- [ ] Restyle product page to FIBER design system
-- [ ] Restyle about page to FIBER design system
-- [ ] Responsive design pass (currently desktop-only with hardcoded px-20)
-- [ ] Clean up unused components (old `CategoryCards.tsx`, `FeaturedProducts.tsx`)
+---
 
-### Polish & Launch (later)
-- [ ] SEO: meta tags, Open Graph, structured data
-- [ ] Responsive design for mobile + tablet
-- [ ] Populate real product data for 10-20 brands
-- [ ] Set up affiliate links
+## Launch Checklist
+
+### Must fix (blockers) 🚫
+
+- [x] ~~**Responsive design pass** — FIBER pages use hardcoded `px-20` padding, `text-[72px]` hero, rigid flex layouts~~ — all pages now use `px-5 sm:px-8 lg:px-20`, hero scales, footer/stats stack on mobile
+- [x] ~~**Rewrite About page** — still says "Terra Threads" throughout~~ — fully rewritten with FIBER branding, mission, curation policy, affiliate disclosure
+- [x] ~~**Fix hardcoded data** — `BrandStrip` lists brands not in DB; `BrowseByFiber` has fake product counts; Hero "20+ brands" should be dynamic~~ — all now DB-driven
+- [x] ~~**Restyle 404 page** — uses old `neutral-*` / `primary` color tokens~~ — restyled with FIBER tokens
+
+### Should fix (important) ⚠️
+
+- [x] ~~**SEO basics** — add `robots.txt`, `sitemap.ts`, Open Graph / Twitter card meta tags~~ — all added
+- [x] ~~**Global `error.tsx`** — no error boundary~~ — added with FIBER styling, reset + home link
+- [x] ~~**Clean up dead code** — remove unused `CategoryCards.tsx`, `FeaturedProducts.tsx`~~ — deleted
+- [x] ~~**Decide on old-styled routes**~~ — nav "Activewear" now links to `/brands?category=activewear` instead of old-styled `/category/activewear`
+
+### Polish (post-launch) 💅
+
+- [x] ~~Restyle category page to FIBER design system~~ — page + all filter components restyled
+- [x] ~~Restyle product page to FIBER design system~~ — page + ProductImages, MaterialBreakdown, AffiliateButton, RelatedProducts restyled
+- [ ] Populate product data for more brands (currently only 3/28 have products)
+- [ ] Real product images (all are placeholders)
+- [x] ~~Affiliate tracking parameters on outbound links~~ — `affiliateUrl()` utility adds UTM params to BrandCard, FeaturedBrands, AffiliateButton
+- [ ] Per-page Open Graph images
+- [x] ~~JSON-LD structured data on brands page~~ — ItemList schema with all brands
 - [ ] Deploy to production on Vercel
 
 ---

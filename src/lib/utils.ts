@@ -56,3 +56,15 @@ export function naturalPercentage(materials: MaterialInfo[]): number {
     .filter((m) => m.is_natural)
     .reduce((sum, m) => sum + m.percentage, 0);
 }
+
+export function affiliateUrl(brandUrl: string, source: string): string {
+  try {
+    const url = new URL(brandUrl);
+    url.searchParams.set("utm_source", "fiber");
+    url.searchParams.set("utm_medium", "referral");
+    url.searchParams.set("utm_campaign", source);
+    return url.toString();
+  } catch {
+    return brandUrl;
+  }
+}

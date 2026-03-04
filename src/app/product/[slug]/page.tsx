@@ -57,20 +57,20 @@ export default async function ProductPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <nav className="mb-8 text-sm text-neutral-500">
-          <Link href="/" className="hover:text-primary">
+      <div className="mx-auto max-w-[1280px] px-5 sm:px-8 lg:px-20 py-8">
+        <nav className="mb-8 text-sm text-muted">
+          <Link href="/" className="hover:text-accent">
             Home
           </Link>
           {" / "}
           <Link
             href={`/category/${product.category}`}
-            className="capitalize hover:text-primary"
+            className="capitalize hover:text-accent"
           >
             {product.category}
           </Link>
           {" / "}
-          <span className="text-neutral-900">{product.name}</span>
+          <span className="text-text">{product.name}</span>
         </nav>
 
         <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
@@ -84,14 +84,14 @@ export default async function ProductPage({ params }: Props) {
             <div>
               <Link
                 href={`/brand/${product.brand_slug}`}
-                className="text-sm font-medium uppercase tracking-wide text-neutral-500 hover:text-primary"
+                className="text-sm font-medium uppercase tracking-wide text-muted hover:text-accent"
               >
                 {product.brand_name}
               </Link>
-              <h1 className="mt-1 text-3xl font-bold text-neutral-900">
+              <h1 className="mt-1 font-display text-[36px] font-semibold leading-[42px] tracking-[-0.02em] text-text">
                 {product.name}
               </h1>
-              <p className="mt-2 text-2xl font-bold text-neutral-900">
+              <p className="mt-2 text-2xl font-bold text-text">
                 {formatPrice(product.price, product.currency)}
               </p>
             </div>
@@ -107,7 +107,7 @@ export default async function ProductPage({ params }: Props) {
             </div>
 
             {product.description && (
-              <p className="text-neutral-600">{product.description}</p>
+              <p className="text-secondary">{product.description}</p>
             )}
 
             <MaterialBreakdown materials={product.materials} />
@@ -119,7 +119,7 @@ export default async function ProductPage({ params }: Props) {
               />
             )}
 
-            <p className="text-xs text-neutral-400">
+            <p className="text-xs text-muted-light">
               We may earn a commission when you shop through our links.
             </p>
           </div>

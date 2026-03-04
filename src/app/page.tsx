@@ -10,11 +10,11 @@ export default async function HomePage() {
 
   return (
     <>
-      <Hero />
+      <Hero brandCount={brands.length} />
       <FeaturedBrands brands={brands} />
       <WhyNaturalFibers />
       <BrowseByFiber />
-      <BrandStrip />
+      <BrandStrip brands={brands} />
     </>
   );
 }

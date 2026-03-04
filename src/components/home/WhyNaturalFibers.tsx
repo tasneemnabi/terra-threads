@@ -6,9 +6,9 @@ const stats = [
 
 export function WhyNaturalFibers() {
   return (
-    <section className="px-20 py-20">
-      <div className="mx-auto flex max-w-[1280px] items-start gap-20">
-        <div className="w-[400px] shrink-0">
+    <section className="px-5 sm:px-8 lg:px-20 py-20">
+      <div className="mx-auto flex flex-col gap-8 max-w-[1280px] lg:flex-row lg:items-start lg:gap-20">
+        <div className="lg:w-[400px] lg:shrink-0">
           <p className="font-body text-[13px] font-medium uppercase leading-[16px] tracking-[0.08em] text-secondary">
             Why it matters
           </p>
@@ -25,7 +25,7 @@ export function WhyNaturalFibers() {
             perform just as well.
           </p>
 
-          <div className="mt-10 flex gap-16">
+          <div className="mt-10 flex flex-wrap gap-8 sm:gap-16">
             {stats.map((stat) => (
               <div key={stat.value}>
                 <p className="font-display text-[36px] font-bold leading-[44px] tracking-[-0.02em] text-accent">

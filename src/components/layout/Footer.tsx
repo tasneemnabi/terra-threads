@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 const shopLinks = [
-  { href: "/category/activewear", label: "Activewear" },
+  { href: "/brands?category=activewear", label: "Activewear" },
   { href: "/brands", label: "All Brands" },
   { href: "/brands", label: "New Arrivals" },
 ];
@@ -20,8 +20,8 @@ const connectLinks = [
 
 export function Footer() {
   return (
-    <footer className="mt-20 border-t border-surface-dark px-20 py-[60px]">
-      <div className="mx-auto flex max-w-[1280px] items-start justify-between">
+    <footer className="mt-20 border-t border-surface-dark px-5 sm:px-8 lg:px-20 py-[60px]">
+      <div className="mx-auto flex flex-col gap-12 max-w-[1280px] lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-[280px]">
           <span className="font-display text-[22px] font-bold leading-[28px] tracking-[-0.02em] text-text">
             FIBER
@@ -32,7 +32,7 @@ export function Footer() {
           </p>
         </div>
 
-        <div className="flex gap-16">
+        <div className="flex flex-wrap gap-8 sm:gap-16">
           <div>
             <h4 className="font-body text-[13px] font-medium uppercase leading-[16px] tracking-[0.08em] text-text">
               Shop

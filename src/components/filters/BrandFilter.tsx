@@ -19,7 +19,7 @@ export function BrandFilter({ brands, selected, onChange }: BrandFilterProps) {
 
   return (
     <div>
-      <h3 className="text-sm font-semibold text-neutral-900">Brand</h3>
+      <h3 className="text-sm font-semibold text-text">Brand</h3>
       <div className="mt-3 space-y-2">
         {brands.map((brand) => (
           <label key={brand.id} className="flex items-center gap-2 text-sm">
@@ -27,9 +27,9 @@ export function BrandFilter({ brands, selected, onChange }: BrandFilterProps) {
               type="checkbox"
               checked={selected.includes(brand.slug)}
               onChange={() => toggle(brand.slug)}
-              className="h-4 w-4 rounded border-neutral-300 text-primary focus:ring-primary"
+              className="h-4 w-4 rounded border-surface-dark text-accent focus:ring-accent"
             />
-            <span className="text-neutral-700">{brand.name}</span>
+            <span className="text-secondary">{brand.name}</span>
           </label>
         ))}
       </div>

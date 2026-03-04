@@ -2,7 +2,7 @@ import Link from "next/link";
 import { MobileNav } from "./MobileNav";
 
 const navLinks = [
-  { href: "/category/activewear", label: "Activewear" },
+  { href: "/brands?category=activewear", label: "Activewear" },
   { href: "/brands", label: "Brands" },
   { href: "/about", label: "About" },
 ];
@@ -10,7 +10,7 @@ const navLinks = [
 export function Header() {
   return (
     <header className="bg-background">
-      <div className="mx-auto flex h-[84px] max-w-[1440px] items-center justify-between px-20">
+      <div className="mx-auto flex h-[84px] max-w-[1440px] items-center justify-between px-5 sm:px-8 lg:px-20">
         <Link href="/" className="flex items-center">
           <span className="font-display text-[22px] font-bold leading-[28px] tracking-[-0.02em] text-text">
             FIBER

@@ -31,13 +31,13 @@ export function ActiveFilters({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="text-sm font-medium text-neutral-500">Filters:</span>
+      <span className="text-sm font-medium text-muted">Filters:</span>
 
       {brands.map((slug) => (
         <button
           key={slug}
           onClick={() => onRemoveBrand(slug)}
-          className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/20"
+          className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2.5 py-1 text-xs font-medium text-accent hover:bg-accent/20"
         >
           {slug}
           <svg className="h-3 w-3" viewBox="0 0 12 12" fill="currentColor">
@@ -62,7 +62,7 @@ export function ActiveFilters({
       {(minPrice !== undefined || maxPrice !== undefined) && (
         <button
           onClick={onRemovePrice}
-          className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-medium text-neutral-600 hover:bg-neutral-200"
+          className="inline-flex items-center gap-1 rounded-full bg-surface px-2.5 py-1 text-xs font-medium text-muted hover:bg-surface-dark"
         >
           {minPrice !== undefined && maxPrice !== undefined
             ? `$${minPrice} - $${maxPrice}`
@@ -77,7 +77,7 @@ export function ActiveFilters({
 
       <button
         onClick={onClearAll}
-        className="text-xs font-medium text-neutral-500 underline hover:text-neutral-700"
+        className="text-xs font-medium text-muted underline hover:text-text"
       >
         Clear all
       </button>

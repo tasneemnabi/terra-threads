@@ -84,14 +84,14 @@ export function FilterSidebar({ brands, materials }: FilterSidebarProps) {
         onClearAll={clearAll}
       />
 
-      <div className="space-y-6 rounded-xl border border-neutral-200 bg-white p-5">
+      <div className="space-y-6 rounded-xl border border-surface-dark bg-background p-5">
         <FiberTypeFilter
           materials={materials}
           selected={selectedMaterials}
           onChange={handleMaterialsChange}
         />
 
-        <hr className="border-neutral-200" />
+        <hr className="border-surface-dark" />
 
         <BrandFilter
           brands={brands}
@@ -99,7 +99,7 @@ export function FilterSidebar({ brands, materials }: FilterSidebarProps) {
           onChange={handleBrandsChange}
         />
 
-        <hr className="border-neutral-200" />
+        <hr className="border-surface-dark" />
 
         <PriceRangeFilter
           minPrice={minPrice}

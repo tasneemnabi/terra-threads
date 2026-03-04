@@ -51,10 +51,10 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   const categoryTitle = slug.charAt(0).toUpperCase() + slug.slice(1);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-[1280px] px-5 sm:px-8 lg:px-20 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-neutral-900">{categoryTitle}</h1>
-        <p className="mt-2 text-neutral-500">
+        <h1 className="font-display text-[36px] font-semibold leading-[42px] tracking-[-0.02em] text-text">{categoryTitle}</h1>
+        <p className="mt-2 font-body text-muted">
           {totalCount} {totalCount === 1 ? "product" : "products"} found
         </p>
       </div>

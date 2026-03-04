@@ -30,7 +30,7 @@ export function PriceRangeFilter({
 
   return (
     <div>
-      <h3 className="text-sm font-semibold text-neutral-900">Price Range</h3>
+      <h3 className="text-sm font-semibold text-text">Price Range</h3>
       <div className="mt-3 flex items-center gap-2">
         <input
           type="number"
@@ -38,16 +38,16 @@ export function PriceRangeFilter({
           value={min}
           onChange={(e) => setMin(e.target.value)}
           onBlur={handleApply}
-          className="w-full rounded-md border border-neutral-300 px-3 py-1.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          className="w-full rounded-md border border-surface-dark px-3 py-1.5 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
         />
-        <span className="text-neutral-400">-</span>
+        <span className="text-muted-light">-</span>
         <input
           type="number"
           placeholder="Max"
           value={max}
           onChange={(e) => setMax(e.target.value)}
           onBlur={handleApply}
-          className="w-full rounded-md border border-neutral-300 px-3 py-1.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          className="w-full rounded-md border border-surface-dark px-3 py-1.5 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
         />
       </div>
     </div>

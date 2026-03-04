@@ -1,6 +1,6 @@
 import Image from "next/image";
 import type { BrandWithDetails } from "@/types/database";
-import { brandLogoUrl } from "@/lib/utils";
+import { brandLogoUrl, affiliateUrl } from "@/lib/utils";
 
 interface BrandCardProps {
   brand: BrandWithDetails;
@@ -24,7 +24,7 @@ export function BrandCard({ brand }: BrandCardProps) {
 
   return (
     <a
-      href={brand.website_url || "#"}
+      href={brand.website_url ? affiliateUrl(brand.website_url, "brand-card") : "#"}
       target="_blank"
       rel="noopener noreferrer"
       className="group relative flex flex-col gap-5 rounded-[14px] border border-surface-dark bg-white p-7 transition-all duration-200 hover:-translate-y-0.5 hover:border-muted hover:shadow-lg"

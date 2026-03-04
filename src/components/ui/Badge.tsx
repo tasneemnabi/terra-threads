@@ -5,9 +5,9 @@ interface BadgeProps {
 }
 
 const variants = {
-  default: "bg-primary/10 text-primary",
+  default: "bg-accent/10 text-accent",
   success: "bg-green-100 text-green-800",
-  neutral: "bg-neutral-100 text-neutral-600",
+  neutral: "bg-surface text-muted",
 };
 
 export function Badge({ children, variant = "default", className = "" }: BadgeProps) {

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Brand } from "@/types/database";
+import { affiliateUrl } from "@/lib/utils";
 
 interface FeaturedBrandsProps {
   brands: Brand[];
@@ -9,7 +10,7 @@ export function FeaturedBrands({ brands }: FeaturedBrandsProps) {
   if (brands.length === 0) return null;
 
   return (
-    <section className="px-20">
+    <section className="px-5 sm:px-8 lg:px-20">
       <div className="mx-auto max-w-[1280px]">
         <div className="flex items-end justify-between">
           <div>
@@ -32,15 +33,15 @@ export function FeaturedBrands({ brands }: FeaturedBrandsProps) {
           {brands.slice(0, 3).map((brand) => (
             <a
               key={brand.slug}
-              href={brand.website_url || `/brand/${brand.slug}`}
+              href={brand.website_url ? affiliateUrl(brand.website_url, "featured") : `/brand/${brand.slug}`}
               target={brand.website_url ? "_blank" : undefined}
               rel={brand.website_url ? "noopener noreferrer" : undefined}
               className="group flex flex-col"
             >
               <div className="flex h-[370px] items-end rounded-[14px] bg-surface-dark p-4">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-text/80 px-3 py-1.5 font-body text-[12px] font-medium text-background">
-                  <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
-                  100% Natural
+                  <span className={`h-1.5 w-1.5 rounded-full ${brand.is_fully_natural ? "bg-green-400" : "bg-amber-400"}`} />
+                  {brand.is_fully_natural ? "100% Natural" : "Nearly Natural"}
                 </span>
               </div>
               <div className="px-1 pt-3">

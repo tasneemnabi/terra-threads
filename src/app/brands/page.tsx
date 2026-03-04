@@ -14,8 +14,32 @@ export default async function BrandsPage() {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "ItemList",
+            name: "Natural Fiber Clothing Brands",
+            description:
+              "Curated directory of clothing brands committed to natural fibers.",
+            numberOfItems: brands.length,
+            itemListElement: brands.map((brand, index) => ({
+              "@type": "ListItem",
+              position: index + 1,
+              item: {
+                "@type": "Brand",
+                name: brand.name,
+                description: brand.description,
+                url: brand.website_url,
+              },
+            })),
+          }),
+        }}
+      />
+
       {/* Page Header */}
-      <section className="px-20 pt-14">
+      <section className="px-5 sm:px-8 lg:px-20 pt-14">
         <div className="mx-auto max-w-[1280px] flex flex-col gap-5">
           <p className="font-body text-[13px] font-medium uppercase leading-[16px] tracking-[0.12em] text-accent">
             Our Curation
@@ -39,7 +63,7 @@ export default async function BrandsPage() {
       </Suspense>
 
       {/* Tier Explainer */}
-      <section className="px-20 pb-16 pt-12">
+      <section className="px-5 sm:px-8 lg:px-20 pb-16 pt-12">
         <div className="mx-auto flex max-w-[1280px] gap-10">
           <div className="flex items-start gap-3">
             <span className="mt-[2px] shrink-0 font-body text-[12px] font-semibold uppercase tracking-[0.06em] text-accent">

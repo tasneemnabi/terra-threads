@@ -21,6 +21,21 @@ export const metadata: Metadata = {
   },
   description:
     "Discover clothing made from natural fibers. No polyester, no nylon, no compromise. Browse curated brands that put natural materials first.",
+  openGraph: {
+    title: "FIBER — Natural Fiber Clothing",
+    description:
+      "Discover clothing made from natural fibers. No polyester, no nylon, no compromise.",
+    url: "https://fiber.clothing",
+    siteName: "FIBER",
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "FIBER — Natural Fiber Clothing",
+    description:
+      "Discover clothing made from natural fibers. No polyester, no nylon, no compromise.",
+  },
 };
 
 export default function RootLayout({

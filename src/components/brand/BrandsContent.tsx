@@ -145,7 +145,7 @@ export function BrandsContent({ brands }: BrandsContentProps) {
   return (
     <>
       {/* Filter bar — single row */}
-      <section className="px-20 pt-10">
+      <section className="px-5 sm:px-8 lg:px-20 pt-10">
         <div className="mx-auto flex max-w-[1280px] items-center justify-between">
           {/* Tier toggle — left side */}
           <div className="flex items-center gap-0 rounded-[8px] bg-surface p-1">
@@ -368,7 +368,7 @@ export function BrandsContent({ brands }: BrandsContentProps) {
       )}
 
       {/* Brand grid */}
-      <section className="px-20 pt-8 pb-20">
+      <section className="px-5 sm:px-8 lg:px-20 pt-8 pb-20">
         <div className="mx-auto max-w-[1280px]">
           <p className="mb-8 font-body text-[14px] leading-[18px] text-muted">
             {filtered.length} brand{filtered.length !== 1 ? "s" : ""}

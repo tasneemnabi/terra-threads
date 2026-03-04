@@ -11,27 +11,27 @@ export function MaterialBreakdown({ materials }: MaterialBreakdownProps) {
 
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-neutral-900">
+      <h3 className="text-sm font-semibold text-text">
         Material Composition
       </h3>
       <div className="space-y-2">
         {sorted.map((mat) => (
           <div key={mat.material_id}>
             <div className="flex items-center justify-between text-sm">
-              <span className="flex items-center gap-1.5 text-neutral-700">
+              <span className="flex items-center gap-1.5 text-secondary">
                 {mat.name}
                 {mat.is_natural && (
                   <span className="inline-block h-2 w-2 rounded-full bg-green-500" title="Natural fiber" />
                 )}
               </span>
-              <span className="font-medium text-neutral-900">
+              <span className="font-medium text-text">
                 {mat.percentage}%
               </span>
             </div>
-            <div className="mt-1 h-2 overflow-hidden rounded-full bg-neutral-100">
+            <div className="mt-1 h-2 overflow-hidden rounded-full bg-surface">
               <div
                 className={`h-full rounded-full ${
-                  mat.is_natural ? "bg-primary" : "bg-neutral-400"
+                  mat.is_natural ? "bg-accent" : "bg-muted-light"
                 }`}
                 style={{ width: `${mat.percentage}%` }}
               />

@@ -32,7 +32,7 @@ export function Pagination({ currentPage, totalPages }: PaginationProps) {
       <button
         onClick={() => goToPage(currentPage - 1)}
         disabled={currentPage === 1}
-        className="rounded-lg border border-neutral-300 px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100 disabled:opacity-50 disabled:hover:bg-transparent"
+        className="rounded-lg border border-surface-dark px-3 py-2 text-sm font-medium text-secondary hover:bg-surface disabled:opacity-50 disabled:hover:bg-transparent"
       >
         Previous
       </button>
@@ -43,8 +43,8 @@ export function Pagination({ currentPage, totalPages }: PaginationProps) {
           onClick={() => goToPage(page)}
           className={`rounded-lg px-3 py-2 text-sm font-medium ${
             page === currentPage
-              ? "bg-primary text-white"
-              : "border border-neutral-300 text-neutral-700 hover:bg-neutral-100"
+              ? "bg-accent text-white"
+              : "border border-surface-dark text-secondary hover:bg-surface"
           }`}
         >
           {page}
@@ -54,7 +54,7 @@ export function Pagination({ currentPage, totalPages }: PaginationProps) {
       <button
         onClick={() => goToPage(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="rounded-lg border border-neutral-300 px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100 disabled:opacity-50 disabled:hover:bg-transparent"
+        className="rounded-lg border border-surface-dark px-3 py-2 text-sm font-medium text-secondary hover:bg-surface disabled:opacity-50 disabled:hover:bg-transparent"
       >
         Next
       </button>
