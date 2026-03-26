@@ -1,6 +1,5 @@
 import Link from "next/link";
 import type { Brand } from "@/types/database";
-import { affiliateUrl } from "@/lib/utils";
 
 interface FeaturedBrandsProps {
   brands: Brand[];
@@ -8,6 +7,13 @@ interface FeaturedBrandsProps {
 
 export function FeaturedBrands({ brands }: FeaturedBrandsProps) {
   if (brands.length === 0) return null;
+
+  // Prefer 100% natural brands first, then alphabetical
+  const sorted = [...brands].sort((a, b) => {
+    if (a.is_fully_natural !== b.is_fully_natural) return a.is_fully_natural ? -1 : 1;
+    return a.name.localeCompare(b.name);
+  });
+  const featured = sorted.slice(0, 3);
 
   return (
     <section className="px-5 sm:px-8 lg:px-20">
@@ -30,17 +36,15 @@ export function FeaturedBrands({ brands }: FeaturedBrandsProps) {
         </div>
 
         <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {brands.slice(0, 3).map((brand) => (
-            <a
+          {featured.map((brand) => (
+            <Link
               key={brand.slug}
-              href={brand.website_url ? affiliateUrl(brand.website_url, "featured") : `/brand/${brand.slug}`}
-              target={brand.website_url ? "_blank" : undefined}
-              rel={brand.website_url ? "noopener noreferrer" : undefined}
+              href={`/brand/${brand.slug}`}
               className="group flex flex-col"
             >
               <div className="flex h-[370px] items-end rounded-[14px] bg-surface-dark p-4">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-text/80 px-3 py-1.5 font-body text-[12px] font-medium text-background">
-                  <span className={`h-1.5 w-1.5 rounded-full ${brand.is_fully_natural ? "bg-green-400" : "bg-amber-400"}`} />
+                  <span className={`h-1.5 w-1.5 rounded-full ${brand.is_fully_natural ? "bg-natural" : "bg-nearly"}`} />
                   {brand.is_fully_natural ? "100% Natural" : "Nearly Natural"}
                 </span>
               </div>
@@ -54,10 +58,10 @@ export function FeaturedBrands({ brands }: FeaturedBrandsProps) {
                     : "Natural fiber clothing"}
                 </p>
                 <p className="mt-2 font-body text-[14px] font-medium text-accent">
-                  Shop {brand.name} &rarr;
+                  Browse {brand.name} &rarr;
                 </p>
               </div>
-            </a>
+            </Link>
           ))}
         </div>
       </div>

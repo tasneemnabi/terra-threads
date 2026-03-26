@@ -6,7 +6,7 @@ interface BadgeProps {
 
 const variants = {
   default: "bg-accent/10 text-accent",
-  success: "bg-green-100 text-green-800",
+  success: "bg-natural-light text-natural-dark",
   neutral: "bg-surface text-muted",
 };
 

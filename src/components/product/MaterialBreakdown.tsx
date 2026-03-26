@@ -21,7 +21,7 @@ export function MaterialBreakdown({ materials }: MaterialBreakdownProps) {
               <span className="flex items-center gap-1.5 text-secondary">
                 {mat.name}
                 {mat.is_natural && (
-                  <span className="inline-block h-2 w-2 rounded-full bg-green-500" title="Natural fiber" />
+                  <span className="inline-block h-2 w-2 rounded-full bg-natural" title="Natural fiber" />
                 )}
               </span>
               <span className="font-medium text-text">

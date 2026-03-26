@@ -14,43 +14,19 @@ import * as fs from "fs";
 import * as path from "path";
 import * as crypto from "crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-
-// ─── Curation Policy ────────────────────────────────────────────────
-
-const BANNED_MATERIALS = ["polyester", "nylon", "acrylic", "polypropylene"];
-const SYNTHETIC_STRETCH = ["elastane", "spandex", "lycra"];
-const MAX_SYNTHETIC_PERCENT = 10;
-
-// Materials already in the database (from seed.sql)
-const KNOWN_MATERIALS: Record<string, { is_natural: boolean; id: string }> = {
-  "Merino Wool": { is_natural: true, id: "a1000000-0000-0000-0000-000000000001" },
-  "Organic Cotton": { is_natural: true, id: "a1000000-0000-0000-0000-000000000002" },
-  "Cashmere": { is_natural: true, id: "a1000000-0000-0000-0000-000000000003" },
-  "Hemp": { is_natural: true, id: "a1000000-0000-0000-0000-000000000004" },
-  "Tencel Lyocell": { is_natural: true, id: "a1000000-0000-0000-0000-000000000005" },
-  "Silk": { is_natural: true, id: "a1000000-0000-0000-0000-000000000006" },
-  "Elastane": { is_natural: false, id: "a1000000-0000-0000-0000-000000000007" },
-};
-
-// Additional materials we recognize (not yet in DB — will be inserted if used)
-const EXTRA_NATURAL_FIBERS: Record<string, string> = {
-  "Linen": "Flax-based fiber, breathable and durable.",
-  "Alpaca": "Soft, warm fiber from alpaca fleece.",
-  "Wool": "Natural animal fiber, warm and moisture-wicking.",
-  "Cotton": "Conventional cotton fiber.",
-  "Pima Cotton": "Extra-long staple cotton, exceptionally soft.",
-  "Egyptian Cotton": "Premium long-staple cotton from Egypt.",
-  "Bamboo Lyocell": "Regenerated cellulose fiber from bamboo pulp.",
-  "Modal": "Semi-synthetic fiber from beech tree pulp.",
-  "Viscose": "Regenerated cellulose fiber from wood pulp.",
-  "Rayon": "Regenerated cellulose fiber.",
-  "Cupro": "Regenerated cellulose from cotton linter.",
-  "Yak": "Soft, warm fiber from yak undercoat.",
-  "Mohair": "Lustrous fiber from Angora goats.",
-  "Organic Pima Cotton": "Organically grown extra-long staple cotton.",
-  "Organic Merino Wool": "Merino wool from organically raised sheep.",
-  "Spandex": "Synthetic stretch fiber (alias for Elastane).",
-};
+import {
+  KNOWN_MATERIALS,
+  EXTRA_NATURAL_FIBERS,
+  BANNED_MATERIALS,
+  SYNTHETIC_STRETCH,
+  MAX_SYNTHETIC_PERCENT,
+  slugify,
+  isSyntheticStretch,
+  isBannedMaterial,
+  isKnownNatural,
+  validateProduct as validateProductShared,
+  type ValidationResult,
+} from "./lib/curation.js";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -75,23 +51,7 @@ interface BrandInput {
   products?: ProductInput[];
 }
 
-interface ValidationResult {
-  valid: boolean;
-  tier: "100% Natural" | "Nearly Natural" | null;
-  errors: string[];
-  warnings: string[];
-}
-
 // ─── Helpers ────────────────────────────────────────────────────────
-
-function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[''"]/g, "")
-    .replace(/&/g, "and")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-}
 
 function escapeSQL(str: string): string {
   return str.replace(/'/g, "''");
@@ -101,89 +61,11 @@ function uuid(): string {
   return crypto.randomUUID();
 }
 
-function isSyntheticStretch(name: string): boolean {
-  return SYNTHETIC_STRETCH.includes(name.toLowerCase());
-}
-
-function isBannedMaterial(name: string): boolean {
-  return BANNED_MATERIALS.some((b) => name.toLowerCase().includes(b));
-}
-
-function isKnownNatural(name: string): boolean {
-  const known = KNOWN_MATERIALS[name];
-  if (known) return known.is_natural;
-  return name in EXTRA_NATURAL_FIBERS && !isSyntheticStretch(name);
-}
-
-// ─── Validation ─────────────────────────────────────────────────────
-
 function validateProduct(product: ProductInput, index: number): ValidationResult {
-  const errors: string[] = [];
-  const warnings: string[] = [];
-  const prefix = `Product #${index + 1} "${product.name}"`;
-
-  // Check required fields
-  if (!product.name) errors.push(`${prefix}: missing name`);
-  if (!product.category) errors.push(`${prefix}: missing category`);
-  if (!product.price || product.price <= 0) errors.push(`${prefix}: invalid price`);
-  if (!product.materials || Object.keys(product.materials).length === 0) {
-    errors.push(`${prefix}: no materials specified`);
-    return { valid: false, tier: null, errors, warnings };
-  }
-
-  // Check percentages sum to 100
-  const total = Object.values(product.materials).reduce((a, b) => a + b, 0);
-  if (total !== 100) {
-    errors.push(`${prefix}: material percentages sum to ${total}%, must be 100%`);
-  }
-
-  // Check each material
-  let syntheticPercent = 0;
-  for (const [material, pct] of Object.entries(product.materials)) {
-    if (pct <= 0 || pct > 100) {
-      errors.push(`${prefix}: "${material}" has invalid percentage ${pct}%`);
-    }
-
-    // Banned material check
-    if (isBannedMaterial(material)) {
-      errors.push(
-        `${prefix}: "${material}" is BANNED — polyester, nylon, and acrylic are never allowed`
-      );
-      continue;
-    }
-
-    // Synthetic stretch check
-    if (isSyntheticStretch(material)) {
-      syntheticPercent += pct;
-    }
-
-    // Unknown material warning
-    if (!KNOWN_MATERIALS[material] && !(material in EXTRA_NATURAL_FIBERS)) {
-      warnings.push(
-        `${prefix}: "${material}" is not in the recognized materials list — verify manually`
-      );
-    }
-  }
-
-  // Synthetic limit
-  if (syntheticPercent > MAX_SYNTHETIC_PERCENT) {
-    errors.push(
-      `${prefix}: synthetic content is ${syntheticPercent}% (max ${MAX_SYNTHETIC_PERCENT}%)`
-    );
-  }
-
-  if (errors.length > 0) {
-    return { valid: false, tier: null, errors, warnings };
-  }
-
-  const tier: "100% Natural" | "Nearly Natural" =
-    syntheticPercent === 0 ? "100% Natural" : "Nearly Natural";
-
-  if (syntheticPercent > 0) {
-    warnings.push(`${prefix}: ${syntheticPercent}% synthetic → classified as "Nearly Natural"`);
-  }
-
-  return { valid: true, tier, errors, warnings };
+  return validateProductShared(
+    { name: product.name, materials: product.materials, category: product.category, price: product.price },
+    index
+  );
 }
 
 // ─── SQL Generation ─────────────────────────────────────────────────

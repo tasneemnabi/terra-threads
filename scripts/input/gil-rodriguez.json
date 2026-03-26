@@ -1,0 +1,84 @@
+{
+  "name": "Gil Rodriguez",
+  "website_url": "https://gilrodriguez.com",
+  "description": "LA-based slow fashion label specializing in elevated cotton basics. Gil Rodriguez cuts, sews, and knits the majority of its fabrics locally in Los Angeles, using high-quality cotton jersey and cotton twill with no polyester or nylon in its core collection.",
+  "audience": ["Women"],
+  "fiber_types": ["Cotton"],
+  "categories": ["Basics", "Tops", "Loungewear", "Underwear"],
+  "products": [
+    {
+      "name": "Bellevue Tee",
+      "description": "Super soft short-sleeve baby tee in 100% cotton baby rib, form-fitting with a flattering silhouette. Made in LA from locally knit fabric.",
+      "category": "basics",
+      "price": 85.00,
+      "affiliate_url": "https://gilrodriguez.com/products/bellevue-tee-black",
+      "image_url": "/products/gil-rodriguez-bellevue-tee.jpg",
+      "is_featured": true,
+      "materials": {
+        "Cotton": 100
+      }
+    },
+    {
+      "name": "LaPointe Tank",
+      "description": "Cotton baby rib spaghetti tank with a square neckline, form-fitting and flattering. Made in USA from locally sourced 100% cotton.",
+      "category": "basics",
+      "price": 60.00,
+      "affiliate_url": "https://gilrodriguez.com/products/la-pointe-tank-white",
+      "image_url": "/products/gil-rodriguez-lapointe-tank.jpg",
+      "is_featured": false,
+      "materials": {
+        "Cotton": 100
+      }
+    },
+    {
+      "name": "Lou Pant",
+      "description": "Unisex drawcord pant in 100% enzyme-washed cotton twill that gets softer with every wash. Features front and back patch pockets, made in Los Angeles.",
+      "category": "loungewear",
+      "price": 250.00,
+      "affiliate_url": "https://gilrodriguez.com/products/lou-pant-with-pockets",
+      "image_url": "/products/gil-rodriguez-lou-pant.jpg",
+      "is_featured": true,
+      "materials": {
+        "Cotton": 100
+      }
+    },
+    {
+      "name": "Capri Legging",
+      "description": "High-waisted knee-length legging in cotton spandex jersey with a lightly sanded velvety finish. Wide elastic waistband, made in LA.",
+      "category": "activewear",
+      "price": 105.00,
+      "affiliate_url": "https://gilrodriguez.com/products/capri-leggings",
+      "image_url": "/products/gil-rodriguez-capri-legging.jpg",
+      "is_featured": false,
+      "materials": {
+        "Cotton": 90,
+        "Spandex": 10
+      }
+    },
+    {
+      "name": "Matisse Scooped Tank",
+      "description": "Scooped neckline tank in lightly sanded cotton spandex jersey with a plush feel. Hip-grazing length, made in USA from locally sourced fabric.",
+      "category": "basics",
+      "price": 75.00,
+      "affiliate_url": "https://gilrodriguez.com/products/tank-top",
+      "image_url": "/products/gil-rodriguez-matisse-scooped-tank.jpg",
+      "is_featured": false,
+      "materials": {
+        "Cotton": 91,
+        "Spandex": 9
+      }
+    },
+    {
+      "name": "French 100 Brief",
+      "description": "Classic French-cut brief in 100% cotton baby rib for ultimate breathability. Slightly high-cut fit, made in USA from locally knit cotton.",
+      "category": "underwear",
+      "price": 45.00,
+      "affiliate_url": "https://gilrodriguez.com/products/underwear",
+      "image_url": "/products/gil-rodriguez-french-100-brief.jpg",
+      "is_featured": false,
+      "materials": {
+        "Cotton": 100
+      }
+    }
+  ]
+}

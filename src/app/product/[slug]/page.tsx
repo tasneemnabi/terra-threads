@@ -1,14 +1,13 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { getProductBySlug, getRelatedProducts } from "@/lib/queries/products";
 import { ProductImages } from "@/components/product/ProductImages";
-import { MaterialBreakdown } from "@/components/product/MaterialBreakdown";
+import { FiberFactsLabel } from "@/components/product/FiberFactsLabel";
 import { AffiliateButton } from "@/components/product/AffiliateButton";
 import { RelatedProducts } from "@/components/product/RelatedProducts";
-import { NaturalBadge } from "@/components/brand/NaturalBadge";
-import { Badge } from "@/components/ui/Badge";
-import { formatPrice, isAllNatural, naturalPercentage } from "@/lib/utils";
+import { formatPrice, brandLogoUrl } from "@/lib/utils";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -20,8 +19,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!product) return { title: "Product Not Found" };
 
   return {
-    title: product.name,
-    description: product.description || `${product.name} by ${product.brand_name}`,
+    title: `${product.name} | ${product.brand_name} | FIBER`,
+    description: product.description || `${product.name} by ${product.brand_name} — natural fiber clothing on FIBER`,
   };
 }
 
@@ -32,13 +31,14 @@ export default async function ProductPage({ params }: Props) {
   if (!product) notFound();
 
   const relatedProducts = await getRelatedProducts(product.id, product.category);
-  const natPercent = naturalPercentage(product.materials);
+  const logoUrl = brandLogoUrl(product.brand_website_url, 48);
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
     description: product.description,
+    image: product.image_url,
     brand: {
       "@type": "Brand",
       name: product.brand_name,
@@ -58,21 +58,23 @@ export default async function ProductPage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <div className="mx-auto max-w-[1280px] px-5 sm:px-8 lg:px-20 py-8">
-        <nav className="mb-8 text-sm text-muted">
-          <Link href="/" className="hover:text-accent">
+        {/* Breadcrumb */}
+        <nav className="mb-8 flex items-center gap-1 font-body text-sm text-muted">
+          <Link href="/" className="hover:text-text transition-colors">
             Home
           </Link>
-          {" / "}
+          <span>/</span>
           <Link
-            href={`/category/${product.category}`}
-            className="capitalize hover:text-accent"
+            href={`/brands?category=${product.category}`}
+            className="capitalize hover:text-text transition-colors"
           >
             {product.category}
           </Link>
-          {" / "}
+          <span>/</span>
           <span className="text-text">{product.name}</span>
         </nav>
 
+        {/* Hero: two-column grid */}
         <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
           <ProductImages
             mainImage={product.image_url}
@@ -81,37 +83,40 @@ export default async function ProductPage({ params }: Props) {
           />
 
           <div className="space-y-6">
-            <div>
-              <Link
-                href={`/brand/${product.brand_slug}`}
-                className="text-sm font-medium uppercase tracking-wide text-muted hover:text-accent"
-              >
-                {product.brand_name}
-              </Link>
-              <h1 className="mt-1 font-display text-[36px] font-semibold leading-[42px] tracking-[-0.02em] text-text">
-                {product.name}
-              </h1>
-              <p className="mt-2 text-2xl font-bold text-text">
-                {formatPrice(product.price, product.currency)}
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="neutral" className="capitalize">
-                {product.category}
-              </Badge>
-              {isAllNatural(product.materials) && <NaturalBadge />}
-              {!isAllNatural(product.materials) && natPercent > 0 && (
-                <Badge variant="success">{natPercent}% Natural Fibers</Badge>
+            {/* Brand identity */}
+            <Link
+              href={`/brand/${product.brand_slug}`}
+              className="inline-flex items-center gap-2.5 transition-opacity hover:opacity-80"
+            >
+              {logoUrl && (
+                <Image
+                  src={logoUrl}
+                  alt={`${product.brand_name} logo`}
+                  width={32}
+                  height={32}
+                  className="shrink-0 rounded-md"
+                  unoptimized
+                />
               )}
-            </div>
+              <span className="font-body text-sm font-medium uppercase tracking-wide text-muted">
+                {product.brand_name}
+              </span>
+            </Link>
 
-            {product.description && (
-              <p className="text-secondary">{product.description}</p>
-            )}
+            {/* Product name */}
+            <h1 className="font-display text-[32px] font-semibold leading-[38px] tracking-[-0.02em] text-text sm:text-[36px] sm:leading-[42px]">
+              {product.name}
+            </h1>
 
-            <MaterialBreakdown materials={product.materials} />
+            {/* Price */}
+            <p className="text-2xl font-bold text-text">
+              {formatPrice(product.price, product.currency)}
+            </p>
 
+            {/* Fiber Facts Label — the centerpiece */}
+            <FiberFactsLabel materials={product.materials} />
+
+            {/* CTA */}
             {product.affiliate_url && (
               <AffiliateButton
                 url={product.affiliate_url}
@@ -119,12 +124,20 @@ export default async function ProductPage({ params }: Props) {
               />
             )}
 
-            <p className="text-xs text-muted-light">
+            {/* Description */}
+            {product.description && (
+              <p className="font-body text-[15px] leading-[24px] text-secondary">
+                {product.description}
+              </p>
+            )}
+
+            <p className="font-body text-xs text-muted-light">
               We may earn a commission when you shop through our links.
             </p>
           </div>
         </div>
 
+        {/* Related Products */}
         <RelatedProducts products={relatedProducts} />
       </div>
     </>

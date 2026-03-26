@@ -24,7 +24,7 @@ A website that aggregates clothing made from natural fibers (no polyester/plasti
 - **Palette**: warm cream (#FAF7F2), surface (#F0EBE3), surface-dark (#E8E0D5), text (#2C2420), muted (#9C8E82), muted-light (#C8BDB1), accent/dusty rose (#B5636A), secondary/cool slate (#5A6B6E)
 - **Typography**: Space Grotesk (display/headings) + DM Sans (body/UI)
 - **Direction**: warm minimal, Swiss-editorial, organic warmth
-- **Nav**: FIBER logo + Activewear / Brands / About
+- **Nav**: FIBER logo + Shop / Brands / About
 
 ---
 
@@ -62,21 +62,23 @@ A website that aggregates clothing made from natural fibers (no polyester/plasti
 
 ### `products`
 
-| Column            | Type     | Notes                                          |
-| ----------------- | -------- | ---------------------------------------------- |
-| id                | uuid     | Primary key                                    |
-| brand_id          | uuid     | FK → brands.id                                 |
-| name              | text     | Product name                                   |
-| slug              | text     | URL-safe, unique                               |
-| description       | text     | Product description                            |
-| category          | text     | e.g., "activewear"                             |
-| price             | numeric  | Current price                                  |
-| currency          | text     | Default "USD"                                  |
-| image_url         | text     | Primary product image                          |
-| additional_images | text[]   | Extra product images                           |
-| affiliate_url     | text     | Click-through link with affiliate tracking     |
-| is_featured       | boolean  | Show on homepage                               |
-| created_at        | timestamptz | Auto-set                                    |
+| Column               | Type     | Notes                                          |
+| -------------------- | -------- | ---------------------------------------------- |
+| id                   | uuid     | Primary key                                    |
+| brand_id             | uuid     | FK → brands.id                                 |
+| name                 | text     | Product name                                   |
+| slug                 | text     | URL-safe, unique                               |
+| description          | text     | Product description                            |
+| category             | text     | e.g., "activewear"                             |
+| product_type         | text     | e.g., "leggings", "tops", "bras" — subcategory |
+| price                | numeric  | Current price                                  |
+| currency             | text     | Default "USD"                                  |
+| image_url            | text     | Primary product image                          |
+| additional_images    | text[]   | Extra product images                           |
+| affiliate_url        | text     | Click-through link with affiliate tracking     |
+| is_featured          | boolean  | Show on homepage                               |
+| shopify_product_type | text     | Raw Shopify product_type (for reference)       |
+| created_at           | timestamptz | Auto-set                                    |
 
 ### `materials` (lookup/taxonomy)
 
@@ -102,7 +104,7 @@ Joins products + brands + materials into a single queryable view.
 
 ### RPC: `filter_products`
 
-Server-side filtering by category, brand slugs, material names, price range with pagination.
+Server-side filtering by category, product_type, brand slugs, material names, price range, sort order, tier (100% Natural / Nearly Natural), audience (Women / Men), with pagination.
 
 ---
 
@@ -111,7 +113,8 @@ Server-side filtering by category, brand slugs, material names, price range with
 ### 1. Homepage (`/`) — DONE ✅
 
 - Hero: "Clothing without the plastic." headline, "Browse Brands" CTA
-- Featured Brands: 3 brand cards from DB
+- Featured Brands: top 3 100%-natural brand cards, linking to `/brand/[slug]`
+- Featured Products: 6 recent approved products with real images (New arrivals section)
 - Why It Matters: headline + paragraph + 3 stats (60%, 700K, 200+)
 - Browse by Fiber: 4 material cards (Merino Wool, Organic Cotton, Linen, Silk)
 - Brand Strip: "Trusted by brands who care" with 6 brand names
@@ -130,22 +133,43 @@ Server-side filtering by category, brand slugs, material names, price range with
 - Empty filter state includes "Clear all filters" button
 - Tier explainer footer (100% Natural vs Nearly Natural definitions)
 
-### 3. Brand Detail Page (`/brand/[slug]`) — DEFERRED
+### 3. Brand Detail Page (`/brand/[slug]`) — DONE ✅
 
-- Not needed for brands-first iteration — brand cards link directly to external websites
-- Code exists as fallback (breadcrumb, brand info, product grid) but not actively used
-- Will revisit if/when individual product pages are added
+- Brand hero with logo, tier badge, fiber pills, description, "Visit Website" CTA
+- Product grid shows all approved products with real Shopify images
+- Homepage featured brands link to `/brand/[slug]` (internal navigation)
 
-### 4. Category Page (`/category/[slug]`) — needs restyle 🔲
+### 4. Shop Page (`/shop`) — DONE ✅
 
-- Sidebar filters (fiber type, brand, price range)
-- 3-col product grid with pagination
-- Code exists but uses old Terra Threads styling
+- Browse all products without going through brands first
+- **Audience tabs** (All / Women / Men) — Garmentory-inspired underlined text navigation
+- **Category pills** (All, Tops, Dresses, Knitwear, Bottoms, Activewear...) — scrollable horizontal
+- **Product type pills** — appear when a category is selected (e.g., Activewear → Leggings, Tops, Bras, Shorts)
+- **Tier toggle** (All / 100% / Nearly) — compact, inline with category bar
+- **Slide-out filter panel** — sort, fiber, brand, price range (matches brands page pattern)
+- **Brand-grouped layout** — products organized by brand with horizontal scroll rows + "View all →" links
+- URL-based state for shareable links (`/shop?audience=Women&category=activewear&type=leggings`)
+- Server-rendered initial data, client refetch on filter changes
 
-### 5. Product Page (`/product/[slug]`) — needs restyle 🔲
+### 5. Category Page (`/category/[slug]`) — superseded by /shop
 
-- Product images, material breakdown, price, affiliate CTA
-- Code exists but uses old Terra Threads styling
+- Old route still exists but effectively replaced by the Shop page
+
+### 5. Product Page (`/product/[slug]`) — DONE ✅
+
+- **Fiber Facts label** — nutrition-facts-style material composition display (the centerpiece)
+  - Total fiber %, natural/synthetic split, individual materials sorted by percentage
+  - Tier badge: "100% Natural" (green) or "Nearly Natural" (amber)
+  - "Not in this garment" section: confirms no polyester, nylon, or acrylic
+  - "Verified by FIBER" trust stamp
+  - Handles edge cases: 1 material, 0 materials, percentages not summing to 100%
+- **Mini Fiber Facts labels** on ProductCard globally (all grids site-wide: homepage, brand page, related products)
+  - Shows natural % and top 2 material names in a compact bordered box
+  - Green-tinted for 100% natural products
+- **Restyled hero**: brand logo (via Logo.dev) + name → product name → price → Fiber Facts → CTA
+- **Aggregator-aware CTA**: dark brown "Shop at {Brand}" button + "You'll be taken to {domain}" redirect context
+- **Information hierarchy**: materials-first (above CTA), description below — optimized for trust-building and click-through
+- Breadcrumb, JSON-LD structured data, related products section
 
 ### 6. About Page (`/about`) — needs restyle 🔲
 
@@ -162,20 +186,39 @@ Server-side filtering by category, brand slugs, material names, price range with
 - [x] Supabase client configured (server + client)
 - [x] TypeScript types for data model
 - [x] Data-fetching queries (brands, products, materials)
-- [x] Seed data: **28 brands**, 10 products (3 brands), 7 materials
+- [x] Seed data: **28 brands**, 18 canonical materials
 - [x] Homepage — fully restyled to FIBER design system
 - [x] Header + Footer — FIBER branding, correct nav links, mobile hamburger menu
 - [x] Color palette + typography in globals.css + layout.tsx
 - [x] `/brands` page with slide-out filter panel, tier/fiber/category filters, URL param persistence
 - [x] Brand cards link to external websites with Logo.dev logos
 - [x] Brands sorted by tier (100% Natural first) then alphabetically
-- [x] Homepage featured brands DB-driven, link to external websites
+- [x] Homepage featured brands DB-driven, link to `/brand/[slug]` (internal)
+- [x] Homepage featured products section — 6 recent products with real images via `getHomepageProducts()`
 - [x] Brand add/delete scripts (`scripts/add-brand.ts`, `scripts/delete-brand.ts`) with curation policy validation
 - [x] Agent prompt for automated brand research (`scripts/add-brand-agent.md`)
+- [x] Shopify sync pipeline (`scripts/sync-shopify.ts`) — fetches products, extracts materials via regex + Gemini LLM, auto-approves trusted compositions
+- [x] Material extractor (`scripts/lib/material-extractor.ts`) — regex + dictionary + LLM, title extraction, multi-component split, alias normalization
+- [x] Admin review dashboard (`/admin/review`) — approve/reject products, keyboard shortcuts, batch actions
+- [x] CLI review tool (`scripts/review-products.ts`) — interactive terminal product review
+- [x] Playwright scraper (`scripts/scrape-products.ts`) — headless browser for JS-rendered pages
+- [x] DB helpers with trusted materials guard — prevents junk material names from entering DB
+- [x] **4,445 products approved** across 17 Shopify brands with real images from Shopify CDN
+- [x] 18 canonical materials (cleaned from 146 junk entries)
+- [x] Non-clothing filter — rejects home goods, gift cards, accessories automatically
+- [x] Sync script preserves rejected status on re-sync
+- [x] ProductCard + ProductImages components render real Shopify CDN images
 - [x] Loading skeletons for product, category, and brand-detail routes
 - [x] 404 page (exists, needs restyle)
 - [x] Category page code (exists, needs restyle)
-- [x] Product page code with JSON-LD structured data (exists, needs restyle)
+- [x] Product page redesigned with Fiber Facts label (nutrition-facts-style material composition)
+- [x] FiberFactsMini labels on ProductCard globally (all product grids site-wide)
+- [x] Aggregator-aware CTA — dark brown "Shop at {Brand}" + redirect context text
+- [x] Brand logo on product page via Logo.dev (requires DB view migration)
+- [x] `/shop` page — browse all products with audience tabs, category pills, product type subcategories, brand-grouped layout
+- [x] Product type classifier (`scripts/lib/product-classifier.ts`) — keyword-based, 87% classification rate across 11 canonical types
+- [x] Sync pipeline stores `product_type` + `shopify_product_type` — future syncs auto-classify
+- [x] Non-clothing cleanup — rejected shoes, yoga mats, gift cards, ceramics, tote bags across all brands
 
 ---
 
@@ -198,29 +241,45 @@ Server-side filtering by category, brand slugs, material names, price range with
 ### Polish (post-launch) 💅
 
 - [x] ~~Restyle category page to FIBER design system~~ — page + all filter components restyled
-- [x] ~~Restyle product page to FIBER design system~~ — page + ProductImages, MaterialBreakdown, AffiliateButton, RelatedProducts restyled
-- [ ] Populate product data for more brands (currently only 3/28 have products)
-- [ ] Real product images (all are placeholders)
+- [x] ~~Restyle product page to FIBER design system~~ — fully redesigned with Fiber Facts label, mini-labels on all ProductCards, aggregator-aware CTA
+- [x] ~~Populate product data for more brands (currently only 3/28 have products)~~ — **4,445 approved products** across all 17 Shopify brands
+- [x] ~~Real product images (all are placeholders)~~ — Shopify CDN images, ProductCard + ProductImages fixed
 - [x] ~~Affiliate tracking parameters on outbound links~~ — `affiliateUrl()` utility adds UTM params to BrandCard, FeaturedBrands, AffiliateButton
 - [ ] Per-page Open Graph images
 - [x] ~~JSON-LD structured data on brands page~~ — ItemList schema with all brands
 - [ ] Deploy to production on Vercel
+- [ ] Non-Shopify brand scraper — sitemap/Playwright pipeline for 8 remaining brands (Everlane, Icebreaker, Pact, prAna, Quince, Fair Indigo, Rawganique, Gil Rodriguez)
+- [x] ~~Brand detail pages — link brand cards to `/brand/[slug]` instead of external sites now that products exist~~ — featured brands on homepage now link internally
+- [x] ~~Category/filter UX~~ — replaced by `/shop` page with brand-grouped browsing, audience tabs, category + product type filtering
+- [x] ~~Homepage featured products — DB-driven product cards on homepage~~ — FeaturedProducts component with 6 recent products
 
 ---
 
-## Seed Data Guide
+## Product Pipeline
 
-When adding brands + products, follow the curation policy in `CURATION.md`:
+### Shopify Brands (17 brands — DONE ✅)
 
-- **Accepted fibers**: Merino Wool, Organic Cotton, Cashmere, Silk, Linen, Hemp, Tencel/Lyocell, Modal
-- **Allowed in small amounts**: Elastane/Spandex ≤10% (product qualifies as "Nearly Natural")
-- **Never allowed**: Polyester, Nylon, Acrylic in any amount
-- **Materials already in DB**: Merino Wool, Organic Cotton, Cashmere, Hemp, Tencel Lyocell, Silk, Elastane
-- **Materials to add**: Linen, Modal, Alpaca, Yak, Mohair (as needed for new products)
+Automated via `scripts/sync-shopify.ts`:
+1. Fetches from Shopify `/products.json` public API
+2. Extracts materials via regex (title + body), dictionary fallback, then Gemini LLM
+3. Classifies `product_type` via keyword classifier (`scripts/lib/product-classifier.ts`)
+4. Auto-approves when: all materials are trusted canonical names, percentages sum to 100%, confidence >= 0.80
+5. Non-clothing (home goods, gift cards, shoes, accessories) auto-rejected
+6. Rejected products preserved across re-syncs
 
-Existing brand IDs follow pattern: `b1000000-0000-0000-0000-00000000000X`
-Existing product IDs: `c1000000-0000-0000-0000-00000000000X`
-Existing material IDs: `a1000000-0000-0000-0000-00000000000X`
+**Stats**: ~4,400 approved (867 with product_type classified), ~1,100 rejected, 0 in review
+
+### Non-Shopify Brands (8 brands — TODO)
+
+Everlane, Icebreaker, Pact, prAna, Quince, Fair Indigo, Rawganique, Gil Rodriguez
+
+Need: sitemap crawler → Playwright scraper → LLM extraction → same approval pipeline
+
+### Materials (18 canonical)
+
+Alpaca, Bamboo Lyocell, Cashmere, Cotton, Elastane, Hemp, Lambswool, Linen, Merino Wool, Modal, Mohair, Organic Cotton, Organic Pima Cotton, Pima Cotton, Silk, Tencel Lyocell, Viscose, Wool
+
+Trusted materials whitelist in `scripts/lib/curation.ts` — `ensureMaterialExists()` blocks any name not in the whitelist from entering the DB.
 
 ---
 
@@ -230,7 +289,8 @@ Existing material IDs: `a1000000-0000-0000-0000-00000000000X`
 - **Price tracking & sale alerts** — requires scheduled scraping jobs
 - **Brand quality tiers** — Gold/Silver/Bronze scoring system
 - **Marketplace / checkout** — buying directly on-site
-- **Scraping pipeline** — automated product ingestion from brand sites
+- ~~**Scraping pipeline** — automated product ingestion from brand sites~~ — Shopify sync pipeline built, 17 brands fully processed
+- **Non-Shopify scraper** — sitemap + Playwright pipeline for remaining 8 brands
 - **Blog / content marketing** — "best natural fiber running shorts" type SEO content
 - **Email newsletter** — new products, sale alerts
 - **Mobile app** — only if web traffic warrants it

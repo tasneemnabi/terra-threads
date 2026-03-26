@@ -14,6 +14,9 @@ create table brands (
   audience text[] default '{}',
   fiber_types text[] default '{}',
   categories text[] default '{}',
+  shopify_domain text,
+  last_synced_at timestamptz,
+  sync_enabled boolean default true,
   created_at timestamptz default now()
 );
 
@@ -39,7 +42,14 @@ create table products (
   additional_images text[] default '{}',
   affiliate_url text,
   is_featured boolean default false,
-  created_at timestamptz default now()
+  shopify_product_id bigint,
+  shopify_variant_id bigint,
+  last_synced_at timestamptz,
+  sync_status text default null,
+  material_confidence numeric(3,2),
+  raw_body_html text,
+  created_at timestamptz default now(),
+  constraint uq_brand_shopify_product unique (brand_id, shopify_product_id)
 );
 
 -- 4. Product–Material join (with percentage)
@@ -60,16 +70,22 @@ create index idx_products_slug on products(slug);
 create index idx_brands_slug on brands(slug);
 create index idx_product_materials_product on product_materials(product_id);
 create index idx_product_materials_material on product_materials(material_id);
+create index idx_products_sync_status on products(sync_status);
+create index idx_products_shopify_product_id on products(shopify_product_id);
+create index idx_brands_shopify_domain on brands(shopify_domain) where shopify_domain is not null;
 
 -- =============================================
 -- View: products with brand + materials
+-- Only shows visible products (sync_status IS NULL or 'approved')
 -- =============================================
-create or replace view products_with_materials
+create view products_with_materials
 with (security_invoker = on) as
 select
   p.*,
   b.name as brand_name,
   b.slug as brand_slug,
+  b.website_url as brand_website_url,
+  b.is_fully_natural as brand_is_fully_natural,
   coalesce(
     json_agg(
       json_build_object(
@@ -86,7 +102,8 @@ from products p
 join brands b on b.id = p.brand_id
 left join product_materials pm on pm.product_id = p.id
 left join materials m on m.id = pm.material_id
-group by p.id, b.name, b.slug;
+where p.sync_status is null or p.sync_status = 'approved'
+group by p.id, b.name, b.slug, b.website_url, b.is_fully_natural;
 
 -- =============================================
 -- RPC: filter_products
@@ -98,7 +115,10 @@ create or replace function filter_products(
   p_min_price numeric default null,
   p_max_price numeric default null,
   p_limit integer default 20,
-  p_offset integer default 0
+  p_offset integer default 0,
+  p_sort text default 'newest',
+  p_tier text default null,
+  p_audience text default null
 )
 returns table (
   id uuid,
@@ -116,6 +136,8 @@ returns table (
   created_at timestamptz,
   brand_name text,
   brand_slug text,
+  brand_website_url text,
+  brand_is_fully_natural boolean,
   materials json,
   total_count bigint
 )
@@ -126,7 +148,8 @@ as $$
     from products p
     join brands b on b.id = p.brand_id
     where
-      (p_category is null or p.category = p_category)
+      (p.sync_status is null or p.sync_status = 'approved')
+      and (p_category is null or p.category = p_category)
       and (p_brand_slugs is null or b.slug = any(p_brand_slugs))
       and (p_min_price is null or p.price >= p_min_price)
       and (p_max_price is null or p.price <= p_max_price)
@@ -139,6 +162,20 @@ as $$
           where pm2.product_id = p.id
             and m2.name = any(p_material_names)
         )
+      )
+      and (p_audience is null or p_audience = any(b.audience))
+      and (
+        p_tier is null
+        or (p_tier = 'natural' and not exists (
+          select 1 from product_materials pm3
+          join materials m3 on m3.id = pm3.material_id
+          where pm3.product_id = p.id and m3.is_natural = false
+        ))
+        or (p_tier = 'nearly' and exists (
+          select 1 from product_materials pm3
+          join materials m3 on m3.id = pm3.material_id
+          where pm3.product_id = p.id and m3.is_natural = false
+        ))
       )
   ),
   counted as (
@@ -160,12 +197,17 @@ as $$
     pwm.created_at,
     pwm.brand_name,
     pwm.brand_slug,
+    pwm.brand_website_url,
+    pwm.brand_is_fully_natural,
     pwm.materials,
     counted.cnt as total_count
   from products_with_materials pwm
   cross join counted
   where pwm.id in (select filtered.id from filtered)
-  order by pwm.created_at desc
+  order by
+    case when p_sort = 'price-asc' then pwm.price end asc,
+    case when p_sort = 'price-desc' then pwm.price end desc,
+    case when p_sort = 'newest' or p_sort is null then pwm.created_at end desc
   limit p_limit
   offset p_offset;
 $$;

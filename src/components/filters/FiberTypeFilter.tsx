@@ -35,7 +35,7 @@ export function FiberTypeFilter({
             />
             <span className="text-secondary">{mat.name}</span>
             {mat.is_natural && (
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-natural" />
             )}
           </label>
         ))}

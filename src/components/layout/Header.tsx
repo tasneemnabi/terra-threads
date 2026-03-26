@@ -2,7 +2,7 @@ import Link from "next/link";
 import { MobileNav } from "./MobileNav";
 
 const navLinks = [
-  { href: "/brands?category=activewear", label: "Activewear" },
+  { href: "/shop", label: "Shop" },
   { href: "/brands", label: "Brands" },
   { href: "/about", label: "About" },
 ];

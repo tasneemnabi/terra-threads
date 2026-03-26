@@ -50,7 +50,7 @@ export function ActiveFilters({
         <button
           key={name}
           onClick={() => onRemoveMaterial(name)}
-          className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-800 hover:bg-green-200"
+          className="inline-flex items-center gap-1 rounded-full bg-natural-light px-2.5 py-1 text-xs font-medium text-natural-dark hover:bg-natural/10"
         >
           {name}
           <svg className="h-3 w-3" viewBox="0 0 12 12" fill="currentColor">

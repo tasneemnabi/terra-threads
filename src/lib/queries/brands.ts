@@ -28,6 +28,7 @@ export async function getBrandsWithDetails(): Promise<BrandWithDetails[]> {
       products (
         id,
         category,
+        sync_status,
         product_materials (
           percentage,
           materials (
@@ -47,7 +48,11 @@ export async function getBrandsWithDetails(): Promise<BrandWithDetails[]> {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const result = (data || []).map((brand: any) => {
-    const products = brand.products || [];
+    // Only count visible products (sync_status is null or 'approved')
+    const products = (brand.products || []).filter(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (p: any) => p.sync_status == null || p.sync_status === "approved"
+    );
 
     // Prefer brand-level metadata; fall back to product-derived if empty
     let fiberTypes: string[] = brand.fiber_types || [];

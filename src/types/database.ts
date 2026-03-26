@@ -9,6 +9,9 @@ export interface Brand {
   fiber_types: string[];
   categories: string[];
   created_at: string;
+  shopify_domain: string | null;
+  last_synced_at: string | null;
+  sync_enabled: boolean;
 }
 
 export interface Product {
@@ -18,6 +21,7 @@ export interface Product {
   slug: string;
   description: string | null;
   category: string;
+  product_type: string | null;
   price: number;
   currency: string;
   image_url: string | null;
@@ -25,6 +29,12 @@ export interface Product {
   affiliate_url: string | null;
   is_featured: boolean;
   created_at: string;
+  shopify_product_id: number | null;
+  shopify_variant_id: number | null;
+  last_synced_at: string | null;
+  sync_status: "pending" | "review" | "approved" | "rejected" | null;
+  material_confidence: number | null;
+  raw_body_html: string | null;
 }
 
 export interface Material {
@@ -51,6 +61,8 @@ export interface MaterialInfo {
 export interface ProductWithBrand extends Product {
   brand_name: string;
   brand_slug: string;
+  brand_website_url: string | null;
+  brand_is_fully_natural: boolean;
   materials: MaterialInfo[];
 }
 
@@ -78,4 +90,8 @@ export interface FilterState {
   minPrice?: number;
   maxPrice?: number;
   page?: number;
+  sort?: "newest" | "price-asc" | "price-desc";
+  tier?: "all" | "natural" | "nearly";
+  audience?: string;
+  productType?: string;
 }

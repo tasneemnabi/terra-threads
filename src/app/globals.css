@@ -9,6 +9,9 @@
   --color-muted-light: #B8AA9C;
   --color-accent: #A3535A;
   --color-secondary: #475658;
+  --color-natural: #1A8A5A;
+  --color-natural-light: #E8F5EE;
+  --color-natural-dark: #1A6B45;
 
   --font-display: var(--font-space-grotesk);
   --font-body: var(--font-dm-sans);
@@ -18,4 +21,13 @@ body {
   background: var(--color-background);
   color: var(--color-text);
   font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Hide scrollbar for horizontal scroll areas */
+@utility scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }

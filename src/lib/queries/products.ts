@@ -4,10 +4,12 @@ import type { ProductWithBrand, ProductWithBrandAndCount, FilterState } from "@/
 const PAGE_SIZE = 12;
 
 export async function getFilteredProducts(
-  filters: FilterState
+  filters: FilterState,
+  limitOverride?: number
 ): Promise<{ products: ProductWithBrand[]; totalCount: number }> {
   const supabase = await createClient();
-  const offset = ((filters.page || 1) - 1) * PAGE_SIZE;
+  const limit = limitOverride || PAGE_SIZE;
+  const offset = limitOverride ? 0 : ((filters.page || 1) - 1) * PAGE_SIZE;
 
   const { data, error } = await supabase.rpc("filter_products", {
     p_category: filters.category || null,
@@ -15,8 +17,12 @@ export async function getFilteredProducts(
     p_material_names: filters.materials?.length ? filters.materials : null,
     p_min_price: filters.minPrice || null,
     p_max_price: filters.maxPrice || null,
-    p_limit: PAGE_SIZE,
+    p_limit: limit,
     p_offset: offset,
+    p_sort: filters.sort || "newest",
+    p_tier: filters.tier && filters.tier !== "all" ? filters.tier : null,
+    p_audience: filters.audience || null,
+    p_product_type: filters.productType || null,
   });
 
   if (error) {
@@ -68,6 +74,24 @@ export async function getFeaturedProducts(): Promise<ProductWithBrand[]> {
   return data as ProductWithBrand[];
 }
 
+export async function getHomepageProducts(limit = 6): Promise<ProductWithBrand[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("products_with_materials")
+    .select("*")
+    .not("image_url", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error("Error fetching homepage products:", error);
+    return [];
+  }
+
+  return data as ProductWithBrand[];
+}
+
 export async function getRelatedProducts(
   productId: string,
   category: string,
@@ -88,6 +112,57 @@ export async function getRelatedProducts(
   }
 
   return data as ProductWithBrand[];
+}
+
+export async function getDistinctCategories(): Promise<string[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("products_with_materials")
+    .select("category")
+    .not("category", "is", null);
+
+  if (error) {
+    console.error("Error fetching categories:", error);
+    return [];
+  }
+
+  const categories = [...new Set((data as { category: string }[]).map((r) => r.category))];
+  return categories.sort();
+}
+
+export async function getAllMaterials(): Promise<{ name: string; is_natural: boolean }[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("materials")
+    .select("name, is_natural")
+    .order("name");
+
+  if (error) {
+    console.error("Error fetching materials:", error);
+    return [];
+  }
+
+  return data as { name: string; is_natural: boolean }[];
+}
+
+export async function getProductTypesForCategory(category: string): Promise<string[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("products_with_materials")
+    .select("product_type")
+    .eq("category", category)
+    .not("product_type", "is", null);
+
+  if (error) {
+    console.error("Error fetching product types:", error);
+    return [];
+  }
+
+  const types = [...new Set((data as { product_type: string }[]).map((r) => r.product_type))];
+  return types.sort();
 }
 
 export async function getProductsByBrand(brandId: string): Promise<ProductWithBrand[]> {

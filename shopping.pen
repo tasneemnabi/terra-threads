@@ -1,0 +1,4616 @@
+{
+  "version": "2.8",
+  "children": [
+    {
+      "type": "frame",
+      "id": "FXRE8",
+      "x": 0,
+      "y": -200,
+      "name": "Component/Navbar",
+      "reusable": true,
+      "width": 1440,
+      "height": 60,
+      "fill": "$bg-primary",
+      "padding": [
+        0,
+        60
+      ],
+      "justifyContent": "space_between",
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "text",
+          "id": "IFJUd",
+          "name": "Logo",
+          "fill": "$text-primary",
+          "content": "FIBER",
+          "fontFamily": "Inter",
+          "fontSize": 20,
+          "fontWeight": "700",
+          "letterSpacing": 1.5
+        },
+        {
+          "type": "frame",
+          "id": "Tu5Tx",
+          "name": "NavLinks",
+          "gap": 32,
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "4T3D0",
+              "name": "shopLink",
+              "fill": "$text-primary",
+              "content": "Shop",
+              "fontFamily": "Inter",
+              "fontSize": 14
+            },
+            {
+              "type": "text",
+              "id": "4AQEJ",
+              "name": "brandsLink",
+              "fill": "$text-primary",
+              "content": "Brands",
+              "fontFamily": "Inter",
+              "fontSize": 14
+            },
+            {
+              "type": "text",
+              "id": "KKNsK",
+              "name": "aboutLink",
+              "fill": "$text-primary",
+              "content": "About",
+              "fontFamily": "Inter",
+              "fontSize": 14
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "oHn1C",
+      "x": 0,
+      "y": -500,
+      "name": "Component/Footer",
+      "reusable": true,
+      "width": 1440,
+      "fill": "$bg-footer",
+      "layout": "vertical",
+      "gap": 40,
+      "padding": [
+        48,
+        60
+      ],
+      "children": [
+        {
+          "type": "frame",
+          "id": "1zhuU",
+          "name": "footerTop",
+          "width": "fill_container",
+          "justifyContent": "space_between",
+          "children": [
+            {
+              "type": "frame",
+              "id": "GytNA",
+              "name": "footerLeft",
+              "width": 300,
+              "layout": "vertical",
+              "gap": 12,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "mYpHY",
+                  "name": "footerLogo",
+                  "fill": "$text-primary",
+                  "content": "FIBER",
+                  "fontFamily": "Inter",
+                  "fontSize": 18,
+                  "fontWeight": "700",
+                  "letterSpacing": 1.5
+                },
+                {
+                  "type": "text",
+                  "id": "I5cR8",
+                  "name": "footerDesc",
+                  "fill": "$text-secondary",
+                  "textGrowth": "fixed-width",
+                  "width": 260,
+                  "content": "Helping you find clothing made from natural fibers. No polyester, no compromise.",
+                  "lineHeight": 1.5,
+                  "fontFamily": "Inter",
+                  "fontSize": 13
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "ASuzG",
+              "name": "footerRight",
+              "gap": 80,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "v4co3",
+                  "name": "shopCol",
+                  "layout": "vertical",
+                  "gap": 12,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "jrnQX",
+                      "name": "shopTitle",
+                      "fill": "$text-primary",
+                      "content": "SHOP",
+                      "fontFamily": "Inter",
+                      "fontSize": 11,
+                      "fontWeight": "600",
+                      "letterSpacing": 1.5
+                    },
+                    {
+                      "type": "text",
+                      "id": "se3la",
+                      "name": "shopItem1",
+                      "fill": "$text-secondary",
+                      "content": "Activewear",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    },
+                    {
+                      "type": "text",
+                      "id": "1HUbO",
+                      "name": "shopItem2",
+                      "fill": "$text-secondary",
+                      "content": "All Brands",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    },
+                    {
+                      "type": "text",
+                      "id": "UDBwT",
+                      "name": "shopItem3",
+                      "fill": "$text-secondary",
+                      "content": "New Arrivals",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "gr87G",
+                  "name": "learnCol",
+                  "layout": "vertical",
+                  "gap": 12,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "ZKsgI",
+                      "name": "learnTitle",
+                      "fill": "$text-primary",
+                      "content": "LEARN",
+                      "fontFamily": "Inter",
+                      "fontSize": 11,
+                      "fontWeight": "600",
+                      "letterSpacing": 1.5
+                    },
+                    {
+                      "type": "text",
+                      "id": "NYWbR",
+                      "name": "learnItem1",
+                      "fill": "$text-secondary",
+                      "content": "About Us",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    },
+                    {
+                      "type": "text",
+                      "id": "RtXa4",
+                      "name": "learnItem2",
+                      "fill": "$text-secondary",
+                      "content": "Why Natural Fibers",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    },
+                    {
+                      "type": "text",
+                      "id": "GeRJK",
+                      "name": "learnItem3",
+                      "fill": "$text-secondary",
+                      "content": "How We Curate",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "qC0IH",
+                  "name": "connectCol",
+                  "layout": "vertical",
+                  "gap": 12,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "OZUpA",
+                      "name": "connectTitle",
+                      "fill": "$text-primary",
+                      "content": "CONNECT",
+                      "fontFamily": "Inter",
+                      "fontSize": 11,
+                      "fontWeight": "600",
+                      "letterSpacing": 1.5
+                    },
+                    {
+                      "type": "text",
+                      "id": "OK3mK",
+                      "name": "connectItem1",
+                      "fill": "$text-secondary",
+                      "content": "Newsletter",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    },
+                    {
+                      "type": "text",
+                      "id": "jyTuO",
+                      "name": "connectItem2",
+                      "fill": "$text-secondary",
+                      "content": "Instagram",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    },
+                    {
+                      "type": "text",
+                      "id": "g5pRo",
+                      "name": "connectItem3",
+                      "fill": "$text-secondary",
+                      "content": "Contact",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "1zEVS",
+          "name": "footerDivider",
+          "width": "fill_container",
+          "height": 1,
+          "fill": "$border-light"
+        },
+        {
+          "type": "text",
+          "id": "JHlJD",
+          "name": "footerBottom",
+          "fill": "$text-tertiary",
+          "content": "Logos provided by Logo.dev",
+          "fontFamily": "Inter",
+          "fontSize": 12
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "zm1ar",
+      "x": 1600,
+      "y": -500,
+      "name": "Component/Button/Dark",
+      "reusable": true,
+      "fill": "$btn-dark",
+      "cornerRadius": 24,
+      "gap": 8,
+      "padding": [
+        12,
+        24
+      ],
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "text",
+          "id": "cSXMI",
+          "name": "btnDarkLabel",
+          "fill": "$text-white",
+          "content": "Browse Brands",
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "500"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "By5LX",
+      "x": 1600,
+      "y": -440,
+      "name": "Component/Button/Light",
+      "reusable": true,
+      "fill": "$bg-primary",
+      "cornerRadius": 24,
+      "stroke": {
+        "thickness": 1,
+        "fill": "$border-medium"
+      },
+      "gap": 8,
+      "padding": [
+        12,
+        24
+      ],
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "text",
+          "id": "IkcM6",
+          "name": "btnLightLabel",
+          "fill": "$text-primary",
+          "content": "0+ brands, 100% natural",
+          "fontFamily": "Inter",
+          "fontSize": 13
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "070dn",
+      "x": 1600,
+      "y": -380,
+      "name": "Component/Button/Green",
+      "reusable": true,
+      "fill": "$accent-green-dark",
+      "cornerRadius": 24,
+      "padding": [
+        14,
+        32
+      ],
+      "justifyContent": "center",
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "text",
+          "id": "SiohL",
+          "name": "btnGreenLabel",
+          "fill": "$text-white",
+          "content": "Shop at Brand",
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "500"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "470Ej",
+      "x": 1600,
+      "y": -300,
+      "name": "Component/ProductCard",
+      "reusable": true,
+      "width": 320,
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "g06XJ",
+          "name": "ImageWrap",
+          "clip": true,
+          "width": "fill_container",
+          "height": 320,
+          "fill": "$product-card-bg",
+          "cornerRadius": 8,
+          "layout": "none",
+          "children": [
+            {
+              "type": "frame",
+              "id": "s007F",
+              "x": 12,
+              "y": 12,
+              "name": "Badge",
+              "fill": "$accent-green",
+              "cornerRadius": 12,
+              "gap": 6,
+              "padding": [
+                4,
+                10
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "ellipse",
+                  "id": "nUEkA",
+                  "name": "badgeDot",
+                  "fill": "$text-white",
+                  "width": 6,
+                  "height": 6
+                },
+                {
+                  "type": "text",
+                  "id": "7gMAA",
+                  "name": "badgeText",
+                  "fill": "$text-white",
+                  "content": "100% Natural Fibers",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "500"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "8MzW6",
+          "name": "Info",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 6,
+          "padding": [
+            12,
+            0,
+            0,
+            0
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "mZafE",
+              "name": "prodBrand",
+              "fill": "$text-secondary",
+              "content": "BRAND NAME",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "letterSpacing": 0.5
+            },
+            {
+              "type": "text",
+              "id": "vPsti",
+              "name": "prodName",
+              "fill": "$text-primary",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Product Name Here",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "500"
+            },
+            {
+              "type": "frame",
+              "id": "hIg7Q",
+              "name": "FiberRow",
+              "width": "fill_container",
+              "gap": 8,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "hRqzh",
+                  "name": "fiberTagWrap",
+                  "cornerRadius": 4,
+                  "stroke": {
+                    "thickness": 1,
+                    "fill": "$border-light"
+                  },
+                  "gap": 4,
+                  "padding": [
+                    3,
+                    8
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "3GKmo",
+                      "name": "fiberPercent",
+                      "fill": "$text-primary",
+                      "content": "100%",
+                      "fontFamily": "Inter",
+                      "fontSize": 11,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "DKXWU",
+                      "name": "fiberNatural",
+                      "fill": "$text-secondary",
+                      "content": "natural",
+                      "fontFamily": "Inter",
+                      "fontSize": 11
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "ip9s3",
+                  "name": "fiberType",
+                  "cornerRadius": 4,
+                  "stroke": {
+                    "thickness": 1,
+                    "fill": "$border-light"
+                  },
+                  "padding": [
+                    3,
+                    8
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "ffhOt",
+                      "name": "fiberTypeText",
+                      "fill": "$text-secondary",
+                      "content": "Cotton",
+                      "fontFamily": "Inter",
+                      "fontSize": 11
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "hvH2V",
+              "name": "PriceRow",
+              "width": "fill_container",
+              "padding": [
+                4,
+                0,
+                0,
+                0
+              ],
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Awmgf",
+                  "name": "priceText",
+                  "fill": "$text-primary",
+                  "content": "$365",
+                  "fontFamily": "Inter",
+                  "fontSize": 15,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "eAJBf",
+                  "name": "categoryTag",
+                  "fill": "$text-secondary",
+                  "content": "outerwear",
+                  "fontFamily": "Inter",
+                  "fontSize": 12
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "e8OUq",
+      "x": 2000,
+      "y": -500,
+      "name": "Component/BrandCard",
+      "reusable": true,
+      "width": 400,
+      "fill": "$bg-white",
+      "cornerRadius": 8,
+      "stroke": {
+        "thickness": 1,
+        "fill": "$border-light"
+      },
+      "layout": "vertical",
+      "gap": 16,
+      "padding": 24,
+      "children": [
+        {
+          "type": "frame",
+          "id": "1ZJT1",
+          "name": "brandHeader",
+          "width": "fill_container",
+          "gap": 12,
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "LzTz4",
+              "name": "brandLogo",
+              "width": 40,
+              "height": 40,
+              "fill": "#E8E4DC",
+              "cornerRadius": 8
+            },
+            {
+              "type": "text",
+              "id": "llUDr",
+              "name": "brandName",
+              "fill": "$text-primary",
+              "content": "Brand Name",
+              "fontFamily": "Inter",
+              "fontSize": 18,
+              "fontWeight": "600"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "tdEjf",
+          "name": "brandTags",
+          "width": "fill_container",
+          "gap": 8,
+          "children": [
+            {
+              "type": "frame",
+              "id": "Lm8k0",
+              "name": "tag1",
+              "cornerRadius": 12,
+              "stroke": {
+                "thickness": 1,
+                "fill": "$border-light"
+              },
+              "gap": 4,
+              "padding": [
+                4,
+                10
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "ellipse",
+                  "id": "O8maw",
+                  "name": "tagDot",
+                  "fill": "$accent-green",
+                  "width": 6,
+                  "height": 6
+                },
+                {
+                  "type": "text",
+                  "id": "fFp8k",
+                  "name": "tagText",
+                  "fill": "$text-primary",
+                  "content": "100% Natural",
+                  "fontFamily": "Inter",
+                  "fontSize": 11
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "nL2Uo",
+              "name": "tag2",
+              "cornerRadius": 12,
+              "stroke": {
+                "thickness": 1,
+                "fill": "$border-light"
+              },
+              "padding": [
+                4,
+                10
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "XjUeX",
+                  "name": "tagText2",
+                  "fill": "$text-primary",
+                  "content": "Organic Cotton",
+                  "fontFamily": "Inter",
+                  "fontSize": 11
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "Oqyjs",
+          "name": "brandCategories",
+          "fill": "$text-tertiary",
+          "content": "Women · Men · Basics",
+          "fontFamily": "Inter",
+          "fontSize": 12
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "miJrD",
+      "x": 0,
+      "y": 0,
+      "name": "Home Page",
+      "width": 1440,
+      "fill": "$bg-primary",
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "L5nzz",
+          "type": "ref",
+          "ref": "FXRE8",
+          "width": "fill_container",
+          "name": "homeNav"
+        },
+        {
+          "type": "frame",
+          "id": "wI5ac",
+          "name": "Hero",
+          "width": "fill_container",
+          "height": 520,
+          "fill": "$bg-hero",
+          "layout": "none",
+          "children": [
+            {
+              "type": "frame",
+              "id": "EttjE",
+              "x": 60,
+              "y": 80,
+              "name": "heroContent",
+              "width": 600,
+              "layout": "vertical",
+              "gap": 20,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "69VlZ",
+                  "name": "heroLabel",
+                  "fill": "$accent-red",
+                  "content": "NATURAL FIBER CLOTHING",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "500",
+                  "letterSpacing": 2
+                },
+                {
+                  "type": "text",
+                  "id": "v9too",
+                  "name": "heroTitle",
+                  "fill": "$text-primary",
+                  "textGrowth": "fixed-width",
+                  "width": 540,
+                  "content": "Clothing without the plastic.",
+                  "lineHeight": 1.1,
+                  "fontFamily": "Inter",
+                  "fontSize": 52,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "1QeAv",
+                  "name": "heroDesc",
+                  "fill": "$text-secondary",
+                  "textGrowth": "fixed-width",
+                  "width": 420,
+                  "content": "Curated brands making clothing from natural fibers. No polyester, no nylon, no compromise — just merino, cotton, linen and silk.",
+                  "lineHeight": 1.6,
+                  "fontFamily": "Inter",
+                  "fontSize": 15
+                },
+                {
+                  "type": "frame",
+                  "id": "arklw",
+                  "name": "heroBtns",
+                  "gap": 12,
+                  "padding": [
+                    8,
+                    0,
+                    0,
+                    0
+                  ],
+                  "children": [
+                    {
+                      "id": "fBnlu",
+                      "type": "ref",
+                      "ref": "zm1ar",
+                      "name": "heroBtn1"
+                    },
+                    {
+                      "id": "VD6OZ",
+                      "type": "ref",
+                      "ref": "By5LX",
+                      "name": "heroBtn2"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Raz7M",
+          "name": "Brands We Love",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 24,
+          "padding": [
+            48,
+            60
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "cqsDR",
+              "name": "brandsHeader",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "wgYDi",
+                  "name": "brandsHeaderLeft",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "5YYub",
+                      "name": "brandsLabel",
+                      "fill": "$text-tertiary",
+                      "content": "FEATURED BRANDS",
+                      "fontFamily": "Inter",
+                      "fontSize": 11,
+                      "fontWeight": "500",
+                      "letterSpacing": 2
+                    },
+                    {
+                      "type": "text",
+                      "id": "cZhTV",
+                      "name": "brandsTitle",
+                      "fill": "$text-primary",
+                      "content": "Brands we love",
+                      "fontFamily": "Inter",
+                      "fontSize": 28,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "uLkFw",
+                  "name": "brandsViewAll",
+                  "fill": "$text-secondary",
+                  "content": "View all brands →",
+                  "fontFamily": "Inter",
+                  "fontSize": 13
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "bcWVQ",
+              "name": "brandsRow",
+              "width": "fill_container",
+              "gap": 24,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "s0VSd",
+                  "name": "brand1",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 12,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "bbe56",
+                      "name": "brand1Img",
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 260,
+                      "fill": "$product-card-bg",
+                      "cornerRadius": 8,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "gach1",
+                          "name": "brand1Badge",
+                          "fill": "$accent-green",
+                          "cornerRadius": 12,
+                          "gap": 4,
+                          "padding": [
+                            4,
+                            10
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "ellipse",
+                              "id": "n0MqF",
+                              "name": "brand1Dot",
+                              "fill": "$text-white",
+                              "width": 6,
+                              "height": 6
+                            },
+                            {
+                              "type": "text",
+                              "id": "V1NdU",
+                              "name": "brand1BadgeText",
+                              "fill": "$text-white",
+                              "content": "100% Natural",
+                              "fontFamily": "Inter",
+                              "fontSize": 11,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "mLAlm",
+                      "name": "brand1Name",
+                      "fill": "$text-primary",
+                      "content": "AYA",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "600",
+                      "letterSpacing": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "Sq2AI",
+                      "name": "brand1Desc",
+                      "fill": "$text-secondary",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "A Peruvian brand that aims for a plastic-free reality by using regenerative organic Pima cotton and alpaca wool.",
+                      "lineHeight": 1.5,
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    },
+                    {
+                      "type": "text",
+                      "id": "rvrYo",
+                      "name": "brand1Link",
+                      "fill": "$text-primary",
+                      "content": "Browse Aya →",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "fJh9S",
+                  "name": "brand2",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 12,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "boLwW",
+                      "name": "brand2Img",
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 260,
+                      "fill": "$product-card-bg",
+                      "cornerRadius": 8,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "60Uwz",
+                          "name": "brand2Badge",
+                          "fill": "$accent-green",
+                          "cornerRadius": 12,
+                          "gap": 4,
+                          "padding": [
+                            4,
+                            10
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "ellipse",
+                              "id": "KEstl",
+                              "name": "brand2Dot",
+                              "fill": "$text-white",
+                              "width": 6,
+                              "height": 6
+                            },
+                            {
+                              "type": "text",
+                              "id": "YrLTv",
+                              "name": "brand2BadgeT",
+                              "fill": "$text-white",
+                              "content": "100% Natural",
+                              "fontFamily": "Inter",
+                              "fontSize": 11,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "0aXZD",
+                      "name": "brand2Name",
+                      "fill": "$text-primary",
+                      "content": "HARVEST & MILL",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "600",
+                      "letterSpacing": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "vkjKM",
+                      "name": "brand2Desc",
+                      "fill": "$text-secondary",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Produces organic cotton clothing that is grown, milled, and sewn exclusively in the USA, featuring non-toxic, dye-free heirloom cotton.",
+                      "lineHeight": 1.5,
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    },
+                    {
+                      "type": "text",
+                      "id": "mo4AX",
+                      "name": "brand2Link",
+                      "fill": "$text-primary",
+                      "content": "Browse Harvest & Mill →",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "YufgM",
+                  "name": "brand3",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 12,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "dXzVv",
+                      "name": "brand3Img",
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 260,
+                      "fill": "$product-card-bg",
+                      "cornerRadius": 8,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "nNHbp",
+                          "name": "brand3Badge",
+                          "fill": "$accent-green",
+                          "cornerRadius": 12,
+                          "gap": 4,
+                          "padding": [
+                            4,
+                            10
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "ellipse",
+                              "id": "qPvUs",
+                              "name": "brand3Dot",
+                              "fill": "$text-white",
+                              "width": 6,
+                              "height": 6
+                            },
+                            {
+                              "type": "text",
+                              "id": "bY3R1",
+                              "name": "brand3BadgeT",
+                              "fill": "$text-white",
+                              "content": "100% Natural",
+                              "fontFamily": "Inter",
+                              "fontSize": 11,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "C8HEU",
+                      "name": "brand3Name",
+                      "fill": "$text-primary",
+                      "content": "INDIGO LUNA",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "600",
+                      "letterSpacing": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "bfWji",
+                      "name": "brand3Desc",
+                      "fill": "$text-secondary",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "An ethically made, small-batch yoga and swimwear brand focusing on organic and recycled materials.",
+                      "lineHeight": 1.5,
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    },
+                    {
+                      "type": "text",
+                      "id": "fr5Vi",
+                      "name": "brand3Link",
+                      "fill": "$text-primary",
+                      "content": "Browse Indigo Luna →",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "vVi9c",
+          "name": "Shop Section",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 24,
+          "padding": [
+            48,
+            60
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "xEXMy",
+              "name": "shopHeader",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "HShyF",
+                  "name": "shopHeaderLeft",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Cf6tX",
+                      "name": "shopLabel",
+                      "fill": "$text-tertiary",
+                      "content": "NEW ARRIVALS",
+                      "fontFamily": "Inter",
+                      "fontSize": 11,
+                      "fontWeight": "500",
+                      "letterSpacing": 2
+                    },
+                    {
+                      "type": "text",
+                      "id": "J1pvB",
+                      "name": "shopTitle",
+                      "fill": "$text-primary",
+                      "content": "Shop natural fiber clothing",
+                      "fontFamily": "Inter",
+                      "fontSize": 28,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "YVkCt",
+                  "name": "shopBrowse",
+                  "fill": "$text-secondary",
+                  "content": "Browse all →",
+                  "fontFamily": "Inter",
+                  "fontSize": 13
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "ddYQi",
+              "name": "ProductGrid",
+              "width": "fill_container",
+              "gap": 24,
+              "children": [
+                {
+                  "id": "PNKtx",
+                  "type": "ref",
+                  "ref": "470Ej",
+                  "width": "fill_container",
+                  "name": "pc1",
+                  "descendants": {
+                    "mZafE": {
+                      "content": "INDUSTRY OF ALL NATIONS"
+                    },
+                    "vPsti": {
+                      "content": "New Kamaleon Jacket"
+                    },
+                    "ffhOt": {
+                      "content": "Cotton"
+                    },
+                    "Awmgf": {
+                      "content": "$365"
+                    },
+                    "eAJBf": {
+                      "content": "outerwear"
+                    }
+                  }
+                },
+                {
+                  "id": "JRPRL",
+                  "type": "ref",
+                  "ref": "470Ej",
+                  "width": "fill_container",
+                  "name": "pc2",
+                  "descendants": {
+                    "mZafE": {
+                      "content": "NADS"
+                    },
+                    "vPsti": {
+                      "content": "Single | Organic Cotton Commando Short"
+                    },
+                    "ffhOt": {
+                      "content": "Merino Wool"
+                    },
+                    "Awmgf": {
+                      "content": "$64"
+                    },
+                    "eAJBf": {
+                      "content": "bottoms"
+                    }
+                  }
+                },
+                {
+                  "id": "DyhfR",
+                  "type": "ref",
+                  "ref": "470Ej",
+                  "width": "fill_container",
+                  "name": "pc3",
+                  "descendants": {
+                    "mZafE": {
+                      "content": "NADS"
+                    },
+                    "vPsti": {
+                      "content": "2 Pack | Organic Cotton Boxer Brief"
+                    },
+                    "ffhOt": {
+                      "content": "Merino Wool"
+                    },
+                    "Awmgf": {
+                      "content": "$64"
+                    },
+                    "eAJBf": {
+                      "content": "underwear"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "aPZcy",
+              "name": "ProductGrid2",
+              "width": "fill_container",
+              "gap": 24,
+              "children": [
+                {
+                  "id": "Ex5ro",
+                  "type": "ref",
+                  "ref": "470Ej",
+                  "width": "fill_container",
+                  "name": "pc4",
+                  "descendants": {
+                    "mZafE": {
+                      "content": "NADS"
+                    },
+                    "vPsti": {
+                      "content": "2 Pack | Organic Cotton Boxer"
+                    },
+                    "ffhOt": {
+                      "content": "Merino Wool"
+                    },
+                    "Awmgf": {
+                      "content": "$64"
+                    },
+                    "eAJBf": {
+                      "content": "underwear"
+                    }
+                  }
+                },
+                {
+                  "id": "2ddyb",
+                  "type": "ref",
+                  "ref": "470Ej",
+                  "width": "fill_container",
+                  "name": "pc5",
+                  "descendants": {
+                    "mZafE": {
+                      "content": "MAGIC LINEN"
+                    },
+                    "vPsti": {
+                      "content": "Midi cold shoulder linen dress THASSOS in Black"
+                    },
+                    "ffhOt": {
+                      "content": "Linen"
+                    },
+                    "Awmgf": {
+                      "content": "$128"
+                    },
+                    "eAJBf": {
+                      "content": "dresses"
+                    }
+                  }
+                },
+                {
+                  "id": "U4lmG",
+                  "type": "ref",
+                  "ref": "470Ej",
+                  "width": "fill_container",
+                  "name": "pc6",
+                  "descendants": {
+                    "mZafE": {
+                      "content": "MAGIC LINEN"
+                    },
+                    "vPsti": {
+                      "content": "Maxi linen dress AGRA in Deep Green"
+                    },
+                    "ffhOt": {
+                      "content": "Linen"
+                    },
+                    "Awmgf": {
+                      "content": "$169"
+                    },
+                    "eAJBf": {
+                      "content": "dresses"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "MIgvg",
+          "name": "Stats Section",
+          "width": "fill_container",
+          "fill": "$bg-hero",
+          "gap": 60,
+          "padding": [
+            64,
+            60
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "VMzom",
+              "name": "statsLeft",
+              "width": 400,
+              "layout": "vertical",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Gx5Jx",
+                  "name": "statsLabel",
+                  "fill": "$text-tertiary",
+                  "content": "WHY IT MATTERS",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "500",
+                  "letterSpacing": 2
+                },
+                {
+                  "type": "text",
+                  "id": "YEv9r",
+                  "name": "statsTitle",
+                  "fill": "$text-primary",
+                  "textGrowth": "fixed-width",
+                  "width": 400,
+                  "content": "Your activewear is probably made of plastic.",
+                  "lineHeight": 1.2,
+                  "fontFamily": "Inter",
+                  "fontSize": 32,
+                  "fontWeight": "700"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "ICoSJ",
+              "name": "statsRight",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "LxYpy",
+                  "name": "statsDesc",
+                  "fill": "$text-secondary",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Over 60% of all clothing produced today contains polyester — a plastic derived from petroleum. Every wash releases microplastics into our waterways. Natural fibers biodegrade, breathe better, and perform just as well.",
+                  "lineHeight": 1.6,
+                  "fontFamily": "Inter",
+                  "fontSize": 14
+                },
+                {
+                  "type": "frame",
+                  "id": "NMacM",
+                  "name": "statsRow",
+                  "width": "fill_container",
+                  "gap": 40,
+                  "padding": [
+                    16,
+                    0,
+                    0,
+                    0
+                  ],
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "pqJ4i",
+                      "name": "stat1",
+                      "layout": "vertical",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "gGe3a",
+                          "name": "stat1Num",
+                          "fill": "$accent-red",
+                          "content": "60%",
+                          "fontFamily": "Inter",
+                          "fontSize": 36,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "fL2KQ",
+                          "name": "stat1Desc",
+                          "fill": "$text-secondary",
+                          "textGrowth": "fixed-width",
+                          "width": 140,
+                          "content": "of clothing contains\npolyester",
+                          "lineHeight": 1.4,
+                          "fontFamily": "Inter",
+                          "fontSize": 12
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "s3LFN",
+                      "name": "stat2",
+                      "layout": "vertical",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "POFoe",
+                          "name": "stat2Num",
+                          "fill": "$accent-red",
+                          "content": "700K",
+                          "fontFamily": "Inter",
+                          "fontSize": 36,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "I1bfq",
+                          "name": "stat2Desc",
+                          "fill": "$text-secondary",
+                          "textGrowth": "fixed-width",
+                          "width": 140,
+                          "content": "microfibers released per\nwash cycle",
+                          "lineHeight": 1.4,
+                          "fontFamily": "Inter",
+                          "fontSize": 12
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "buw3f",
+                      "name": "stat3",
+                      "layout": "vertical",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "oHI00",
+                          "name": "stat3Num",
+                          "fill": "$accent-red",
+                          "content": "200+",
+                          "fontFamily": "Inter",
+                          "fontSize": 36,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "qLTTc",
+                          "name": "stat3Desc",
+                          "fill": "$text-secondary",
+                          "textGrowth": "fixed-width",
+                          "width": 140,
+                          "content": "years for polyester to\ndecompose",
+                          "lineHeight": 1.4,
+                          "fontFamily": "Inter",
+                          "fontSize": 12
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "rhQqA",
+          "name": "Materials Section",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 32,
+          "padding": [
+            64,
+            60
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "HYhPk",
+              "name": "materialTitle",
+              "fill": "$text-primary",
+              "content": "Find your material",
+              "fontFamily": "Inter",
+              "fontSize": 28,
+              "fontWeight": "700"
+            },
+            {
+              "type": "frame",
+              "id": "6bKmL",
+              "name": "materialGrid",
+              "width": "fill_container",
+              "gap": 24,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "86tVu",
+                  "name": "mat1",
+                  "width": "fill_container",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "thickness": 1,
+                    "fill": "$border-light"
+                  },
+                  "layout": "vertical",
+                  "gap": 12,
+                  "padding": 24,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "u6Hqz",
+                      "name": "mat1Title",
+                      "fill": "$text-primary",
+                      "content": "Merino Wool",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "OnyVN",
+                      "name": "mat1Desc",
+                      "fill": "$text-secondary",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Naturally temperature-regulating, odor-resistant, and moisture-wicking. The gold standard for active natural fiber.",
+                      "lineHeight": 1.5,
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    },
+                    {
+                      "type": "text",
+                      "id": "PNdkw",
+                      "name": "mat1Link",
+                      "fill": "$accent-red",
+                      "content": "View brands →",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "4Re4q",
+                  "name": "mat2",
+                  "width": "fill_container",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "thickness": 1,
+                    "fill": "$border-light"
+                  },
+                  "layout": "vertical",
+                  "gap": 12,
+                  "padding": 24,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "DpMTA",
+                      "name": "mat2Title",
+                      "fill": "$text-primary",
+                      "content": "Organic Cotton",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "aL9S6",
+                      "name": "mat2Desc",
+                      "fill": "$text-secondary",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Soft, breathable, and chemical-free. Ideal for low-impact training, yoga, and everyday movement.",
+                      "lineHeight": 1.5,
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    },
+                    {
+                      "type": "text",
+                      "id": "dtP4c",
+                      "name": "mat2Link",
+                      "fill": "$accent-red",
+                      "content": "View brands →",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "YjWAy",
+                  "name": "mat3",
+                  "width": "fill_container",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "thickness": 1,
+                    "fill": "$border-light"
+                  },
+                  "layout": "vertical",
+                  "gap": 12,
+                  "padding": 24,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Qh7Uw",
+                      "name": "mat3Title",
+                      "fill": "$text-primary",
+                      "content": "Linen",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Wk9Qm",
+                      "name": "mat3Desc",
+                      "fill": "$text-secondary",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Exceptionally breathable and lightweight. Gets softer with every wear. Perfect for warm-weather training.",
+                      "lineHeight": 1.5,
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    },
+                    {
+                      "type": "text",
+                      "id": "6PWHd",
+                      "name": "mat3Link",
+                      "fill": "$accent-red",
+                      "content": "View brands →",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "YnjOu",
+                  "name": "mat4",
+                  "width": "fill_container",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "thickness": 1,
+                    "fill": "$border-light"
+                  },
+                  "layout": "vertical",
+                  "gap": 12,
+                  "padding": 24,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "fWt1a",
+                      "name": "mat4Title",
+                      "fill": "$text-primary",
+                      "content": "Silk",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "0nNK0",
+                      "name": "mat4Desc",
+                      "fill": "$text-secondary",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Ultralight with natural thermoregulation. A luxury base layer that performs in heat and cold alike.",
+                      "lineHeight": 1.5,
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    },
+                    {
+                      "type": "text",
+                      "id": "zyj84",
+                      "name": "mat4Link",
+                      "fill": "$accent-red",
+                      "content": "View brands →",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "OMoNt",
+          "name": "Trusted Bar",
+          "width": "fill_container",
+          "fill": "$bg-footer",
+          "gap": 24,
+          "padding": [
+            16,
+            60
+          ],
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "pT7RO",
+              "name": "trustedLabel",
+              "fill": "$text-tertiary",
+              "content": "TRUSTED BY BRANDS WHO CARE",
+              "fontFamily": "Inter",
+              "fontSize": 10,
+              "fontWeight": "500",
+              "letterSpacing": 2
+            },
+            {
+              "type": "frame",
+              "id": "m4bys",
+              "name": "trustedBrands",
+              "gap": 32,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "wX3i3",
+                  "name": "tb1",
+                  "fill": "$text-tertiary",
+                  "content": "Pact",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "500"
+                },
+                {
+                  "type": "text",
+                  "id": "R1TnT",
+                  "name": "tb2",
+                  "fill": "$text-tertiary",
+                  "content": "Harvest & Mill",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "500"
+                },
+                {
+                  "type": "text",
+                  "id": "f2ybp",
+                  "name": "tb3",
+                  "fill": "$text-tertiary",
+                  "content": "Indigo Luna",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "500"
+                },
+                {
+                  "type": "text",
+                  "id": "xWht6",
+                  "name": "tb4",
+                  "fill": "$text-tertiary",
+                  "content": "Industry of All Nations",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "500"
+                },
+                {
+                  "type": "text",
+                  "id": "k9hRp",
+                  "name": "tb5",
+                  "fill": "$text-tertiary",
+                  "content": "Kotn",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "500"
+                },
+                {
+                  "type": "text",
+                  "id": "Jabyy",
+                  "name": "tb6",
+                  "fill": "$text-tertiary",
+                  "content": "Everlane",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "500"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "MOVPb",
+          "type": "ref",
+          "ref": "oHn1C",
+          "width": "fill_container",
+          "name": "homeFooter"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "mEmRS",
+      "x": 2020,
+      "y": 0,
+      "name": "Brands Page",
+      "width": 1440,
+      "fill": "$bg-primary",
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "xo3FC",
+          "type": "ref",
+          "ref": "FXRE8",
+          "width": "fill_container",
+          "name": "brandsNav"
+        },
+        {
+          "type": "frame",
+          "id": "tV5RG",
+          "name": "BrandsHero",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 20,
+          "padding": [
+            64,
+            60,
+            48,
+            60
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "QtE60",
+              "name": "brandsLabel",
+              "fill": "$accent-red",
+              "content": "OUR CURATION",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "500",
+              "letterSpacing": 2
+            },
+            {
+              "type": "text",
+              "id": "Hp6lR",
+              "name": "brandsTitle",
+              "fill": "$text-primary",
+              "textGrowth": "fixed-width",
+              "width": 500,
+              "content": "Brands that never\nuse plastic.",
+              "lineHeight": 1.1,
+              "fontFamily": "Inter",
+              "fontSize": 48,
+              "fontWeight": "700"
+            },
+            {
+              "type": "text",
+              "id": "90dRS",
+              "name": "brandsDesc",
+              "fill": "$text-secondary",
+              "textGrowth": "fixed-width",
+              "width": 420,
+              "content": "Every brand on Fiber has been vetted for their commitment to natural fibers. Some are fully natural — others offer select plastic-free products.",
+              "lineHeight": 1.6,
+              "fontFamily": "Inter",
+              "fontSize": 15
+            },
+            {
+              "type": "frame",
+              "id": "mJrVz",
+              "name": "filterRow",
+              "width": "fill_container",
+              "padding": [
+                12,
+                0,
+                0,
+                0
+              ],
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "9S4Cc",
+                  "name": "filterLeft",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "BDjMQ",
+                      "name": "filterAll",
+                      "fill": "$btn-dark",
+                      "cornerRadius": 20,
+                      "padding": [
+                        8,
+                        16
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "QOVtf",
+                          "name": "filterAllText",
+                          "fill": "$text-white",
+                          "content": "All Brands",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "FItvQ",
+                      "name": "filter100",
+                      "cornerRadius": 20,
+                      "stroke": {
+                        "thickness": 1,
+                        "fill": "$border-light"
+                      },
+                      "padding": [
+                        8,
+                        16
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "8zBbd",
+                          "name": "filter100Text",
+                          "fill": "$text-primary",
+                          "content": "100% Natural",
+                          "fontFamily": "Inter",
+                          "fontSize": 13
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "0RsEH",
+                      "name": "filterNearly",
+                      "cornerRadius": 20,
+                      "stroke": {
+                        "thickness": 1,
+                        "fill": "$border-light"
+                      },
+                      "padding": [
+                        8,
+                        16
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "F6l3k",
+                          "name": "filterNearlyText",
+                          "fill": "$text-primary",
+                          "content": "Nearly Natural",
+                          "fontFamily": "Inter",
+                          "fontSize": 13
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "CmtVL",
+                  "name": "filterSort",
+                  "cornerRadius": 20,
+                  "stroke": {
+                    "thickness": 1,
+                    "fill": "$border-light"
+                  },
+                  "gap": 6,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "Z34cv",
+                      "name": "filterSortIcon",
+                      "width": 14,
+                      "height": 14,
+                      "iconFontName": "sliders-horizontal",
+                      "iconFontFamily": "lucide",
+                      "fill": "$text-primary"
+                    },
+                    {
+                      "type": "text",
+                      "id": "VgS9T",
+                      "name": "filterSortText",
+                      "fill": "$text-primary",
+                      "content": "Filter & Sort",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "qghMD",
+              "name": "brandsCount",
+              "fill": "$text-tertiary",
+              "content": "29 brands",
+              "fontFamily": "Inter",
+              "fontSize": 13
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "LpqYM",
+          "name": "BrandsGrid",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": [
+            0,
+            60,
+            48,
+            60
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "SO2rb",
+              "name": "row1",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "id": "7MS2c",
+                  "type": "ref",
+                  "ref": "e8OUq",
+                  "width": "fill_container",
+                  "name": "bc1",
+                  "descendants": {
+                    "llUDr": {
+                      "content": "Aya"
+                    },
+                    "fFp8k": {
+                      "content": "100% Natural"
+                    },
+                    "XjUeX": {
+                      "content": "Organic Cotton"
+                    },
+                    "Oqyjs": {
+                      "content": "Women · Basics · Knitwear"
+                    }
+                  }
+                },
+                {
+                  "id": "ccDDp",
+                  "type": "ref",
+                  "ref": "e8OUq",
+                  "width": "fill_container",
+                  "name": "bc2",
+                  "descendants": {
+                    "llUDr": {
+                      "content": "Harvest & Mill"
+                    },
+                    "fFp8k": {
+                      "content": "100% Natural"
+                    },
+                    "XjUeX": {
+                      "content": "Organic Cotton"
+                    },
+                    "Oqyjs": {
+                      "content": "Women · Men · Basics · Underwear"
+                    }
+                  }
+                },
+                {
+                  "id": "J4s0H",
+                  "type": "ref",
+                  "ref": "e8OUq",
+                  "width": "fill_container",
+                  "name": "bc3",
+                  "descendants": {
+                    "llUDr": {
+                      "content": "Indigo Luna"
+                    },
+                    "fFp8k": {
+                      "content": "100% Natural"
+                    },
+                    "XjUeX": {
+                      "content": "Organic Cotton"
+                    },
+                    "Oqyjs": {
+                      "content": "Women · Activewear · Basics"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "9cxDb",
+              "name": "row2",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "id": "l4nB3",
+                  "type": "ref",
+                  "ref": "e8OUq",
+                  "width": "fill_container",
+                  "name": "bc4",
+                  "descendants": {
+                    "llUDr": {
+                      "content": "Industry of All Nations"
+                    },
+                    "fFp8k": {
+                      "content": "100% Natural"
+                    },
+                    "XjUeX": {
+                      "content": "Organic Cotton"
+                    },
+                    "Oqyjs": {
+                      "content": "Women · Men · Basics"
+                    }
+                  }
+                },
+                {
+                  "id": "KSfn8",
+                  "type": "ref",
+                  "ref": "e8OUq",
+                  "width": "fill_container",
+                  "name": "bc5",
+                  "descendants": {
+                    "llUDr": {
+                      "content": "Kotn"
+                    },
+                    "fFp8k": {
+                      "content": "100% Natural"
+                    },
+                    "XjUeX": {
+                      "content": "Organic Cotton"
+                    },
+                    "Oqyjs": {
+                      "content": "Women · Men · Basics · Underwear"
+                    }
+                  }
+                },
+                {
+                  "id": "74E6E",
+                  "type": "ref",
+                  "ref": "e8OUq",
+                  "width": "fill_container",
+                  "name": "bc6",
+                  "descendants": {
+                    "llUDr": {
+                      "content": "Kowtow"
+                    },
+                    "fFp8k": {
+                      "content": "100% Natural"
+                    },
+                    "XjUeX": {
+                      "content": "Organic Cotton"
+                    },
+                    "Oqyjs": {
+                      "content": "Women · Basics · Dresses"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "wP6no",
+              "name": "row3",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "id": "TyAYs",
+                  "type": "ref",
+                  "ref": "e8OUq",
+                  "width": "fill_container",
+                  "name": "bc7",
+                  "descendants": {
+                    "llUDr": {
+                      "content": "Magic Linen"
+                    },
+                    "fFp8k": {
+                      "content": "100% Natural"
+                    },
+                    "XjUeX": {
+                      "content": "Linen"
+                    },
+                    "Oqyjs": {
+                      "content": "Women · Men · Dresses"
+                    }
+                  }
+                },
+                {
+                  "id": "FEr8t",
+                  "type": "ref",
+                  "ref": "e8OUq",
+                  "width": "fill_container",
+                  "name": "bc8",
+                  "descendants": {
+                    "llUDr": {
+                      "content": "Nads"
+                    },
+                    "fFp8k": {
+                      "content": "100% Natural"
+                    },
+                    "XjUeX": {
+                      "content": "Organic Cotton"
+                    },
+                    "Oqyjs": {
+                      "content": "Men · Underwear"
+                    }
+                  }
+                },
+                {
+                  "id": "4H3ZS",
+                  "type": "ref",
+                  "ref": "e8OUq",
+                  "width": "fill_container",
+                  "name": "bc9",
+                  "descendants": {
+                    "llUDr": {
+                      "content": "PlainandSimple"
+                    },
+                    "fFp8k": {
+                      "content": "100% Natural"
+                    },
+                    "XjUeX": {
+                      "content": "Organic Cotton"
+                    },
+                    "Oqyjs": {
+                      "content": "Women · Men · Basics"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "nPdra",
+              "name": "row4",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "id": "7ZP57",
+                  "type": "ref",
+                  "ref": "e8OUq",
+                  "width": "fill_container",
+                  "name": "bc10",
+                  "descendants": {
+                    "llUDr": {
+                      "content": "Pyne & Smith"
+                    },
+                    "fFp8k": {
+                      "content": "100% Natural"
+                    },
+                    "XjUeX": {
+                      "content": "Linen"
+                    },
+                    "Oqyjs": {
+                      "content": "Women · Dresses"
+                    }
+                  }
+                },
+                {
+                  "id": "4LCz8",
+                  "type": "ref",
+                  "ref": "e8OUq",
+                  "width": "fill_container",
+                  "name": "bc11",
+                  "descendants": {
+                    "llUDr": {
+                      "content": "Rawganique"
+                    },
+                    "fFp8k": {
+                      "content": "100% Natural"
+                    },
+                    "XjUeX": {
+                      "content": "Organic Cotton"
+                    },
+                    "Oqyjs": {
+                      "content": "Women · Men · Basics · Activewear"
+                    }
+                  }
+                },
+                {
+                  "id": "Fc744",
+                  "type": "ref",
+                  "ref": "e8OUq",
+                  "width": "fill_container",
+                  "name": "bc12",
+                  "descendants": {
+                    "llUDr": {
+                      "content": "Ryker"
+                    },
+                    "fFp8k": {
+                      "content": "100% Natural"
+                    },
+                    "XjUeX": {
+                      "content": "Merino Wool"
+                    },
+                    "Oqyjs": {
+                      "content": "Women · Men · Activewear"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "RAFKd",
+              "name": "row5",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "id": "SpGE2",
+                  "type": "ref",
+                  "ref": "e8OUq",
+                  "width": "fill_container",
+                  "name": "bc13",
+                  "descendants": {
+                    "llUDr": {
+                      "content": "Vivid Linen"
+                    },
+                    "fFp8k": {
+                      "content": "100% Natural"
+                    },
+                    "XjUeX": {
+                      "content": "Linen"
+                    },
+                    "Oqyjs": {
+                      "content": "Women · Dresses · Tops"
+                    }
+                  }
+                },
+                {
+                  "id": "VD4mx",
+                  "type": "ref",
+                  "ref": "e8OUq",
+                  "width": "fill_container",
+                  "name": "bc14",
+                  "descendants": {
+                    "llUDr": {
+                      "content": "Allwear Organic Clothing"
+                    },
+                    "fFp8k": {
+                      "content": "Nearly Natural"
+                    },
+                    "XjUeX": {
+                      "content": "Organic Cotton"
+                    },
+                    "Oqyjs": {
+                      "content": "Women · Men · Basics"
+                    }
+                  }
+                },
+                {
+                  "id": "ghZRw",
+                  "type": "ref",
+                  "ref": "e8OUq",
+                  "width": "fill_container",
+                  "name": "bc15",
+                  "descendants": {
+                    "llUDr": {
+                      "content": "Beaumont Organic"
+                    },
+                    "fFp8k": {
+                      "content": "Nearly Natural"
+                    },
+                    "XjUeX": {
+                      "content": "Organic Cotton"
+                    },
+                    "Oqyjs": {
+                      "content": "Women · Dresses · Tops"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "aqfdX",
+          "name": "Legend",
+          "width": "fill_container",
+          "gap": 40,
+          "padding": [
+            32,
+            60
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "zkweP",
+              "name": "legend1",
+              "gap": 8,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "EBACc",
+                  "name": "legend1Label",
+                  "fill": "$text-primary",
+                  "content": "100% NATURAL",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "600",
+                  "letterSpacing": 1
+                },
+                {
+                  "type": "text",
+                  "id": "TZ5ov",
+                  "name": "legend1Desc",
+                  "fill": "$text-secondary",
+                  "textGrowth": "fixed-width",
+                  "width": 320,
+                  "content": "Every product from this brand is made entirely from natural fibers. Zero synthetics.",
+                  "fontFamily": "Inter",
+                  "fontSize": 12
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "loadV",
+              "name": "legend2",
+              "gap": 8,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "yJLBE",
+                  "name": "legend2Label",
+                  "fill": "$text-primary",
+                  "content": "NEARLY NATURAL",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "600",
+                  "letterSpacing": 1
+                },
+                {
+                  "type": "text",
+                  "id": "F7y6C",
+                  "name": "legend2Desc",
+                  "fill": "$text-secondary",
+                  "textGrowth": "fixed-width",
+                  "width": 320,
+                  "content": "Select products qualify — up to 10% elastane allowed, with the rest being natural fibers.",
+                  "fontFamily": "Inter",
+                  "fontSize": 12
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "Z3AmP",
+          "type": "ref",
+          "ref": "oHn1C",
+          "width": "fill_container",
+          "name": "brandsFooter"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "3IQRf",
+      "x": 3560,
+      "y": 0,
+      "name": "About Page",
+      "width": 1440,
+      "fill": "$bg-primary",
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "I50Ks",
+          "type": "ref",
+          "ref": "FXRE8",
+          "width": "fill_container",
+          "name": "aboutNav"
+        },
+        {
+          "type": "frame",
+          "id": "cLOAT",
+          "name": "AboutHero",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 20,
+          "padding": [
+            64,
+            60,
+            48,
+            60
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "QMkCG",
+              "name": "aboutLabel",
+              "fill": "$accent-red",
+              "content": "ABOUT",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "500",
+              "letterSpacing": 2
+            },
+            {
+              "type": "text",
+              "id": "regAj",
+              "name": "aboutTitle",
+              "fill": "$text-primary",
+              "textGrowth": "fixed-width",
+              "width": 520,
+              "content": "We help you find\nclothing without the\nplastic.",
+              "lineHeight": 1.1,
+              "fontFamily": "Inter",
+              "fontSize": 48,
+              "fontWeight": "700"
+            },
+            {
+              "type": "text",
+              "id": "mpnqY",
+              "name": "aboutDesc",
+              "fill": "$text-secondary",
+              "textGrowth": "fixed-width",
+              "width": 420,
+              "content": "FIBER is a curated directory of brands that make clothing from natural fibers — merino wool, organic cotton, linen, hemp, silk, and more. No polyester. No nylon. No greenwashing.",
+              "lineHeight": 1.6,
+              "fontFamily": "Inter",
+              "fontSize": 15
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "ytSPO",
+          "name": "Mission",
+          "width": "fill_container",
+          "fill": "$bg-footer",
+          "layout": "vertical",
+          "gap": 20,
+          "padding": [
+            64,
+            60
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "VgAfM",
+              "name": "missionLabel",
+              "fill": "$text-tertiary",
+              "content": "OUR MISSION",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "500",
+              "letterSpacing": 2
+            },
+            {
+              "type": "text",
+              "id": "5QPTR",
+              "name": "missionTitle",
+              "fill": "$text-primary",
+              "textGrowth": "fixed-width",
+              "width": 460,
+              "content": "Making natural fiber clothing easy to find.",
+              "lineHeight": 1.2,
+              "fontFamily": "Inter",
+              "fontSize": 32,
+              "fontWeight": "700"
+            },
+            {
+              "type": "text",
+              "id": "L9tTU",
+              "name": "missionP1",
+              "fill": "$text-secondary",
+              "textGrowth": "fixed-width",
+              "width": 460,
+              "content": "The clothing industry is dominated by synthetics. Finding brands that genuinely use natural fibers means hours of research, reading labels, and deciphering vague marketing claims. FIBER does that work for you.",
+              "lineHeight": 1.6,
+              "fontFamily": "Inter",
+              "fontSize": 14
+            },
+            {
+              "type": "text",
+              "id": "0UTOH",
+              "name": "missionP2",
+              "fill": "$text-secondary",
+              "textGrowth": "fixed-width",
+              "width": 460,
+              "content": "We research every brand we feature, verifying their materials and cataloging their fiber compositions. The result is a directory you can trust — every brand on FIBER has been reviewed by hand.",
+              "lineHeight": 1.6,
+              "fontFamily": "Inter",
+              "fontSize": 14
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Aovva",
+          "name": "Why Natural Fibers",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 20,
+          "padding": [
+            64,
+            60
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "XDV02",
+              "name": "whyLabel",
+              "fill": "$text-tertiary",
+              "content": "WHY NATURAL FIBERS",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "500",
+              "letterSpacing": 2
+            },
+            {
+              "type": "text",
+              "id": "RW11j",
+              "name": "whyTitle",
+              "fill": "$text-primary",
+              "textGrowth": "fixed-width",
+              "width": 460,
+              "content": "60% of clothing is made from plastic.",
+              "lineHeight": 1.2,
+              "fontFamily": "Inter",
+              "fontSize": 32,
+              "fontWeight": "700"
+            },
+            {
+              "type": "text",
+              "id": "OCsYu",
+              "name": "whyP1",
+              "fill": "$text-secondary",
+              "textGrowth": "fixed-width",
+              "width": 460,
+              "content": "Polyester is a plastic derived from petroleum, and it dominates the clothing industry. Every time you wash a synthetic garment, it releases hundreds of thousands of microplastic fibers into our waterways — fibers that end up in our oceans, our food, and our bodies.",
+              "lineHeight": 1.6,
+              "fontFamily": "Inter",
+              "fontSize": 14
+            },
+            {
+              "type": "text",
+              "id": "kaJDV",
+              "name": "whyP2",
+              "fill": "$text-secondary",
+              "textGrowth": "fixed-width",
+              "width": 460,
+              "content": "Natural fibers are different. Merino wool regulates temperature. Linen gets softer with every wash. Cotton breathes. Hemp is naturally antimicrobial. And when their life is over, they biodegrade — they don't sit in a landfill for 200 years.",
+              "lineHeight": 1.6,
+              "fontFamily": "Inter",
+              "fontSize": 14
+            },
+            {
+              "type": "frame",
+              "id": "ufYFN",
+              "name": "whyStats",
+              "width": "fill_container",
+              "gap": 60,
+              "padding": [
+                16,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "jsD7e",
+                  "name": "ws1",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TxXOh",
+                      "name": "ws1Num",
+                      "fill": "$accent-red",
+                      "content": "60%",
+                      "fontFamily": "Inter",
+                      "fontSize": 36,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "BgUcI",
+                      "name": "ws1Desc",
+                      "fill": "$text-secondary",
+                      "textGrowth": "fixed-width",
+                      "width": 140,
+                      "content": "of clothing contains\npolyester",
+                      "lineHeight": 1.4,
+                      "fontFamily": "Inter",
+                      "fontSize": 12
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "igC15",
+                  "name": "ws2",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "QHRRI",
+                      "name": "ws2Num",
+                      "fill": "$accent-red",
+                      "content": "700K",
+                      "fontFamily": "Inter",
+                      "fontSize": 36,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "gFqfY",
+                      "name": "ws2Desc",
+                      "fill": "$text-secondary",
+                      "textGrowth": "fixed-width",
+                      "width": 140,
+                      "content": "microfibers released per\nwash cycle",
+                      "lineHeight": 1.4,
+                      "fontFamily": "Inter",
+                      "fontSize": 12
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "pOAoZ",
+                  "name": "ws3",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TyzoP",
+                      "name": "ws3Num",
+                      "fill": "$accent-red",
+                      "content": "200+",
+                      "fontFamily": "Inter",
+                      "fontSize": 36,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "ghTPB",
+                      "name": "ws3Desc",
+                      "fill": "$text-secondary",
+                      "textGrowth": "fixed-width",
+                      "width": 140,
+                      "content": "years for polyester to\ndecompose",
+                      "lineHeight": 1.4,
+                      "fontFamily": "Inter",
+                      "fontSize": 12
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "CbRRt",
+          "name": "How We Curate",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 20,
+          "padding": [
+            64,
+            60
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "KX6Ci",
+              "name": "curateLabel",
+              "fill": "$text-tertiary",
+              "content": "HOW WE CURATE",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "500",
+              "letterSpacing": 2
+            },
+            {
+              "type": "text",
+              "id": "s9V97",
+              "name": "curateTitle",
+              "fill": "$text-primary",
+              "textGrowth": "fixed-width",
+              "width": 460,
+              "content": "Two tiers. Full transparency.",
+              "lineHeight": 1.2,
+              "fontFamily": "Inter",
+              "fontSize": 32,
+              "fontWeight": "700"
+            },
+            {
+              "type": "text",
+              "id": "aIgFY",
+              "name": "curateDesc",
+              "fill": "$text-secondary",
+              "textGrowth": "fixed-width",
+              "width": 460,
+              "content": "Not all \"natural\" brands are created equal. Some use 100% natural fibers across their entire catalog. Others include a small amount of elastane for stretch. We think both deserve recognition — but you deserve to know the difference.",
+              "lineHeight": 1.6,
+              "fontFamily": "Inter",
+              "fontSize": 14
+            },
+            {
+              "type": "frame",
+              "id": "w6nS1",
+              "name": "tier1",
+              "width": 460,
+              "fill": "$bg-white",
+              "cornerRadius": 8,
+              "stroke": {
+                "thickness": 1,
+                "fill": "$border-light"
+              },
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 24,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "tdGlW",
+                  "name": "tier1Title",
+                  "fill": "$text-primary",
+                  "content": "100% Natural",
+                  "fontFamily": "Inter",
+                  "fontSize": 16,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "aXx2p",
+                  "name": "tier1Desc",
+                  "fill": "$text-secondary",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Zero synthetics in the entire catalog. Every garment is made exclusively from natural or plant-derived fibers — wool, cotton, linen, hemp, silk, Tencel, lyocell, and modal.",
+                  "lineHeight": 1.6,
+                  "fontFamily": "Inter",
+                  "fontSize": 14
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "WOhRR",
+              "name": "tier2",
+              "width": 460,
+              "fill": "$bg-white",
+              "cornerRadius": 8,
+              "stroke": {
+                "thickness": 1,
+                "fill": "$border-light"
+              },
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 24,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "PjpFL",
+                  "name": "tier2Title",
+                  "fill": "$text-primary",
+                  "content": "Nearly Natural",
+                  "fontFamily": "Inter",
+                  "fontSize": 16,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "9Y2e5",
+                  "name": "tier2Desc",
+                  "fill": "$text-secondary",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Up to 10% elastane or spandex for stretch, with the remaining 90%+ from natural fibers. Semi-synthetics like Tencel, lyocell, and modal are treated as natural. Polyester, nylon, and acrylic are banned in any amount.",
+                  "lineHeight": 1.6,
+                  "fontFamily": "Inter",
+                  "fontSize": 14
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "Z4gKn",
+              "name": "curateBottom",
+              "fill": "$text-secondary",
+              "textGrowth": "fixed-width",
+              "width": 460,
+              "content": "We display the full material composition for every brand so you can make informed choices. Transparency is non-negotiable.",
+              "lineHeight": 1.6,
+              "fontFamily": "Inter",
+              "fontSize": 14
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "vOoyL",
+          "name": "Affiliate Disclosure",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 20,
+          "padding": [
+            64,
+            60
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "Z8WLn",
+              "name": "affiliateTitle",
+              "fill": "$text-primary",
+              "content": "Affiliate Disclosure",
+              "fontFamily": "Inter",
+              "fontSize": 28,
+              "fontWeight": "700"
+            },
+            {
+              "type": "text",
+              "id": "yQJe4",
+              "name": "affiliateDesc",
+              "fill": "$text-secondary",
+              "textGrowth": "fixed-width",
+              "width": 460,
+              "content": "Some links on FIBER are affiliate links. If you purchase through one of these links, we may earn a small commission at no extra cost to you. This helps us keep the site running, continue researching brands, and maintain the directory. Our curation is never influenced by affiliate relationships.",
+              "lineHeight": 1.6,
+              "fontFamily": "Inter",
+              "fontSize": 14
+            },
+            {
+              "id": "g8YUb",
+              "type": "ref",
+              "ref": "zm1ar",
+              "name": "affiliateBtn"
+            }
+          ]
+        },
+        {
+          "id": "G4jQO",
+          "type": "ref",
+          "ref": "oHn1C",
+          "width": "fill_container",
+          "name": "aboutFooter"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "mKpWU",
+      "x": 5100,
+      "y": 0,
+      "name": "Product Detail Page",
+      "width": 1440,
+      "fill": "$bg-primary",
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "9Kpcc",
+          "type": "ref",
+          "ref": "FXRE8",
+          "width": "fill_container",
+          "name": "prodNav"
+        },
+        {
+          "type": "frame",
+          "id": "Gv7le",
+          "name": "breadcrumb",
+          "width": "fill_container",
+          "gap": 8,
+          "padding": [
+            16,
+            60
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "GRsDq",
+              "name": "bc1",
+              "fill": "$text-secondary",
+              "content": "Home",
+              "fontFamily": "Inter",
+              "fontSize": 13
+            },
+            {
+              "type": "text",
+              "id": "BUyfx",
+              "name": "bcSep1",
+              "fill": "$text-tertiary",
+              "content": "/",
+              "fontFamily": "Inter",
+              "fontSize": 13
+            },
+            {
+              "type": "text",
+              "id": "HFqyT",
+              "name": "bc2",
+              "fill": "$text-secondary",
+              "content": "Outerwear",
+              "fontFamily": "Inter",
+              "fontSize": 13
+            },
+            {
+              "type": "text",
+              "id": "VW1F5",
+              "name": "bcSep2",
+              "fill": "$text-tertiary",
+              "content": "/",
+              "fontFamily": "Inter",
+              "fontSize": 13
+            },
+            {
+              "type": "text",
+              "id": "mJgXT",
+              "name": "bc3",
+              "fill": "$text-primary",
+              "content": "New Kamaleon Jacket",
+              "fontFamily": "Inter",
+              "fontSize": 13,
+              "fontWeight": "500"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "TBt27",
+          "name": "ProductMain",
+          "width": "fill_container",
+          "gap": 48,
+          "padding": [
+            32,
+            60
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "TjGLP",
+              "name": "ProductImage",
+              "clip": true,
+              "width": 560,
+              "height": 560,
+              "fill": "$product-card-bg",
+              "cornerRadius": 8
+            },
+            {
+              "type": "frame",
+              "id": "uVWSV",
+              "name": "ProductDetails",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 20,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "gQV1N",
+                  "name": "brandRow",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "5QZnT",
+                      "name": "brandIcon",
+                      "width": 32,
+                      "height": 32,
+                      "fill": "#3B5998",
+                      "cornerRadius": 16
+                    },
+                    {
+                      "type": "text",
+                      "id": "F80ij",
+                      "name": "brandLabel",
+                      "fill": "$text-secondary",
+                      "content": "INDUSTRY OF ALL NATIONS",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "500",
+                      "letterSpacing": 1
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "sRpH9",
+                  "name": "prodTitle",
+                  "fill": "$text-primary",
+                  "content": "New Kamaleon Jacket",
+                  "fontFamily": "Inter",
+                  "fontSize": 32,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "pbLj8",
+                  "name": "prodPrice",
+                  "fill": "$text-primary",
+                  "content": "$365",
+                  "fontFamily": "Inter",
+                  "fontSize": 22,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "X1ReD",
+                  "name": "FiberFacts",
+                  "width": "fill_container",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "thickness": 1,
+                    "fill": "$border-light"
+                  },
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "boaSW",
+                      "name": "ffTitle",
+                      "width": "fill_container",
+                      "padding": [
+                        16,
+                        20
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "qh0KD",
+                          "name": "ffTitleText",
+                          "fill": "$text-primary",
+                          "content": "Fiber Facts",
+                          "fontFamily": "Inter",
+                          "fontSize": 16,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "rA0KK",
+                      "name": "ffDivider1",
+                      "width": "fill_container",
+                      "height": 1,
+                      "fill": "$border-light"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "L0ydW",
+                      "name": "ffRow1",
+                      "width": "fill_container",
+                      "padding": [
+                        12,
+                        20
+                      ],
+                      "justifyContent": "space_between",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "mWio9",
+                          "name": "ffRow1Left",
+                          "fill": "$text-primary",
+                          "content": "Total Fiber",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "87ijV",
+                          "name": "ffRow1Right",
+                          "fill": "$text-primary",
+                          "content": "100%",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "uvpLp",
+                      "name": "ffRow2",
+                      "width": "fill_container",
+                      "padding": [
+                        8,
+                        20
+                      ],
+                      "justifyContent": "space_between",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "xqbBy",
+                          "name": "ffRow2Left",
+                          "fill": "$text-secondary",
+                          "content": "Natural",
+                          "fontFamily": "Inter",
+                          "fontSize": 13
+                        },
+                        {
+                          "type": "text",
+                          "id": "B4Ekt",
+                          "name": "ffRow2Right",
+                          "fill": "$text-secondary",
+                          "content": "100%",
+                          "fontFamily": "Inter",
+                          "fontSize": 13
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "p6F2u",
+                      "name": "ffDivider2",
+                      "width": "fill_container",
+                      "height": 1,
+                      "fill": "$border-light"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "rvn69",
+                      "name": "ffRow3",
+                      "width": "fill_container",
+                      "padding": [
+                        12,
+                        20
+                      ],
+                      "justifyContent": "space_between",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "DtfaM",
+                          "name": "ffRow3Left",
+                          "fill": "$text-primary",
+                          "content": "Cotton",
+                          "fontFamily": "Inter",
+                          "fontSize": 13
+                        },
+                        {
+                          "type": "text",
+                          "id": "nmYXr",
+                          "name": "ffRow3Right",
+                          "fill": "$text-primary",
+                          "content": "100%",
+                          "fontFamily": "Inter",
+                          "fontSize": 13
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "r5ANQ",
+                      "name": "ffDivider3",
+                      "width": "fill_container",
+                      "height": 1,
+                      "fill": "$border-light"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "IEeWl",
+                      "name": "ffBadgeRow",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "padding": [
+                        12,
+                        20
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "ellipse",
+                          "id": "spGeY",
+                          "name": "ffBadgeDot",
+                          "fill": "$accent-green",
+                          "width": 8,
+                          "height": 8
+                        },
+                        {
+                          "type": "text",
+                          "id": "vZM39",
+                          "name": "ffBadgeText",
+                          "fill": "$text-primary",
+                          "content": "100% Natural",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "ohbIH",
+                      "name": "ffDivider4",
+                      "width": "fill_container",
+                      "height": 1,
+                      "fill": "$border-light"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "ElwCu",
+                      "name": "ffChecks",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 6,
+                      "padding": [
+                        12,
+                        20
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "fxOUj",
+                          "name": "ffCheck1",
+                          "fill": "$text-primary",
+                          "content": "✓ No polyester",
+                          "fontFamily": "Inter",
+                          "fontSize": 13
+                        },
+                        {
+                          "type": "text",
+                          "id": "Ozyiz",
+                          "name": "ffCheck2",
+                          "fill": "$text-primary",
+                          "content": "✓ No nylon",
+                          "fontFamily": "Inter",
+                          "fontSize": 13
+                        },
+                        {
+                          "type": "text",
+                          "id": "YojxQ",
+                          "name": "ffCheck3",
+                          "fill": "$text-primary",
+                          "content": "✓ No acrylic",
+                          "fontFamily": "Inter",
+                          "fontSize": 13
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "v3CPY",
+                      "name": "ffVerified",
+                      "width": "fill_container",
+                      "padding": [
+                        8,
+                        20,
+                        12,
+                        20
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "A4tL3",
+                          "name": "ffVerifiedText",
+                          "fill": "$text-tertiary",
+                          "content": "Verified by FIBER",
+                          "fontFamily": "Inter",
+                          "fontSize": 11
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "MjEQI",
+                  "type": "ref",
+                  "ref": "070dn",
+                  "width": "fill_container",
+                  "name": "ctaBtn",
+                  "descendants": {
+                    "SiohL": {
+                      "content": "Shop at Industry of All Nations ↗"
+                    }
+                  }
+                },
+                {
+                  "type": "text",
+                  "id": "bAvev",
+                  "name": "ctaNote",
+                  "fill": "$text-tertiary",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "You'll be taken to industryofallnations.com to complete your purchase",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 12
+                },
+                {
+                  "type": "text",
+                  "id": "Yzgzk",
+                  "name": "prodDescText",
+                  "fill": "$text-secondary",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "This special edition of the Kamaleon Jacket is a tribute to circular design. By combining the classic silhouette of our favorite cropped denim jacket with the application of our recycled fibers, a new functional everyday classic has been reborn. Made in Guatemala City, in partnership with The New Denim Project, this jacket is made from 100% upcycled denim fibers, diverting textile waste from landfills and breathing new life into what would have otherwise been cotton scraps.",
+                  "lineHeight": 1.6,
+                  "fontFamily": "Inter",
+                  "fontSize": 14
+                },
+                {
+                  "type": "text",
+                  "id": "XEfYa",
+                  "name": "prodDisclaimer",
+                  "fill": "$text-tertiary",
+                  "content": "We may earn a commission when you shop through our links.",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontStyle": "italic"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "XlDMO",
+          "name": "YouMightAlsoLike",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 24,
+          "padding": [
+            48,
+            60
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "z4fXM",
+              "name": "alsoTitle",
+              "fill": "$text-primary",
+              "content": "You Might Also Like",
+              "fontFamily": "Inter",
+              "fontSize": 24,
+              "fontWeight": "700"
+            },
+            {
+              "type": "frame",
+              "id": "UHyYO",
+              "name": "alsoGrid",
+              "width": "fill_container",
+              "gap": 24,
+              "children": [
+                {
+                  "id": "LIJjc",
+                  "type": "ref",
+                  "ref": "470Ej",
+                  "width": "fill_container",
+                  "name": "rec1",
+                  "descendants": {
+                    "mZafE": {
+                      "content": "ALLWEAR ORGANIC CLOTHING"
+                    },
+                    "vPsti": {
+                      "content": "Allwear Organic Half-Zip Hoodie 2.0 3 Pack"
+                    },
+                    "ffhOt": {
+                      "content": "Organic Cotton"
+                    },
+                    "Awmgf": {
+                      "content": "$80"
+                    },
+                    "eAJBf": {
+                      "content": "outerwear"
+                    }
+                  }
+                },
+                {
+                  "id": "LqaUh",
+                  "type": "ref",
+                  "ref": "470Ej",
+                  "width": "fill_container",
+                  "name": "rec2",
+                  "descendants": {
+                    "mZafE": {
+                      "content": "ALLWEAR ORGANIC CLOTHING"
+                    },
+                    "vPsti": {
+                      "content": "Allwear Organic Half-Zip Hoodie 2.0"
+                    },
+                    "ffhOt": {
+                      "content": "Organic Cotton"
+                    },
+                    "Awmgf": {
+                      "content": "$84"
+                    },
+                    "eAJBf": {
+                      "content": "outerwear"
+                    }
+                  }
+                },
+                {
+                  "id": "PPCNj",
+                  "type": "ref",
+                  "ref": "470Ej",
+                  "width": "fill_container",
+                  "name": "rec3",
+                  "descendants": {
+                    "mZafE": {
+                      "content": "ALLWEAR ORGANIC CLOTHING"
+                    },
+                    "vPsti": {
+                      "content": "Allwear Organic Half-Zip Hoodie"
+                    },
+                    "ffhOt": {
+                      "content": "Organic Cotton"
+                    },
+                    "Awmgf": {
+                      "content": "$70"
+                    },
+                    "eAJBf": {
+                      "content": "outerwear"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "MouYP",
+          "type": "ref",
+          "ref": "oHn1C",
+          "width": "fill_container",
+          "name": "prodFooter"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "0MAAy",
+      "x": 6640,
+      "y": 0,
+      "name": "Shop Page",
+      "width": 1440,
+      "fill": "$bg-primary",
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "8pq0W",
+          "type": "ref",
+          "ref": "FXRE8",
+          "width": "fill_container",
+          "name": "shopNav"
+        },
+        {
+          "type": "frame",
+          "id": "IinBn",
+          "name": "ShopFilters",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": [
+            20,
+            60
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "lARAi",
+              "name": "filterTabs",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "DC8qj",
+                  "name": "tabAll",
+                  "fill": "$accent-green",
+                  "cornerRadius": 20,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "ti0T8",
+                      "name": "tabAllText",
+                      "fill": "$text-white",
+                      "content": "All",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "W6JqA",
+                  "name": "tabActivewear",
+                  "cornerRadius": 20,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "kojet",
+                      "name": "tabActiveText",
+                      "fill": "$text-primary",
+                      "content": "Activewear",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "11UTd",
+                  "name": "tabBasics",
+                  "cornerRadius": 20,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "8Jl5L",
+                      "name": "tabBasicsText",
+                      "fill": "$text-primary",
+                      "content": "Basics",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "xRI39",
+                  "name": "tabBottoms",
+                  "cornerRadius": 20,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "bRQsM",
+                      "name": "tabBottomsText",
+                      "fill": "$text-primary",
+                      "content": "Bottoms",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "rmW2o",
+                  "name": "tabDresses",
+                  "cornerRadius": 20,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "3imxw",
+                      "name": "tabDressesText",
+                      "fill": "$text-primary",
+                      "content": "Dresses",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "f5TQe",
+                  "name": "tabKnitwear",
+                  "cornerRadius": 20,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "abwbL",
+                      "name": "tabKnitwearText",
+                      "fill": "$text-primary",
+                      "content": "Knitwear",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "o0bLn",
+                  "name": "tabLounge",
+                  "cornerRadius": 20,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "K5k6J",
+                      "name": "tabLoungeText",
+                      "fill": "$text-primary",
+                      "content": "Loungewear",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "3WG6e",
+                  "name": "tabOuterwear",
+                  "cornerRadius": 20,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "hv1b7",
+                      "name": "tabOuterwearText",
+                      "fill": "$text-primary",
+                      "content": "Outerwear",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "YjcB4",
+                  "name": "tabSwim",
+                  "cornerRadius": 20,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "HWctO",
+                      "name": "tabSwimText",
+                      "fill": "$text-primary",
+                      "content": "Swimwear",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "MGnyd",
+                  "name": "tabTops",
+                  "cornerRadius": 20,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "ljiR7",
+                      "name": "tabTopsText",
+                      "fill": "$text-primary",
+                      "content": "Tops",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Gws6R",
+                  "name": "tabUnderwear",
+                  "fill": "$btn-dark",
+                  "cornerRadius": 20,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "MTgri",
+                      "name": "tabUnderwearText",
+                      "fill": "$text-white",
+                      "content": "Underwear",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "545la",
+              "name": "filterActionsRow",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "rOnBB",
+                  "name": "filterInfo",
+                  "fill": "$text-tertiary",
+                  "content": "Showing products in all brands. Filtered.",
+                  "fontFamily": "Inter",
+                  "fontSize": 12
+                },
+                {
+                  "type": "frame",
+                  "id": "haHol",
+                  "name": "filterBtn",
+                  "cornerRadius": 20,
+                  "stroke": {
+                    "thickness": 1,
+                    "fill": "$border-light"
+                  },
+                  "gap": 6,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "kzLmF",
+                      "name": "filterBtnIcon",
+                      "width": 14,
+                      "height": 14,
+                      "iconFontName": "sliders-horizontal",
+                      "iconFontFamily": "lucide",
+                      "fill": "$text-primary"
+                    },
+                    {
+                      "type": "text",
+                      "id": "PXkwD",
+                      "name": "filterBtnText",
+                      "fill": "$text-primary",
+                      "content": "Filters",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "1uUwx",
+          "name": "BrandSection-IOAN",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": [
+            32,
+            60
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "kuaQ4",
+              "name": "bs1Header",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "Iorng",
+                  "name": "bs1Left",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "d488y",
+                      "name": "bs1Name",
+                      "fill": "$text-primary",
+                      "content": "Industry of All Nations",
+                      "fontFamily": "Inter",
+                      "fontSize": 20,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "L4387",
+                      "name": "bs1Count",
+                      "fill": "$text-tertiary",
+                      "content": "1 product",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "MRbQd",
+                  "name": "bs1ViewAll",
+                  "fill": "$text-secondary",
+                  "content": "View all →",
+                  "fontFamily": "Inter",
+                  "fontSize": 13
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "opyOs",
+              "name": "bs1Grid",
+              "width": "fill_container",
+              "gap": 24,
+              "children": [
+                {
+                  "id": "xHUtE",
+                  "type": "ref",
+                  "ref": "470Ej",
+                  "width": 320,
+                  "name": "bs1pc1",
+                  "descendants": {
+                    "mZafE": {
+                      "content": "INDUSTRY OF ALL NATIONS"
+                    },
+                    "vPsti": {
+                      "content": "New Kamaleon Jacket"
+                    },
+                    "ffhOt": {
+                      "content": "Cotton"
+                    },
+                    "Awmgf": {
+                      "content": "$365"
+                    },
+                    "eAJBf": {
+                      "content": "outerwear"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "CqFMg",
+          "name": "BrandSection-Nads",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": [
+            32,
+            60
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "VbRVp",
+              "name": "bs2Header",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "HM4Ik",
+                  "name": "bs2Left",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "4eLXy",
+                      "name": "bs2Name",
+                      "fill": "$text-primary",
+                      "content": "Nads",
+                      "fontFamily": "Inter",
+                      "fontSize": 20,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "oc1wR",
+                      "name": "bs2Count",
+                      "fill": "$text-tertiary",
+                      "content": "6 products",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "SOBxK",
+                  "name": "bs2ViewAll",
+                  "fill": "$text-secondary",
+                  "content": "View all →",
+                  "fontFamily": "Inter",
+                  "fontSize": 13
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "E9v19",
+              "name": "bs2Grid",
+              "width": "fill_container",
+              "gap": 24,
+              "children": [
+                {
+                  "id": "0Ldv5",
+                  "type": "ref",
+                  "ref": "470Ej",
+                  "width": "fill_container",
+                  "name": "bs2pc1",
+                  "descendants": {
+                    "mZafE": {
+                      "content": "NADS"
+                    },
+                    "vPsti": {
+                      "content": "Single | Organic Cotton Commando Short"
+                    },
+                    "ffhOt": {
+                      "content": "Organic Cotton"
+                    },
+                    "Awmgf": {
+                      "content": "$64"
+                    },
+                    "eAJBf": {
+                      "content": "bottoms"
+                    }
+                  }
+                },
+                {
+                  "id": "b6Cw2",
+                  "type": "ref",
+                  "ref": "470Ej",
+                  "width": "fill_container",
+                  "name": "bs2pc2",
+                  "descendants": {
+                    "mZafE": {
+                      "content": "NADS"
+                    },
+                    "vPsti": {
+                      "content": "2 Pack | Organic Cotton Boxer Brief"
+                    },
+                    "ffhOt": {
+                      "content": "Organic Cotton"
+                    },
+                    "Awmgf": {
+                      "content": "$64"
+                    },
+                    "eAJBf": {
+                      "content": "underwear"
+                    }
+                  }
+                },
+                {
+                  "id": "L5o4U",
+                  "type": "ref",
+                  "ref": "470Ej",
+                  "width": "fill_container",
+                  "name": "bs2pc3",
+                  "descendants": {
+                    "mZafE": {
+                      "content": "NADS"
+                    },
+                    "vPsti": {
+                      "content": "4 Pack | Organic Cotton Boxer"
+                    },
+                    "ffhOt": {
+                      "content": "Organic Cotton"
+                    },
+                    "Awmgf": {
+                      "content": "$52"
+                    },
+                    "eAJBf": {
+                      "content": "underwear"
+                    }
+                  }
+                },
+                {
+                  "id": "uh4bI",
+                  "type": "ref",
+                  "ref": "470Ej",
+                  "width": "fill_container",
+                  "name": "bs2pc4",
+                  "descendants": {
+                    "mZafE": {
+                      "content": "NADS"
+                    },
+                    "vPsti": {
+                      "content": "NADS Package Protection"
+                    },
+                    "ffhOt": {
+                      "content": "Organic Cotton"
+                    },
+                    "Awmgf": {
+                      "content": "$4"
+                    },
+                    "eAJBf": {
+                      "content": "other"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "yHC6A",
+          "name": "BrandSection-MagicLinen",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": [
+            32,
+            60
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "7BouM",
+              "name": "bs3Header",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "DFd5e",
+                  "name": "bs3Left",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "I4bVj",
+                      "name": "bs3Name",
+                      "fill": "$text-primary",
+                      "content": "Magic Linen",
+                      "fontFamily": "Inter",
+                      "fontSize": 20,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "EvDnB",
+                      "name": "bs3Count",
+                      "fill": "$text-tertiary",
+                      "content": "4 products",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "7Axcv",
+                  "name": "bs3ViewAll",
+                  "fill": "$text-secondary",
+                  "content": "View all →",
+                  "fontFamily": "Inter",
+                  "fontSize": 13
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "zmy7F",
+              "name": "bs3Grid",
+              "width": "fill_container",
+              "gap": 24,
+              "children": [
+                {
+                  "id": "93hSC",
+                  "type": "ref",
+                  "ref": "470Ej",
+                  "width": "fill_container",
+                  "name": "bs3pc1",
+                  "descendants": {
+                    "mZafE": {
+                      "content": "MAGIC LINEN"
+                    },
+                    "vPsti": {
+                      "content": "Midi cold shoulder linen dress THASSOS in Black"
+                    },
+                    "ffhOt": {
+                      "content": "Linen"
+                    },
+                    "Awmgf": {
+                      "content": "$128"
+                    },
+                    "eAJBf": {
+                      "content": "dresses"
+                    }
+                  }
+                },
+                {
+                  "id": "3v8c6",
+                  "type": "ref",
+                  "ref": "470Ej",
+                  "width": "fill_container",
+                  "name": "bs3pc2",
+                  "descendants": {
+                    "mZafE": {
+                      "content": "MAGIC LINEN"
+                    },
+                    "vPsti": {
+                      "content": "Maxi linen dress AGRA in Deep Green"
+                    },
+                    "ffhOt": {
+                      "content": "Linen"
+                    },
+                    "Awmgf": {
+                      "content": "$169"
+                    },
+                    "eAJBf": {
+                      "content": "dresses"
+                    }
+                  }
+                },
+                {
+                  "id": "KOt7y",
+                  "type": "ref",
+                  "ref": "470Ej",
+                  "width": "fill_container",
+                  "name": "bs3pc3",
+                  "descendants": {
+                    "mZafE": {
+                      "content": "MAGIC LINEN"
+                    },
+                    "vPsti": {
+                      "content": "Maxi linen pants AGRA in White"
+                    },
+                    "ffhOt": {
+                      "content": "Linen"
+                    },
+                    "Awmgf": {
+                      "content": "$95"
+                    },
+                    "eAJBf": {
+                      "content": "bottoms"
+                    }
+                  }
+                },
+                {
+                  "id": "w7n5m",
+                  "type": "ref",
+                  "ref": "470Ej",
+                  "width": "fill_container",
+                  "name": "bs3pc4",
+                  "descendants": {
+                    "mZafE": {
+                      "content": "MAGIC LINEN"
+                    },
+                    "vPsti": {
+                      "content": "Wide leg linen pants MECCA in White"
+                    },
+                    "ffhOt": {
+                      "content": "Linen"
+                    },
+                    "Awmgf": {
+                      "content": "$93"
+                    },
+                    "eAJBf": {
+                      "content": "bottoms"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Ivl2l",
+          "name": "BrandSection-IndigoLuna",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": [
+            32,
+            60
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "Ptfuu",
+              "name": "bs4Header",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "H1Uk3",
+                  "name": "bs4Left",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "9vNkG",
+                      "name": "bs4Name",
+                      "fill": "$text-primary",
+                      "content": "Indigo Luna",
+                      "fontFamily": "Inter",
+                      "fontSize": 20,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "ymU5D",
+                      "name": "bs4Count",
+                      "fill": "$text-tertiary",
+                      "content": "3 products",
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "EfAE9",
+                  "name": "bs4ViewAll",
+                  "fill": "$text-secondary",
+                  "content": "View all →",
+                  "fontFamily": "Inter",
+                  "fontSize": 13
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "rJNyN",
+              "name": "bs4Grid",
+              "width": "fill_container",
+              "gap": 24,
+              "children": [
+                {
+                  "id": "kaN5F",
+                  "type": "ref",
+                  "ref": "470Ej",
+                  "width": "fill_container",
+                  "name": "bs4pc1",
+                  "descendants": {
+                    "mZafE": {
+                      "content": "INDIGO LUNA"
+                    },
+                    "vPsti": {
+                      "content": "Ludo Tie Yoga Bra"
+                    },
+                    "ffhOt": {
+                      "content": "Organic Cotton"
+                    },
+                    "Awmgf": {
+                      "content": "$45"
+                    },
+                    "eAJBf": {
+                      "content": "activewear"
+                    }
+                  }
+                },
+                {
+                  "id": "EgD78",
+                  "type": "ref",
+                  "ref": "470Ej",
+                  "width": "fill_container",
+                  "name": "bs4pc2",
+                  "descendants": {
+                    "mZafE": {
+                      "content": "INDIGO LUNA"
+                    },
+                    "vPsti": {
+                      "content": "Wren Yogi Capris"
+                    },
+                    "ffhOt": {
+                      "content": "Organic Cotton"
+                    },
+                    "Awmgf": {
+                      "content": "$65"
+                    },
+                    "eAJBf": {
+                      "content": "activewear"
+                    }
+                  }
+                },
+                {
+                  "id": "zYseh",
+                  "type": "ref",
+                  "ref": "470Ej",
+                  "width": "fill_container",
+                  "name": "bs4pc3",
+                  "descendants": {
+                    "mZafE": {
+                      "content": "INDIGO LUNA"
+                    },
+                    "vPsti": {
+                      "content": "Moana Swim Top"
+                    },
+                    "ffhOt": {
+                      "content": "Organic Cotton"
+                    },
+                    "Awmgf": {
+                      "content": "$55"
+                    },
+                    "eAJBf": {
+                      "content": "swimwear"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "NWP2p",
+          "type": "ref",
+          "ref": "oHn1C",
+          "width": "fill_container",
+          "name": "shopFooter"
+        }
+      ]
+    }
+  ],
+  "variables": {
+    "accent-green": {
+      "type": "color",
+      "value": "#1A8A5A"
+    },
+    "accent-green-dark": {
+      "type": "color",
+      "value": "#0D6B42"
+    },
+    "accent-red": {
+      "type": "color",
+      "value": "#C75050"
+    },
+    "bg-beige-light": {
+      "type": "color",
+      "value": "#F0EBE3"
+    },
+    "bg-card": {
+      "type": "color",
+      "value": "#FFFFFF"
+    },
+    "bg-dark-section": {
+      "type": "color",
+      "value": "#E8E0D4"
+    },
+    "bg-footer": {
+      "type": "color",
+      "value": "#F5F0E8"
+    },
+    "bg-hero": {
+      "type": "color",
+      "value": "#E8E0D4"
+    },
+    "bg-primary": {
+      "type": "color",
+      "value": "#FAFAF5"
+    },
+    "bg-white": {
+      "type": "color",
+      "value": "#FFFFFF"
+    },
+    "border-light": {
+      "type": "color",
+      "value": "#E5E0D8"
+    },
+    "border-medium": {
+      "type": "color",
+      "value": "#D5D0C8"
+    },
+    "btn-dark": {
+      "type": "color",
+      "value": "#1A1A1A"
+    },
+    "product-card-bg": {
+      "type": "color",
+      "value": "#E8E4DC"
+    },
+    "tag-bg": {
+      "type": "color",
+      "value": "#F5F0E8"
+    },
+    "text-primary": {
+      "type": "color",
+      "value": "#1A1A1A"
+    },
+    "text-secondary": {
+      "type": "color",
+      "value": "#666666"
+    },
+    "text-tertiary": {
+      "type": "color",
+      "value": "#999999"
+    },
+    "text-white": {
+      "type": "color",
+      "value": "#FFFFFF"
+    }
+  }
+}

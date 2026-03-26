@@ -1,6 +1,7 @@
 import Image from "next/image";
+import Link from "next/link";
 import type { BrandWithDetails } from "@/types/database";
-import { brandLogoUrl, affiliateUrl } from "@/lib/utils";
+import { brandLogoUrl } from "@/lib/utils";
 
 interface BrandCardProps {
   brand: BrandWithDetails;
@@ -9,7 +10,7 @@ interface BrandCardProps {
 export function BrandCard({ brand }: BrandCardProps) {
   const logoUrl = brandLogoUrl(brand.website_url, 128);
   const tierLabel = brand.is_fully_natural ? "100% Natural" : "Nearly Natural";
-  const dotColor = brand.is_fully_natural ? "bg-[#4A7A3D]" : "bg-[#C4960C]";
+  const dotColor = brand.is_fully_natural ? "bg-natural" : "bg-nearly";
 
   const formatCategory = (cat: string) =>
     cat
@@ -23,11 +24,9 @@ export function BrandCard({ brand }: BrandCardProps) {
   ];
 
   return (
-    <a
-      href={brand.website_url ? affiliateUrl(brand.website_url, "brand-card") : "#"}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="group relative flex flex-col gap-5 rounded-[14px] border border-surface-dark bg-white p-7 transition-all duration-200 hover:-translate-y-0.5 hover:border-muted hover:shadow-lg"
+    <Link
+      href={`/brand/${brand.slug}`}
+      className="group relative flex flex-col gap-5 rounded-[14px] border border-surface-dark bg-background p-7 transition-all duration-200 hover:-translate-y-0.5 hover:border-muted hover:shadow-lg"
     >
       {/* Top row: Logo + Name */}
       <div className="flex items-center gap-3">
@@ -79,10 +78,10 @@ export function BrandCard({ brand }: BrandCardProps) {
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
-            d="M7 17L17 7M17 7H7M17 7v10"
+            d="M9 5l7 7-7 7"
           />
         </svg>
       </div>
-    </a>
+    </Link>
   );
 }
