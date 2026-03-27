@@ -121,9 +121,9 @@ const MATERIAL_ALIASES: [string, string][] = [
   // Single-word
   ["cotton", "Cotton"],
   ["merino", "Merino Wool"],
-  ["elastane", "Elastane"],
-  ["spandex", "Elastane"],
-  ["lycra", "Elastane"],
+  ["elastane", "Spandex"],
+  ["spandex", "Spandex"],
+  ["lycra", "Spandex"],
   ["tencel", "Tencel Lyocell"],
   ["lyocell", "Tencel Lyocell"],
   ["hemp", "Hemp"],
@@ -442,8 +442,8 @@ Return a JSON array with one object per product, in order:
 
 Rules:
 - Material percentages must sum to 100 for each product
-- Use standard names: "Organic Cotton", "Merino Wool", "Elastane", "Hemp", "Tencel Lyocell", "Silk", "Linen", "Wool", "Cotton", "Modal", "Viscose", etc.
-- "Elastane", "Spandex", and "Lycra" should all be normalized to "Elastane"
+- Use standard names: "Organic Cotton", "Merino Wool", "Spandex", "Hemp", "Tencel Lyocell", "Silk", "Linen", "Wool", "Cotton", "Modal", "Viscose", etc.
+- "Elastane", "Spandex", and "Lycra" should all be normalized to "Spandex"
 - Set has_banned=true if polyester, nylon, acrylic, or polypropylene is present
 - If you cannot determine a product's composition, use empty materials and confidence 0.0
 - confidence: 0.9+ if explicitly stated, 0.6-0.8 if inferred, below 0.5 if guessing`;

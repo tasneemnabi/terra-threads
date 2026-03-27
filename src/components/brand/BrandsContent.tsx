@@ -147,41 +147,7 @@ export function BrandsContent({ brands }: BrandsContentProps) {
       {/* Filter bar — single row */}
       <section className="px-5 sm:px-8 lg:px-20 pt-10">
         <div className="mx-auto flex max-w-[1280px] items-center justify-between">
-          {/* Tier toggle — left side */}
-          <div className="flex items-center gap-0 rounded-[8px] bg-surface p-1">
-            <button
-              onClick={() => setTier("all")}
-              className={`rounded-[6px] px-5 py-[10px] font-body text-[14px] font-medium leading-[18px] transition-colors ${
-                tier === "all"
-                  ? "bg-text text-background"
-                  : "text-secondary hover:text-text"
-              }`}
-            >
-              All Brands
-            </button>
-            <button
-              onClick={() => setTier("natural")}
-              className={`rounded-[6px] px-5 py-[10px] font-body text-[14px] font-medium leading-[18px] transition-colors ${
-                tier === "natural"
-                  ? "bg-text text-background"
-                  : "text-secondary hover:text-text"
-              }`}
-            >
-              100% Natural
-            </button>
-            <button
-              onClick={() => setTier("nearly")}
-              className={`rounded-[6px] px-5 py-[10px] font-body text-[14px] font-medium leading-[18px] transition-colors ${
-                tier === "nearly"
-                  ? "bg-text text-background"
-                  : "text-secondary hover:text-text"
-              }`}
-            >
-              Nearly Natural
-            </button>
-          </div>
-
-          {/* Secondary filters — right side */}
+          {/* Filters — right side */}
           <div className="flex items-center gap-3">
             {/* Active filter pills */}
             {selectedFiber && (

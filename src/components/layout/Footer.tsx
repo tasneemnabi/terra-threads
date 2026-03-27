@@ -8,7 +8,7 @@ const shopLinks = [
 
 const learnLinks = [
   { href: "/about", label: "About Us" },
-  { href: "/about#why-natural", label: "Why Natural Fibers" },
+  { href: "/about#why-natural", label: "Why Plastic-Free" },
   { href: "/about#curation", label: "How We Curate" },
 ];
 

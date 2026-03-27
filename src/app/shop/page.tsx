@@ -3,44 +3,13 @@ import type { Metadata } from "next";
 import { getFilteredProducts, getDistinctCategories, getAllMaterials, getProductTypesForCategory } from "@/lib/queries/products";
 import { getAllBrands } from "@/lib/queries/brands";
 import { ShopContent } from "@/components/shop/ShopContent";
-import type { FilterState, ProductWithBrand } from "@/types/database";
+import type { FilterState } from "@/types/database";
 
 export const metadata: Metadata = {
   title: "Shop Natural Fiber Clothing | FIBER",
   description:
     "Browse thousands of products made from natural fibers. Filter by material, brand, price, and more. No polyester, no nylon, no plastic.",
 };
-
-interface BrandGroup {
-  brandName: string;
-  brandSlug: string;
-  products: ProductWithBrand[];
-  totalForBrand: number;
-}
-
-function groupByBrand(products: ProductWithBrand[]): BrandGroup[] {
-  const brandMap = new Map<string, ProductWithBrand[]>();
-  const brandOrder: string[] = [];
-
-  for (const product of products) {
-    const key = product.brand_slug;
-    if (!brandMap.has(key)) {
-      brandMap.set(key, []);
-      brandOrder.push(key);
-    }
-    brandMap.get(key)!.push(product);
-  }
-
-  return brandOrder.map((slug) => {
-    const products = brandMap.get(slug)!;
-    return {
-      brandName: products[0].brand_name,
-      brandSlug: slug,
-      products,
-      totalForBrand: products.length,
-    };
-  });
-}
 
 export default async function ShopPage({
   searchParams,
@@ -59,17 +28,16 @@ export default async function ShopPage({
     tier: typeof params.tier === "string" ? (params.tier as FilterState["tier"]) : undefined,
     audience: typeof params.audience === "string" ? params.audience : undefined,
     productType: typeof params.type === "string" ? params.type : undefined,
+    page: 1,
   };
 
   const [{ products, totalCount }, brands, categories, materials, productTypes] = await Promise.all([
-    getFilteredProducts(initialFilters, 500),
+    getFilteredProducts(initialFilters),
     getAllBrands(),
     getDistinctCategories(),
     getAllMaterials(),
     initialFilters.category ? getProductTypesForCategory(initialFilters.category) : Promise.resolve([]),
   ]);
-
-  const initialGroups = groupByBrand(products);
 
   return (
     <>
@@ -89,7 +57,7 @@ export default async function ShopPage({
 
       <Suspense>
         <ShopContent
-          initialGroups={initialGroups}
+          initialProducts={products}
           initialTotalCount={totalCount}
           brands={brands.map((b) => ({ name: b.name, slug: b.slug }))}
           categories={categories}

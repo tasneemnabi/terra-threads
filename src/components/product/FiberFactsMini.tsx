@@ -1,5 +1,5 @@
 import type { MaterialInfo } from "@/types/database";
-import { naturalPercentage, isAllNatural } from "@/lib/utils";
+import { isAllNatural } from "@/lib/utils";
 
 interface FiberFactsMiniProps {
   materials: MaterialInfo[];
@@ -8,13 +8,11 @@ interface FiberFactsMiniProps {
 export function FiberFactsMini({ materials }: FiberFactsMiniProps) {
   if (!materials || materials.length === 0) return null;
 
-  const natPercent = naturalPercentage(materials);
   const allNatural = isAllNatural(materials);
-  const topMaterials = [...materials]
-    .filter((m) => m.is_natural)
+  const fibers = [...materials]
     .sort((a, b) => b.percentage - a.percentage)
-    .slice(0, 2)
-    .map((m) => m.name)
+    .slice(0, 3)
+    .map((m) => `${m.percentage}% ${m.name}`)
     .join(", ");
 
   return (
@@ -25,15 +23,9 @@ export function FiberFactsMini({ materials }: FiberFactsMiniProps) {
           : "border-surface-dark bg-white"
       }`}
     >
-      <p className="font-body text-xs leading-tight">
-        <span className="font-bold text-text">{natPercent}%</span>{" "}
-        <span className="text-muted">natural</span>
+      <p className="font-body text-[11px] leading-tight text-muted">
+        {fibers}
       </p>
-      {topMaterials && (
-        <p className="font-body text-[11px] leading-tight text-muted">
-          {topMaterials}
-        </p>
-      )}
     </div>
   );
 }

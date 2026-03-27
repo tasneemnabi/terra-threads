@@ -42,12 +42,7 @@ export function FeaturedBrands({ brands }: FeaturedBrandsProps) {
               href={`/brand/${brand.slug}`}
               className="group flex flex-col"
             >
-              <div className="flex h-[370px] items-end rounded-[14px] bg-surface-dark p-4">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-text/80 px-3 py-1.5 font-body text-[12px] font-medium text-background">
-                  <span className={`h-1.5 w-1.5 rounded-full ${brand.is_fully_natural ? "bg-natural" : "bg-nearly"}`} />
-                  {brand.is_fully_natural ? "100% Natural" : "Nearly Natural"}
-                </span>
-              </div>
+              <div className="flex h-[370px] items-end rounded-[14px] bg-surface-dark p-4" />
               <div className="px-1 pt-3">
                 <p className="font-body text-[13px] font-medium uppercase leading-[16px] tracking-[0.08em] text-muted">
                   {brand.name}

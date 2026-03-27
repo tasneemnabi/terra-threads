@@ -17,7 +17,7 @@ export const KNOWN_MATERIALS: Record<string, { is_natural: boolean; id: string }
   "Hemp": { is_natural: true, id: "a1000000-0000-0000-0000-000000000004" },
   "Tencel Lyocell": { is_natural: true, id: "a1000000-0000-0000-0000-000000000005" },
   "Silk": { is_natural: true, id: "a1000000-0000-0000-0000-000000000006" },
-  "Elastane": { is_natural: false, id: "a1000000-0000-0000-0000-000000000007" },
+  "Spandex": { is_natural: false, id: "a1000000-0000-0000-0000-000000000007" },
 };
 
 /**
@@ -35,7 +35,7 @@ export const TRUSTED_MATERIALS = new Set([
   // Wool variants
   "Organic Merino Wool",
   // Synthetics (tracked for curation)
-  "Elastane", "Nylon", "Polyester", "Acrylic",
+  "Spandex", "Nylon", "Polyester", "Acrylic",
 ]);
 
 /** Additional materials we recognize (not yet in DB — will be inserted if used) */

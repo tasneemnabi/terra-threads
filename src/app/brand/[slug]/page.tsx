@@ -32,9 +32,6 @@ export default async function BrandPage({ params }: Props) {
   const products = await getProductsByBrand(brand.id);
   const logoUrl = brandLogoUrl(brand.website_url, 128);
   const domain = brandDomain(brand.website_url);
-  const tierLabel = brand.is_fully_natural ? "100% Natural" : "Nearly Natural";
-  const dotColor = brand.is_fully_natural ? "bg-natural" : "bg-nearly";
-
   const formatCategory = (cat: string) =>
     cat
       .split("-")
@@ -96,16 +93,8 @@ export default async function BrandPage({ params }: Props) {
             </h1>
           </div>
 
-          {/* Tier badge + Fiber type pills */}
+          {/* Fiber type pills */}
           <div className="flex flex-wrap gap-2">
-            <span className="flex items-center gap-1.5 rounded-full border border-muted-light px-3 py-1">
-              <span
-                className={`h-[6px] w-[6px] rounded-full ${dotColor}`}
-              />
-              <span className="font-body text-[13px] leading-[16px] text-secondary">
-                {tierLabel}
-              </span>
-            </span>
             {brand.fiber_types.map((fiber) => (
               <span
                 key={fiber}

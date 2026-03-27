@@ -1,11 +1,10 @@
 "use client";
 
-import { useMemo, useCallback, useState, useEffect, useTransition, useRef } from "react";
+import { useMemo, useCallback, useState, useEffect, useTransition } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import Link from "next/link";
-import type { FilterState } from "@/types/database";
+import type { FilterState, ProductWithBrand } from "@/types/database";
 import { ProductCard } from "@/components/product/ProductCard";
-import { fetchGroupedProducts, type BrandGroup } from "@/app/shop/actions";
+import { fetchProducts } from "@/app/shop/actions";
 
 type TierFilter = "all" | "natural" | "nearly";
 type SortOption = "newest" | "price-asc" | "price-desc";
@@ -16,8 +15,18 @@ const SORT_LABELS: Record<SortOption, string> = {
   "price-desc": "Price: High to Low",
 };
 
+const FIBER_FAMILIES: { label: string; members: string[] }[] = [
+  { label: "Cotton", members: ["Cotton", "Organic Cotton", "Organic Pima Cotton", "Pima Cotton"] },
+  { label: "Wool", members: ["Wool", "Merino Wool", "Lambswool", "Cashmere", "Mohair", "Alpaca"] },
+  { label: "Linen", members: ["Linen"] },
+  { label: "Hemp", members: ["Hemp"] },
+  { label: "Silk", members: ["Silk"] },
+  { label: "Lyocell & Modal", members: ["Bamboo Lyocell", "Tencel Lyocell", "Modal", "Viscose"] },
+  { label: "Spandex", members: ["Spandex"] },
+];
+
 interface ShopContentProps {
-  initialGroups: BrandGroup[];
+  initialProducts: ProductWithBrand[];
   initialTotalCount: number;
   brands: { name: string; slug: string }[];
   categories: string[];
@@ -118,105 +127,8 @@ function AccordionSection({
   );
 }
 
-function BrandRow({ group }: { group: BrandGroup }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-
-  const checkScroll = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 0);
-    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 1);
-  }, []);
-
-  useEffect(() => {
-    checkScroll();
-    const el = scrollRef.current;
-    if (!el) return;
-    el.addEventListener("scroll", checkScroll, { passive: true });
-    window.addEventListener("resize", checkScroll);
-    return () => {
-      el.removeEventListener("scroll", checkScroll);
-      window.removeEventListener("resize", checkScroll);
-    };
-  }, [checkScroll, group.products]);
-
-  const scroll = (direction: "left" | "right") => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const cardWidth = el.querySelector("a")?.offsetWidth ?? 300;
-    el.scrollBy({ left: direction === "left" ? -cardWidth - 20 : cardWidth + 20, behavior: "smooth" });
-  };
-
-  return (
-    <div className="group/brand">
-      {/* Brand header */}
-      <div className="mb-5 flex items-baseline justify-between">
-        <Link
-          href={`/brand/${group.brandSlug}`}
-          className="group/link flex items-baseline gap-3"
-        >
-          <h2 className="font-display text-[18px] font-semibold tracking-[-0.01em] text-text transition-colors duration-200 group-hover/link:text-accent">
-            {group.brandName}
-          </h2>
-          <span className="font-body text-[13px] text-muted">
-            {group.totalForBrand} product{group.totalForBrand !== 1 ? "s" : ""}
-          </span>
-        </Link>
-        <Link
-          href={`/brand/${group.brandSlug}`}
-          className="font-body text-[13px] text-secondary transition-colors duration-200 hover:text-accent"
-        >
-          View all <span className="inline-block transition-transform duration-200 hover:translate-x-0.5">&rarr;</span>
-        </Link>
-      </div>
-
-      {/* Horizontal scrolling product row */}
-      <div className="relative">
-        {canScrollLeft && (
-          <>
-            <div className="pointer-events-none absolute -left-1 top-0 z-[5] h-[calc(100%-60px)] w-16 bg-gradient-to-r from-background to-transparent" />
-            <button
-              onClick={() => scroll("left")}
-              className="absolute -left-3 top-1/3 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-surface-dark bg-background shadow-sm transition-all duration-200 hover:bg-surface hover:shadow-md"
-            >
-              <svg className="h-4 w-4 text-text" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-              </svg>
-            </button>
-          </>
-        )}
-        <div
-          ref={scrollRef}
-          className="flex gap-5 overflow-x-auto scrollbar-hide scroll-smooth"
-        >
-          {group.products.map((product) => (
-            <div key={product.id} className="w-[260px] shrink-0 sm:w-[280px]">
-              <ProductCard product={product} />
-            </div>
-          ))}
-        </div>
-        {canScrollRight && (
-          <>
-            <div className="pointer-events-none absolute -right-1 top-0 z-[5] h-[calc(100%-60px)] w-16 bg-gradient-to-l from-background to-transparent" />
-            <button
-              onClick={() => scroll("right")}
-              className="absolute -right-3 top-1/3 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-surface-dark bg-background shadow-sm transition-all duration-200 hover:bg-surface hover:shadow-md"
-            >
-              <svg className="h-4 w-4 text-text" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-              </svg>
-            </button>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
 export function ShopContent({
-  initialGroups,
+  initialProducts,
   initialTotalCount,
   brands,
   categories,
@@ -228,8 +140,10 @@ export function ShopContent({
   const [filterOpen, setFilterOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  const [groups, setGroups] = useState(initialGroups);
+  const [products, setProducts] = useState(initialProducts);
   const [totalCount, setTotalCount] = useState(initialTotalCount);
+  const [page, setPage] = useState(1);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   useEffect(() => {
     if (filterOpen) {
@@ -270,13 +184,29 @@ export function ShopContent({
     [selectedCategory, selectedBrands, selectedFibers, minPrice, maxPrice, sort, tier]
   );
 
+  // When filters change, reset to page 1
   useEffect(() => {
+    setPage(1);
     startTransition(async () => {
-      const result = await fetchGroupedProducts(currentFilters);
-      setGroups(result.groups);
+      const result = await fetchProducts({ ...currentFilters, page: 1 });
+      setProducts(result.products);
       setTotalCount(result.totalCount);
     });
   }, [currentFilters]);
+
+  const loadMore = useCallback(async () => {
+    const nextPage = page + 1;
+    setIsLoadingMore(true);
+    try {
+      const result = await fetchProducts({ ...currentFilters, page: nextPage });
+      setProducts((prev) => [...prev, ...result.products]);
+      setPage(nextPage);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [currentFilters, page]);
+
+  const hasMore = products.length < totalCount;
 
   const setParams = useCallback(
     (updates: Record<string, string | null>) => {
@@ -298,10 +228,21 @@ export function ShopContent({
   const setSort = (s: SortOption) => setParams({ sort: s === "newest" ? null : s });
   const setCategory = (c: string | null) => setParams({ category: c });
 
-  const toggleFiber = (fiber: string) => {
-    const next = selectedFibers.includes(fiber)
-      ? selectedFibers.filter((f) => f !== fiber)
-      : [...selectedFibers, fiber];
+  // Build fiber families filtered to only materials that exist in the DB
+  const fiberFamilies = useMemo(
+    () =>
+      FIBER_FAMILIES.map((fam) => ({
+        ...fam,
+        members: fam.members.filter((m) => materials.includes(m)),
+      })).filter((fam) => fam.members.length > 0),
+    [materials]
+  );
+
+  const toggleFiberFamily = (family: { label: string; members: string[] }) => {
+    const allSelected = family.members.every((m) => selectedFibers.includes(m));
+    const next = allSelected
+      ? selectedFibers.filter((f) => !family.members.includes(f))
+      : [...new Set([...selectedFibers, ...family.members])];
     setParams({ fiber: next.length ? next.join(",") : null });
   };
 
@@ -352,7 +293,7 @@ export function ShopContent({
                 onClick={() => setCategory(selectedCategory === cat ? null : cat)}
                 className={`shrink-0 rounded-full px-4 py-2 font-body text-[13px] font-medium transition-all duration-200 ${
                   selectedCategory === cat
-                    ? "bg-[#1A8A5A] text-white shadow-sm"
+                    ? "bg-accent text-white shadow-sm"
                     : "text-text hover:bg-surface"
                 }`}
               >
@@ -399,12 +340,12 @@ export function ShopContent({
           {/* Persistent sidebar — desktop only */}
           <aside className="hidden w-[220px] shrink-0 border-r border-muted-light pr-6 pt-8 lg:flex lg:flex-col lg:gap-8">
             <FilterSection title="Fiber Type">
-              {materials.map((mat) => (
+              {fiberFamilies.map((fam) => (
                 <FilterCheckbox
-                  key={mat}
-                  label={mat}
-                  checked={selectedFibers.includes(mat)}
-                  onChange={() => toggleFiber(mat)}
+                  key={fam.label}
+                  label={fam.label}
+                  checked={fam.members.some((m) => selectedFibers.includes(m))}
+                  onChange={() => toggleFiberFamily(fam)}
                 />
               ))}
             </FilterSection>
@@ -420,21 +361,6 @@ export function ShopContent({
                   onChange={() => toggleBrand(brand.slug)}
                 />
               ))}
-            </FilterSection>
-
-            <div className="h-px w-full bg-muted-light" />
-
-            <FilterSection title="Tier">
-              <FilterCheckbox
-                label="100% Natural"
-                checked={tier === "natural"}
-                onChange={() => setTier(tier === "natural" ? "all" : "natural")}
-              />
-              <FilterCheckbox
-                label="Nearly Natural"
-                checked={tier === "nearly"}
-                onChange={() => setTier(tier === "nearly" ? "all" : "nearly")}
-              />
             </FilterSection>
 
             <div className="h-px w-full bg-muted-light" />
@@ -471,26 +397,35 @@ export function ShopContent({
                 "Loading..."
               ) : (
                 <>
-                  {totalCount.toLocaleString()} product{totalCount !== 1 ? "s" : ""} across{" "}
-                  {groups.length} brand{groups.length !== 1 ? "s" : ""}
+                  {totalCount.toLocaleString()} product{totalCount !== 1 ? "s" : ""}
                 </>
               )}
             </p>
 
             <div
-              className={`flex flex-col transition-opacity duration-300 ease-out ${
+              className={`transition-opacity duration-300 ease-out ${
                 isPending ? "opacity-50" : "opacity-100"
               }`}
             >
-              {groups.map((group, i) => (
-                <div key={group.brandSlug}>
-                  {i > 0 && (
-                    <div className="my-10 h-px w-full bg-surface-dark" />
-                  )}
-                  <BrandRow group={group} />
+              <div className="grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
+                {products.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+
+              {!isPending && hasMore && (
+                <div className="mt-12 flex justify-center">
+                  <button
+                    onClick={loadMore}
+                    disabled={isLoadingMore}
+                    className="rounded-full border border-surface-dark px-8 py-3 font-body text-[14px] font-medium text-text transition-colors hover:bg-surface disabled:opacity-50"
+                  >
+                    {isLoadingMore ? "Loading..." : "Load more"}
+                  </button>
                 </div>
-              ))}
-              {!isPending && groups.length === 0 && (
+              )}
+
+              {!isPending && products.length === 0 && (
                 <div className="flex flex-col items-center gap-4 py-16">
                   <p className="font-body text-[16px] text-secondary">
                     No products match the selected filters.
@@ -565,19 +500,19 @@ export function ShopContent({
 
               <AccordionSection label="Fiber Type" defaultOpen={selectedFibers.length > 0}>
                 <div className="flex flex-col gap-0.5">
-                  {materials.map((mat) => {
-                    const active = selectedFibers.includes(mat);
+                  {fiberFamilies.map((fam) => {
+                    const active = fam.members.some((m) => selectedFibers.includes(m));
                     return (
                       <button
-                        key={mat}
-                        onClick={() => toggleFiber(mat)}
+                        key={fam.label}
+                        onClick={() => toggleFiberFamily(fam)}
                         className={`flex items-center justify-between rounded-md px-3 py-2.5 text-left font-body text-[14px] transition-colors ${
                           active
                             ? "bg-surface font-medium text-text"
                             : "text-secondary hover:bg-surface/60 hover:text-text"
                         }`}
                       >
-                        {mat}
+                        {fam.label}
                         {active && (
                           <svg className="h-4 w-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
@@ -586,35 +521,6 @@ export function ShopContent({
                       </button>
                     );
                   })}
-                </div>
-              </AccordionSection>
-
-              <AccordionSection label="Tier" defaultOpen={tier !== "all"}>
-                <div className="flex flex-col gap-0.5">
-                  {(
-                    [
-                      ["all", "All Products"],
-                      ["natural", "100% Natural"],
-                      ["nearly", "Nearly Natural"],
-                    ] as const
-                  ).map(([value, label]) => (
-                    <button
-                      key={value}
-                      onClick={() => setTier(value)}
-                      className={`flex items-center justify-between rounded-md px-3 py-2.5 text-left font-body text-[14px] transition-colors ${
-                        tier === value
-                          ? "bg-surface font-medium text-text"
-                          : "text-secondary hover:bg-surface/60 hover:text-text"
-                      }`}
-                    >
-                      {label}
-                      {tier === value && (
-                        <svg className="h-4 w-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                        </svg>
-                      )}
-                    </button>
-                  ))}
                 </div>
               </AccordionSection>
 

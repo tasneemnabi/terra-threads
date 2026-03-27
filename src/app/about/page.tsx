@@ -110,43 +110,13 @@ export default function AboutPage() {
               How We Curate
             </p>
             <h2 className="mt-3 font-display text-[28px] font-semibold leading-[36px] tracking-[-0.01em] text-text sm:text-[32px] sm:leading-[40px]">
-              Two tiers. Full transparency.
+              Every fiber, listed. No exceptions.
             </h2>
             <p className="mt-5 text-[17px] leading-[28px] text-secondary sm:text-[18px] sm:leading-[30px]">
-              Not all &ldquo;natural&rdquo; brands are created equal. Some use
-              100% natural fibers across their entire catalog. Others include a
-              small amount of elastane for stretch. We think both deserve
-              recognition — but you deserve to know the difference.
-            </p>
-
-            <div className="mt-8 space-y-6">
-              <div className="rounded-lg border border-surface-dark bg-surface p-6">
-                <h3 className="font-display text-[18px] font-semibold text-text">
-                  100% Natural
-                </h3>
-                <p className="mt-2 text-[15px] leading-[24px] text-secondary">
-                  Zero synthetics in the entire catalog. Every garment is made
-                  exclusively from natural or plant-derived fibers — wool,
-                  cotton, linen, hemp, silk, Tencel, lyocell, and modal.
-                </p>
-              </div>
-
-              <div className="rounded-lg border border-surface-dark bg-surface p-6">
-                <h3 className="font-display text-[18px] font-semibold text-text">
-                  Nearly Natural
-                </h3>
-                <p className="mt-2 text-[15px] leading-[24px] text-secondary">
-                  Up to 10% elastane or spandex for stretch, with the remaining
-                  90%+ from natural fibers. Semi-synthetics like Tencel, lyocell,
-                  and modal are treated as natural. Polyester, nylon, and acrylic
-                  are banned in any amount.
-                </p>
-              </div>
-            </div>
-
-            <p className="mt-6 text-[15px] leading-[24px] text-muted">
-              We display the full material composition for every brand so you can
-              make informed choices. Transparency is non-negotiable.
+              Every product on FIBER shows its full material composition. No
+              polyester, no nylon, no acrylic — ever. Some products include a
+              small amount of spandex for stretch (up to 10%), and we show that
+              too. You always know exactly what you&apos;re wearing.
             </p>
           </div>
         </div>

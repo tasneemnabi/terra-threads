@@ -1,8 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
-import { NaturalBadge } from "@/components/brand/NaturalBadge";
 import { FiberFactsMini } from "@/components/product/FiberFactsMini";
-import { formatPrice, isAllNatural } from "@/lib/utils";
+import { formatPrice } from "@/lib/utils";
 import type { ProductWithBrand } from "@/types/database";
 
 interface ProductCardProps {
@@ -31,18 +30,13 @@ export function ProductCard({ product }: ProductCardProps) {
             </svg>
           </div>
         )}
-        {isAllNatural(product.materials) && (
-          <div className="absolute left-3 top-3">
-            <NaturalBadge />
-          </div>
-        )}
       </div>
 
-      <div className="pt-3">
+      <div className="flex flex-col pt-3">
         <p className="font-body text-[11px] font-normal uppercase tracking-[0.5px] text-secondary">
           {product.brand_name}
         </p>
-        <h3 className="mt-1 line-clamp-2 font-body text-[14px] font-medium leading-snug text-text transition-colors duration-200 group-hover:text-accent">
+        <h3 className="mt-1 min-h-[2.75em] line-clamp-2 font-body text-[14px] font-medium leading-snug text-text transition-colors duration-200 group-hover:text-accent">
           {product.name}
         </h3>
         <div className="mt-1.5">
