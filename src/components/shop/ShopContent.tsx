@@ -340,8 +340,8 @@ export function ShopContent({
               onClick={() => setCategory(null)}
               className={`shrink-0 rounded-full px-4 py-2 font-body text-[13px] font-medium transition-all duration-200 ${
                 selectedCategory === null
-                  ? "bg-[#1A8A5A] text-white shadow-sm"
-                  : "text-text hover:bg-surface"
+                  ? "bg-accent text-white shadow-sm"
+                  : "bg-surface-dark/40 text-secondary hover:bg-surface-dark/60 hover:text-text"
               }`}
             >
               All
@@ -365,12 +365,7 @@ export function ShopContent({
 
       {/* Filter info + button row */}
       <section className="px-5 sm:px-8 lg:px-20 pt-4">
-        <div className="mx-auto flex max-w-[1280px] items-center justify-between">
-          <p className="font-body text-[12px] text-muted">
-            {isPending
-              ? "Loading..."
-              : `Showing ${totalCount.toLocaleString()} products across ${groups.length} brand${groups.length !== 1 ? "s" : ""}`}
-          </p>
+        <div className="mx-auto flex max-w-[1280px] items-center justify-end">
           <button
             onClick={() => setFilterOpen(true)}
             className="flex items-center gap-1.5 rounded-full border border-muted-light px-4 py-2 font-body text-[13px] text-text transition-colors hover:border-muted"
