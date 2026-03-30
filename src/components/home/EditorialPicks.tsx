@@ -68,7 +68,7 @@ export function EditorialPicks({ products }: EditorialPicksProps) {
     <section className="px-5 sm:px-8 lg:px-20 py-20 sm:py-28">
       <div className="mx-auto max-w-[1280px]">
         <div className="flex items-end justify-between mb-10">
-          <h2 className="font-display text-[24px] sm:text-[28px] font-semibold leading-tight tracking-[-0.01em] text-text">
+          <h2 className="font-display text-[24px] sm:text-[28px] font-semibold leading-tight tracking-[-0.01em] text-text text-balance">
             New arrivals
           </h2>
           <Link

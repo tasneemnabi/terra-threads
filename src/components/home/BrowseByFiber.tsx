@@ -34,7 +34,7 @@ export function BrowseByFiber() {
         <p className="font-body text-[13px] font-medium uppercase leading-[16px] tracking-[0.08em] text-secondary">
           Browse by fiber
         </p>
-        <h2 className="mt-2 font-display text-[28px] font-semibold leading-[34px] tracking-[-0.01em] text-text">
+        <h2 className="mt-2 font-display text-[28px] font-semibold leading-[34px] tracking-[-0.01em] text-text text-balance">
           Find your material
         </h2>
 

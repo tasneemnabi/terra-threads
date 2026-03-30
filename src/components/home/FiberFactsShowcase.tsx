@@ -18,7 +18,7 @@ export function FiberFactsShowcase({ product }: FiberFactsShowcaseProps) {
 
           {/* Copy */}
           <div className="flex-1 lg:pt-2">
-            <h2 className="font-display text-[24px] sm:text-[28px] font-semibold leading-tight tracking-[-0.01em] text-text">
+            <h2 className="font-display text-[24px] sm:text-[28px] font-semibold leading-tight tracking-[-0.01em] text-text text-balance">
               Every fiber, listed.
             </h2>
             <p className="mt-4 max-w-[480px] font-body text-[16px] leading-[26px] text-secondary">

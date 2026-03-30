@@ -14,7 +14,7 @@ export function Hero({ products }: HeroProps) {
       <div className="mx-auto max-w-[1280px] flex flex-col lg:flex-row lg:items-center lg:gap-16">
         {/* Text */}
         <div className="flex-1">
-          <h1 className="max-w-[620px] font-display text-[40px] leading-[1.08] sm:text-[56px] lg:text-[72px] font-bold tracking-[-0.035em] text-text">
+          <h1 className="max-w-[620px] font-display text-[40px] leading-[1.08] sm:text-[56px] lg:text-[72px] font-bold tracking-[-0.03em] text-text text-balance">
             Clothing without
             <br />
             <span className="text-accent">the plastic.</span>
