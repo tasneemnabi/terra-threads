@@ -395,27 +395,31 @@ export function ShopContent({
         </div>
       )}
 
-      {/* Product Type pills (shown when a category is selected and types exist) */}
+      {/* Product Type (shown when a category is selected and types exist) */}
       {productTypes.length > 0 && selectedCategory && (
         <div className="border-b border-muted-light/60 pb-4">
-          <p className="mb-2.5 font-display text-[14px] font-semibold text-text">
+          <p className="mb-2 font-display text-[14px] font-semibold text-text">
             Type
           </p>
-          <div className="flex flex-wrap gap-2">
-            {productTypes.map((pt) => {
+          <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
+            {productTypes.map((pt, i) => {
               const isActive = selectedProductType === pt;
               return (
-                <button
-                  key={pt}
-                  onClick={() => setProductType(isActive ? null : pt)}
-                  className={`rounded-full px-3.5 py-1.5 font-body text-[12px] font-medium transition-colors ${
-                    isActive
-                      ? "bg-accent text-background"
-                      : "border border-muted-light text-secondary hover:border-accent/40 hover:text-accent"
-                  }`}
-                >
-                  {PRODUCT_TYPE_LABELS[pt] || formatCategory(pt)}
-                </button>
+                <span key={pt} className="flex items-center">
+                  <button
+                    onClick={() => setProductType(isActive ? null : pt)}
+                    className={`font-body text-[13px] transition-colors ${
+                      isActive
+                        ? "font-medium text-accent"
+                        : "text-muted hover:text-accent"
+                    }`}
+                  >
+                    {PRODUCT_TYPE_LABELS[pt] || formatCategory(pt)}
+                  </button>
+                  {i < productTypes.length - 1 && (
+                    <span className="ml-1 text-[11px] text-muted-light">/</span>
+                  )}
+                </span>
               );
             })}
           </div>
