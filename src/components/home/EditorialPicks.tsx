@@ -73,7 +73,7 @@ export function EditorialPicks({ products }: EditorialPicksProps) {
           </h2>
           <Link
             href="/shop"
-            className="hidden sm:block font-body text-[14px] font-medium text-accent hover:text-accent/80 transition-colors"
+            className="hidden sm:inline-flex items-center gap-1.5 font-body text-[15px] font-medium text-accent hover:text-accent/80 transition-colors"
           >
             See all &rarr;
           </Link>
