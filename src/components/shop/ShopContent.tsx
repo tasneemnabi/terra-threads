@@ -395,6 +395,33 @@ export function ShopContent({
         </div>
       )}
 
+      {/* Product Type pills (shown when a category is selected and types exist) */}
+      {productTypes.length > 0 && selectedCategory && (
+        <div className="border-b border-muted-light/60 pb-4">
+          <p className="mb-2.5 font-display text-[14px] font-semibold text-text">
+            Type
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {productTypes.map((pt) => {
+              const isActive = selectedProductType === pt;
+              return (
+                <button
+                  key={pt}
+                  onClick={() => setProductType(isActive ? null : pt)}
+                  className={`rounded-full px-3.5 py-1.5 font-body text-[12px] font-medium transition-colors ${
+                    isActive
+                      ? "bg-accent text-background"
+                      : "border border-muted-light text-secondary hover:border-accent/40 hover:text-accent"
+                  }`}
+                >
+                  {PRODUCT_TYPE_LABELS[pt] || formatCategory(pt)}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Gender */}
       {audiences.length > 0 && (
         <AccordionFilter title="Gender" defaultOpen={selectedAudience !== null}>
@@ -422,20 +449,6 @@ export function ShopContent({
           />
         ))}
       </AccordionFilter>
-
-      {/* Product Type (shown when a category is selected and types exist) */}
-      {productTypes.length > 0 && selectedCategory && (
-        <AccordionFilter title="Type" defaultOpen={selectedProductType !== null}>
-          {productTypes.map((pt) => (
-            <FilterCheckbox
-              key={pt}
-              label={PRODUCT_TYPE_LABELS[pt] || formatCategory(pt)}
-              checked={selectedProductType === pt}
-              onChange={() => setProductType(selectedProductType === pt ? null : pt)}
-            />
-          ))}
-        </AccordionFilter>
-      )}
 
       {/* Fiber Type */}
       <AccordionFilter title="Fiber Type" defaultOpen={selectedFibers.length > 0}>
