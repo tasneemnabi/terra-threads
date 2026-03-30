@@ -87,15 +87,7 @@ export function Footer() {
       </div>
       <div className="mx-auto mt-12 max-w-[1280px] border-t border-surface-dark pt-6">
         <p className="font-body text-[12px] leading-[16px] text-muted-light">
-          Logos provided by{" "}
-          <a
-            href="https://logo.dev"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline hover:text-muted"
-          >
-            Logo.dev
-          </a>
+          &copy; {new Date().getFullYear()} FIBER
         </p>
       </div>
     </footer>
