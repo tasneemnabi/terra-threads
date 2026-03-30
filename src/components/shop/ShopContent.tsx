@@ -69,7 +69,7 @@ function FilterCheckbox({
       <div
         className={`flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-[3px] border transition-all duration-150 ${
           checked
-            ? "border-text bg-text"
+            ? "border-accent bg-accent"
             : "border-muted-light group-hover/cb:border-muted"
         }`}
       >
@@ -144,7 +144,7 @@ function ActiveFilterChip({
   return (
     <button
       onClick={onRemove}
-      className="flex items-center gap-1.5 rounded-[4px] border border-text px-3 py-1.5 font-body text-[12px] font-medium text-text transition-colors hover:bg-surface"
+      className="flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1.5 font-body text-[12px] font-medium text-accent transition-colors hover:bg-accent/20"
     >
       {label}
       <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
