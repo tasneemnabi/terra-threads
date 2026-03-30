@@ -80,7 +80,6 @@ export async function getHomepageProducts(limit = 6): Promise<ProductWithBrand[]
   const { data, error } = await supabase
     .from("products_with_materials")
     .select("*")
-    .eq("category", "Clothing")
     .not("image_url", "is", null)
     .order("created_at", { ascending: false })
     .limit(limit);

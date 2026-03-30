@@ -6,13 +6,13 @@ import { FinalCTA } from "@/components/home/FinalCTA";
 import { getHomepageProducts } from "@/lib/queries/products";
 
 export default async function HomePage() {
-  const products = await getHomepageProducts(9);
+  const products = await getHomepageProducts(5);
 
   return (
     <>
-      <Hero products={products.slice(0, 4)} />
-      <EditorialPicks products={products.slice(4)} />
-      <FiberFactsShowcase product={products[0]} />
+      <Hero />
+      <EditorialPicks products={products} />
+      {products[0] && <FiberFactsShowcase product={products[0]} />}
       <BrowseByFiber />
       <FinalCTA />
     </>
