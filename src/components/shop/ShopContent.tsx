@@ -198,7 +198,10 @@ export function ShopContent({
   const tier = (searchParams.get("tier") as TierFilter) || "all";
   const selectedCategory = searchParams.get("category") || null;
   const selectedAudience = searchParams.get("audience") || null;
-  const selectedProductType = searchParams.get("type") || null;
+  const selectedProductTypes = useMemo(
+    () => searchParams.get("type")?.split(",").filter(Boolean) ?? [],
+    [searchParams]
+  );
   const selectedFibers = useMemo(
     () => searchParams.get("fiber")?.split(",").filter(Boolean) ?? [],
     [searchParams]
@@ -215,7 +218,7 @@ export function ShopContent({
     () => ({
       category: selectedCategory || undefined,
       audience: selectedAudience || undefined,
-      productType: selectedProductType || undefined,
+      productTypes: selectedProductTypes.length ? selectedProductTypes : undefined,
       brands: selectedBrands.length ? selectedBrands : undefined,
       materials: selectedFibers.length ? selectedFibers : undefined,
       minPrice,
@@ -223,7 +226,7 @@ export function ShopContent({
       sort,
       tier,
     }),
-    [selectedCategory, selectedAudience, selectedProductType, selectedBrands, selectedFibers, minPrice, maxPrice, sort, tier]
+    [selectedCategory, selectedAudience, selectedProductTypes, selectedBrands, selectedFibers, minPrice, maxPrice, sort, tier]
   );
 
   // When filters change, reset to page 1
@@ -298,7 +301,12 @@ export function ShopContent({
     }
   };
   const setAudience = (a: string | null) => setParams({ audience: a });
-  const setProductType = (t: string | null) => setParams({ type: t });
+  const toggleProductType = (t: string) => {
+    const next = selectedProductTypes.includes(t)
+      ? selectedProductTypes.filter((pt) => pt !== t)
+      : [...selectedProductTypes, t];
+    setParams({ type: next.length ? next.join(",") : null });
+  };
 
   // Build fiber groups filtered to only materials that exist in the DB
   const fiberGroups = useMemo(
@@ -342,7 +350,7 @@ export function ShopContent({
   const hasActiveFilters =
     selectedAudience !== null ||
     selectedCategory !== null ||
-    selectedProductType !== null ||
+    selectedProductTypes.length > 0 ||
     selectedFibers.length > 0 ||
     selectedBrands.length > 0 ||
     minPrice !== undefined ||
@@ -362,8 +370,8 @@ export function ShopContent({
   if (selectedCategory) {
     activeChips.push({ label: formatCategory(selectedCategory), onRemove: () => setCategory(null) });
   }
-  if (selectedProductType) {
-    activeChips.push({ label: PRODUCT_TYPE_LABELS[selectedProductType] || selectedProductType, onRemove: () => setProductType(null) });
+  for (const pt of selectedProductTypes) {
+    activeChips.push({ label: PRODUCT_TYPE_LABELS[pt] || formatCategory(pt), onRemove: () => toggleProductType(pt) });
   }
   for (const fam of allFiberFamilies) {
     if (fam.members.some((m) => selectedFibers.includes(m))) {
@@ -423,22 +431,14 @@ export function ShopContent({
             {/* Type sub-filter nested under selected category */}
             {selectedCategory === cat && productTypes.length > 0 && (
               <div className="ml-6 mt-0.5 mb-1 flex flex-col gap-0.5">
-                {productTypes.map((pt) => {
-                  const isActive = selectedProductType === pt;
-                  return (
-                    <button
-                      key={pt}
-                      onClick={() => setProductType(isActive ? null : pt)}
-                      className={`py-0.5 text-left font-body text-[12px] transition-colors ${
-                        isActive
-                          ? "font-medium text-accent"
-                          : "text-muted hover:text-accent"
-                      }`}
-                    >
-                      {PRODUCT_TYPE_LABELS[pt] || formatCategory(pt)}
-                    </button>
-                  );
-                })}
+                {productTypes.map((pt) => (
+                  <FilterCheckbox
+                    key={pt}
+                    label={PRODUCT_TYPE_LABELS[pt] || formatCategory(pt)}
+                    checked={selectedProductTypes.includes(pt)}
+                    onChange={() => toggleProductType(pt)}
+                  />
+                ))}
               </div>
             )}
           </div>

@@ -27,7 +27,7 @@ export default async function ShopPage({
     sort: typeof params.sort === "string" ? (params.sort as FilterState["sort"]) : undefined,
     tier: typeof params.tier === "string" ? (params.tier as FilterState["tier"]) : undefined,
     audience: typeof params.audience === "string" ? params.audience : undefined,
-    productType: typeof params.type === "string" ? params.type : undefined,
+    productTypes: typeof params.type === "string" ? params.type.split(",").filter(Boolean) : undefined,
     page: 1,
   };
 

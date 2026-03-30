@@ -22,7 +22,7 @@ export async function getFilteredProducts(
     p_sort: filters.sort || "newest",
     p_tier: filters.tier && filters.tier !== "all" ? filters.tier : null,
     p_audience: filters.audience || null,
-    p_product_type: filters.productType || null,
+    p_product_type: filters.productTypes?.length ? filters.productTypes : null,
   });
 
   if (error) {
