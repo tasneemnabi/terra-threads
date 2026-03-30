@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useCallback, useState, useEffect, useTransition } from "react";
+import { useMemo, useCallback, useState, useEffect, useRef, useTransition } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import type { FilterState, ProductWithBrand } from "@/types/database";
 import { ProductCard } from "@/components/product/ProductCard";
@@ -249,6 +249,25 @@ export function ShopContent({
   }, [currentFilters, page]);
 
   const hasMore = products.length < totalCount;
+
+  // Infinite scroll via intersection observer
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoadingMore && !isPending) {
+          loadMore();
+        }
+      },
+      { rootMargin: "400px" }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, isLoadingMore, isPending, loadMore]);
 
   const setParams = useCallback(
     (updates: Record<string, string | null>) => {
@@ -596,14 +615,10 @@ export function ShopContent({
               </div>
 
               {!isPending && hasMore && (
-                <div className="mt-12 flex justify-center">
-                  <button
-                    onClick={loadMore}
-                    disabled={isLoadingMore}
-                    className="rounded-full border border-surface-dark px-8 py-3 font-body text-[14px] font-medium text-text transition-colors hover:bg-surface disabled:opacity-50"
-                  >
-                    {isLoadingMore ? "Loading..." : "Load more"}
-                  </button>
+                <div ref={sentinelRef} className="mt-12 flex justify-center py-4">
+                  {isLoadingMore && (
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-surface-dark border-t-transparent" />
+                  )}
                 </div>
               )}
 
