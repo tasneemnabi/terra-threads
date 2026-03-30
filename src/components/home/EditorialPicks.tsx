@@ -11,9 +11,11 @@ interface EditorialPicksProps {
 function ProductCard({
   product,
   large = false,
+  priority = false,
 }: {
   product: ProductWithBrand;
   large?: boolean;
+  priority?: boolean;
 }) {
   return (
     <Link href={`/product/${product.slug}`} className="group block">
@@ -27,6 +29,7 @@ function ProductCard({
             src={product.image_url}
             alt={product.name}
             fill
+            priority={priority}
             className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
             sizes={
               large
@@ -82,12 +85,12 @@ export function EditorialPicks({ products }: EditorialPicksProps) {
         {/* Featured + side grid */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Large featured product */}
-          <ProductCard product={featured} large />
+          <ProductCard product={featured} large priority />
 
           {/* 2x2 grid of smaller products */}
           <div className="grid grid-cols-2 gap-4 sm:gap-6">
-            {rest.map((product) => (
-              <ProductCard key={product.id} product={product} />
+            {rest.map((product, i) => (
+              <ProductCard key={product.id} product={product} priority={i < 2} />
             ))}
           </div>
         </div>
