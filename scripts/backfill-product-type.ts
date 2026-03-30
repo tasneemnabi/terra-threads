@@ -6,7 +6,7 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
-import { classifyProductType, isNonClothing } from "./lib/product-classifier";
+import { classifyProductType, mapActivewearType, isNonClothing } from "./lib/product-classifier";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SECRET_KEY!;
@@ -54,7 +54,8 @@ async function main() {
       continue;
     }
 
-    const productType = classifyProductType(product.name);
+    const rawType = classifyProductType(product.name);
+    const productType = rawType && product.category === "activewear" ? mapActivewearType(rawType) : rawType;
 
     if (productType) {
       stats.classified++;

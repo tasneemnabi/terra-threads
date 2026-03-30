@@ -128,6 +128,24 @@ export function isAccessory(title: string): boolean {
   return ACCESSORY_KEYWORDS.test(title);
 }
 
+// For activewear, map granular types to 4 broad subcategories
+const ACTIVEWEAR_TYPE_MAP: Record<string, string> = {
+  tops: "tops",
+  bras: "sports-bras",
+  leggings: "bottoms",
+  pants: "bottoms",
+  shorts: "bottoms",
+  skirts: "bottoms",
+  jackets: "outerwear",
+  sweaters: "outerwear",
+  bodysuits: "tops",
+  jumpsuits: "bottoms",
+};
+
+export function mapActivewearType(productType: ProductType): string {
+  return ACTIVEWEAR_TYPE_MAP[productType] || "tops";
+}
+
 export function classifyProductType(
   title: string,
   shopifyProductType?: string,

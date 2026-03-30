@@ -76,7 +76,7 @@ function getImages(product: ShopifyProduct): { primary: string | null; additiona
   };
 }
 
-import { classifyProductType } from "./lib/product-classifier";
+import { classifyProductType, mapActivewearType } from "./lib/product-classifier";
 
 function guessCategory(product: ShopifyProduct): string {
   const text = `${product.title} ${product.product_type} ${(product.tags || []).join(" ")}`.toLowerCase();
@@ -185,7 +185,8 @@ async function syncBrand(
     const images = getImages(shopifyProduct);
     const price = getFirstVariantPrice(shopifyProduct);
     const category = guessCategory(shopifyProduct);
-    const productType = classifyProductType(shopifyProduct.title, shopifyProduct.product_type, shopifyProduct.tags);
+    const rawProductType = classifyProductType(shopifyProduct.title, shopifyProduct.product_type, shopifyProduct.tags);
+    const productType = rawProductType && category === "activewear" ? mapActivewearType(rawProductType) : rawProductType;
     const productSlug = `${brand.slug}-${slugify(shopifyProduct.title)}`;
 
     if (syncStatus === "approved") stats.autoApproved++;

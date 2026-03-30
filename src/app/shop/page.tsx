@@ -60,6 +60,7 @@ export default async function ShopPage({
           initialProducts={products}
           initialTotalCount={totalCount}
           brands={brands.map((b) => ({ name: b.name, slug: b.slug }))}
+          audiences={[...new Set(brands.flatMap((b) => b.audience))].sort()}
           categories={categories}
           initialProductTypes={productTypes}
           materials={materials.map((m) => m.name)}
