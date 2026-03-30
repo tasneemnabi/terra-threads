@@ -10,7 +10,7 @@ export function Hero({ products }: HeroProps) {
   const heroProducts = products.slice(0, 4);
 
   return (
-    <section className="px-5 sm:px-8 lg:px-20 pt-16 sm:pt-24 lg:pt-[120px] pb-20 sm:pb-28 lg:pb-[140px]">
+    <section className="px-5 sm:px-8 lg:px-20 pt-12 sm:pt-16 lg:pt-20 pb-20 sm:pb-28 lg:pb-[120px]">
       <div className="mx-auto max-w-[1280px] flex flex-col lg:flex-row lg:items-center lg:gap-16">
         {/* Text */}
         <div className="flex-1">
