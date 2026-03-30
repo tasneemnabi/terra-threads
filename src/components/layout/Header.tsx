@@ -22,7 +22,7 @@ export function Header() {
             <Link
               key={link.href}
               href={link.href}
-              className="font-body text-[15px] leading-[18px] text-text transition-colors hover:text-muted"
+              className="font-body text-[15px] leading-[18px] text-text transition-colors hover:text-muted py-3"
             >
               {link.label}
             </Link>
