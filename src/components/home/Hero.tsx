@@ -1,14 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
-import type { ProductWithBrand } from "@/types/database";
 
-interface HeroProps {
-  products: ProductWithBrand[];
-}
-
-export function Hero({ products }: HeroProps) {
-  const heroProducts = products.slice(0, 4);
-
+export function Hero() {
   return (
     <section className="px-5 sm:px-8 lg:px-20 pt-12 sm:pt-16 lg:pt-20 pb-20 sm:pb-28 lg:pb-[120px]">
       <div className="mx-auto max-w-[1280px] flex flex-col lg:flex-row lg:items-center lg:gap-16">
@@ -31,43 +24,24 @@ export function Hero({ products }: HeroProps) {
             </Link>
             <Link
               href="/brands"
-              className="inline-flex items-center justify-center rounded-lg border border-text/20 px-8 py-3.5 font-body text-[15px] font-semibold text-text transition-colors hover:bg-text/5"
+              className="inline-flex items-center justify-center rounded-lg border border-text/30 px-8 py-3.5 font-body text-[15px] font-semibold text-text transition-colors hover:bg-text/5"
             >
               Browse Brands
             </Link>
           </div>
         </div>
 
-        {/* Product image grid */}
-        {heroProducts.length >= 4 && (
-          <div className="mt-12 lg:mt-0 w-full max-w-[520px] grid grid-cols-2 gap-3">
-            {heroProducts.map((product, i) => (
-              <Link
-                key={product.id}
-                href={`/product/${product.slug}`}
-                className={`group relative overflow-hidden rounded-xl bg-surface ${
-                  i === 0 ? "aspect-[3/4]" : "aspect-[3/4]"
-                }`}
-              >
-                {product.image_url && (
-                  <Image
-                    src={product.image_url}
-                    alt={product.name}
-                    fill
-                    className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
-                    sizes="(max-width: 1024px) 45vw, 250px"
-                    priority={i < 2}
-                  />
-                )}
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/40 to-transparent p-3 pt-8">
-                  <p className="font-body text-[12px] uppercase tracking-[0.08em] text-white/70">
-                    {product.brand_name}
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
+        {/* Hero illustration */}
+        <div className="mt-12 lg:mt-0 w-full max-w-[480px] flex-shrink-0">
+          <Image
+            src="/hero-texture.png"
+            alt="Abstract textile composition in dusty rose and slate"
+            width={1200}
+            height={1400}
+            className="w-full h-auto"
+            priority
+          />
+        </div>
       </div>
     </section>
   );
