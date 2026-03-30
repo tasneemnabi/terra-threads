@@ -16,7 +16,7 @@
       "is_featured": true,
       "materials": {
         "Organic Cotton": 95,
-        "Elastane": 5
+        "Spandex": 5
       }
     },
     {
@@ -29,7 +29,7 @@
       "is_featured": true,
       "materials": {
         "Organic Cotton": 95,
-        "Elastane": 5
+        "Spandex": 5
       }
     },
     {
@@ -42,7 +42,7 @@
       "is_featured": false,
       "materials": {
         "Organic Cotton": 95,
-        "Elastane": 5
+        "Spandex": 5
       }
     },
     {
@@ -55,7 +55,7 @@
       "is_featured": false,
       "materials": {
         "Organic Cotton": 95,
-        "Elastane": 5
+        "Spandex": 5
       }
     },
     {

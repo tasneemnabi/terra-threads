@@ -289,17 +289,32 @@ async function insertBrand(brand: BrandInput): Promise<void> {
     .select("id")
     .single();
 
+  let brandId: string;
+
   if (brandError) {
     if (brandError.code === "23505") {
-      console.error(`Brand "${brand.name}" (slug: ${brandSlug}) already exists.`);
+      // Brand already exists — look up its ID and add products to it
+      const { data: existing } = await supabase
+        .from("brands")
+        .select("id")
+        .eq("slug", brandSlug)
+        .single();
+
+      if (!existing) {
+        console.error(`Brand "${brand.name}" exists but could not be looked up.`);
+        process.exit(1);
+      }
+
+      brandId = existing.id;
+      console.log(`\n→ Brand "${brand.name}" already exists (${brandId}), adding products...`);
     } else {
       console.error("Failed to insert brand:", brandError.message);
+      process.exit(1);
     }
-    process.exit(1);
+  } else {
+    brandId = brandData!.id;
+    console.log(`\n✓ Inserted brand: ${brand.name} (${brandId})`);
   }
-
-  const brandId = brandData!.id;
-  console.log(`\n✓ Inserted brand: ${brand.name} (${brandId})`);
 
   // 3. Insert products + product_materials
   for (const product of products) {
