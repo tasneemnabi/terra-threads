@@ -95,37 +95,6 @@ function FilterSection({
   );
 }
 
-function AccordionSection({
-  label,
-  children,
-  defaultOpen = false,
-}: {
-  label: string;
-  children: React.ReactNode;
-  defaultOpen?: boolean;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
-  return (
-    <div className="border-b border-surface-dark">
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between py-4 font-body text-[13px] font-semibold uppercase tracking-[0.06em] text-text transition-colors hover:text-secondary"
-      >
-        {label}
-        <svg
-          className={`h-4 w-4 text-muted transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={1.5}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-        </svg>
-      </button>
-      {open && <div className="pb-4">{children}</div>}
-    </div>
-  );
-}
 
 export function ShopContent({
   initialProducts,
@@ -271,42 +240,125 @@ export function ShopContent({
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
       .join(" ");
 
-  return (
+  const sidebarContent = (
     <>
-      {/* Category pills */}
-      <section className="px-5 sm:px-8 lg:px-20 pt-5">
-        <div className="mx-auto max-w-[1280px]">
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+      <FilterSection title="Category">
+        <button
+          onClick={() => setCategory(null)}
+          className={`rounded-md px-1 py-1 text-left font-body text-[13px] transition-colors ${
+            selectedCategory === null
+              ? "font-medium text-accent"
+              : "text-text hover:text-secondary"
+          }`}
+        >
+          All Categories
+        </button>
+        {categories.map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setCategory(selectedCategory === cat ? null : cat)}
+            className={`rounded-md px-1 py-1 text-left font-body text-[13px] transition-colors ${
+              selectedCategory === cat
+                ? "font-medium text-accent"
+                : "text-text hover:text-secondary"
+            }`}
+          >
+            {formatCategory(cat)}
+          </button>
+        ))}
+      </FilterSection>
+
+      <div className="h-px w-full bg-muted-light" />
+
+      <FilterSection title="Sort By">
+        {(Object.entries(SORT_LABELS) as [SortOption, string][]).map(
+          ([value, label]) => (
             <button
-              onClick={() => setCategory(null)}
-              className={`shrink-0 rounded-full px-4 py-2 font-body text-[13px] font-medium transition-all duration-200 ${
-                selectedCategory === null
-                  ? "bg-accent text-white shadow-sm"
-                  : "bg-surface-dark/40 text-secondary hover:bg-surface-dark/60 hover:text-text"
+              key={value}
+              onClick={() => setSort(value)}
+              className={`rounded-md px-1 py-1 text-left font-body text-[13px] transition-colors ${
+                sort === value
+                  ? "font-medium text-accent"
+                  : "text-text hover:text-secondary"
               }`}
             >
-              All
+              {label}
             </button>
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setCategory(selectedCategory === cat ? null : cat)}
-                className={`shrink-0 rounded-full px-4 py-2 font-body text-[13px] font-medium transition-all duration-200 ${
-                  selectedCategory === cat
-                    ? "bg-accent text-white shadow-sm"
-                    : "text-text hover:bg-surface"
-                }`}
-              >
-                {formatCategory(cat)}
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
+          )
+        )}
+      </FilterSection>
 
-      {/* Filter info + button row */}
-      <section className="px-5 sm:px-8 lg:px-20 pt-4">
-        <div className="mx-auto flex max-w-[1280px] items-center justify-end">
+      <div className="h-px w-full bg-muted-light" />
+
+      <FilterSection title="Fiber Type">
+        {fiberFamilies.map((fam) => (
+          <FilterCheckbox
+            key={fam.label}
+            label={fam.label}
+            checked={fam.members.some((m) => selectedFibers.includes(m))}
+            onChange={() => toggleFiberFamily(fam)}
+          />
+        ))}
+      </FilterSection>
+
+      <div className="h-px w-full bg-muted-light" />
+
+      <FilterSection title="Brand">
+        {brands.map((brand) => (
+          <FilterCheckbox
+            key={brand.slug}
+            label={brand.name}
+            checked={selectedBrands.includes(brand.slug)}
+            onChange={() => toggleBrand(brand.slug)}
+          />
+        ))}
+      </FilterSection>
+
+      <div className="h-px w-full bg-muted-light" />
+
+      <FilterSection title="Price Range">
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            placeholder="$0"
+            value={minPrice ?? ""}
+            onChange={(e) =>
+              setParams({ minPrice: e.target.value || null })
+            }
+            className="w-full rounded-md border border-muted-light bg-background px-3 py-2 font-body text-[13px] text-text outline-none focus:border-muted"
+          />
+          <span className="font-body text-[13px] text-muted">–</span>
+          <input
+            type="number"
+            placeholder="$500"
+            value={maxPrice ?? ""}
+            onChange={(e) =>
+              setParams({ maxPrice: e.target.value || null })
+            }
+            className="w-full rounded-md border border-muted-light bg-background px-3 py-2 font-body text-[13px] text-text outline-none focus:border-muted"
+          />
+        </div>
+      </FilterSection>
+
+      {hasActiveFilters && (
+        <>
+          <div className="h-px w-full bg-muted-light" />
+          <button
+            onClick={clearAllFilters}
+            className="font-body text-[13px] font-medium text-accent transition-colors hover:text-accent/80"
+          >
+            Clear all filters
+          </button>
+        </>
+      )}
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile filter button */}
+      <section className="px-5 sm:px-8 lg:hidden pt-5">
+        <div className="mx-auto max-w-[1280px]">
           <button
             onClick={() => setFilterOpen(true)}
             className="flex items-center gap-1.5 rounded-full border border-muted-light px-4 py-2 font-body text-[13px] text-text transition-colors hover:border-muted"
@@ -338,56 +390,8 @@ export function ShopContent({
       <section className="px-5 sm:px-8 lg:px-20 pb-20">
         <div className="mx-auto flex max-w-[1280px] gap-8">
           {/* Persistent sidebar — desktop only */}
-          <aside className="hidden w-[220px] shrink-0 border-r border-muted-light pr-6 pt-8 lg:flex lg:flex-col lg:gap-8">
-            <FilterSection title="Fiber Type">
-              {fiberFamilies.map((fam) => (
-                <FilterCheckbox
-                  key={fam.label}
-                  label={fam.label}
-                  checked={fam.members.some((m) => selectedFibers.includes(m))}
-                  onChange={() => toggleFiberFamily(fam)}
-                />
-              ))}
-            </FilterSection>
-
-            <div className="h-px w-full bg-muted-light" />
-
-            <FilterSection title="Brand">
-              {brands.map((brand) => (
-                <FilterCheckbox
-                  key={brand.slug}
-                  label={brand.name}
-                  checked={selectedBrands.includes(brand.slug)}
-                  onChange={() => toggleBrand(brand.slug)}
-                />
-              ))}
-            </FilterSection>
-
-            <div className="h-px w-full bg-muted-light" />
-
-            <FilterSection title="Price Range">
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  placeholder="$0"
-                  value={minPrice ?? ""}
-                  onChange={(e) =>
-                    setParams({ minPrice: e.target.value || null })
-                  }
-                  className="w-full rounded-md border border-muted-light bg-background px-3 py-2 font-body text-[13px] text-text outline-none focus:border-muted"
-                />
-                <span className="font-body text-[13px] text-muted">–</span>
-                <input
-                  type="number"
-                  placeholder="$500"
-                  value={maxPrice ?? ""}
-                  onChange={(e) =>
-                    setParams({ maxPrice: e.target.value || null })
-                  }
-                  className="w-full rounded-md border border-muted-light bg-background px-3 py-2 font-body text-[13px] text-text outline-none focus:border-muted"
-                />
-              </div>
-            </FilterSection>
+          <aside className="hidden w-[220px] shrink-0 border-r border-muted-light pr-6 pt-8 lg:flex lg:flex-col lg:gap-6">
+            {sidebarContent}
           </aside>
 
           {/* Content column */}
@@ -445,154 +449,36 @@ export function ShopContent({
         </div>
       </section>
 
-      {/* Mobile slide-out filter panel */}
+      {/* Mobile slide-out filter panel (from left) */}
       {filterOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end">
+        <div className="fixed inset-0 z-50 flex justify-start lg:hidden">
           <div
             className="absolute inset-0 bg-text/20"
             onClick={() => setFilterOpen(false)}
           />
-          <div className="relative flex h-full w-full max-w-[400px] flex-col bg-white shadow-2xl animate-in slide-in-from-right duration-200">
-            <div className="flex items-center justify-between border-b border-surface-dark px-8 py-6">
-              <h2 className="font-display text-[20px] font-semibold tracking-[-0.01em] text-text">
-                Filter &amp; Sort
+          <div className="relative flex h-full w-full max-w-[320px] flex-col bg-white shadow-2xl animate-in slide-in-from-left duration-200">
+            <div className="flex items-center justify-between border-b border-surface-dark px-6 py-5">
+              <h2 className="font-display text-[18px] font-semibold tracking-[-0.01em] text-text">
+                Filters
               </h2>
-              <div className="flex items-center gap-4">
-                <span className="font-body text-[13px] text-muted">
-                  {totalCount.toLocaleString()} result{totalCount !== 1 ? "s" : ""}
-                </span>
-                <button
-                  onClick={() => setFilterOpen(false)}
-                  className="flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface hover:text-text"
-                >
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto px-8">
-              <AccordionSection label="Sort By" defaultOpen={sort !== "newest"}>
-                <div className="flex flex-col gap-0.5">
-                  {(Object.entries(SORT_LABELS) as [SortOption, string][]).map(
-                    ([value, label]) => (
-                      <button
-                        key={value}
-                        onClick={() => setSort(value)}
-                        className={`flex items-center justify-between rounded-md px-3 py-2.5 text-left font-body text-[14px] transition-colors ${
-                          sort === value
-                            ? "bg-surface font-medium text-text"
-                            : "text-secondary hover:bg-surface/60 hover:text-text"
-                        }`}
-                      >
-                        {label}
-                        {sort === value && (
-                          <svg className="h-4 w-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                          </svg>
-                        )}
-                      </button>
-                    )
-                  )}
-                </div>
-              </AccordionSection>
-
-              <AccordionSection label="Fiber Type" defaultOpen={selectedFibers.length > 0}>
-                <div className="flex flex-col gap-0.5">
-                  {fiberFamilies.map((fam) => {
-                    const active = fam.members.some((m) => selectedFibers.includes(m));
-                    return (
-                      <button
-                        key={fam.label}
-                        onClick={() => toggleFiberFamily(fam)}
-                        className={`flex items-center justify-between rounded-md px-3 py-2.5 text-left font-body text-[14px] transition-colors ${
-                          active
-                            ? "bg-surface font-medium text-text"
-                            : "text-secondary hover:bg-surface/60 hover:text-text"
-                        }`}
-                      >
-                        {fam.label}
-                        {active && (
-                          <svg className="h-4 w-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                          </svg>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </AccordionSection>
-
-              <AccordionSection label="Brand" defaultOpen={selectedBrands.length > 0}>
-                <div className="flex flex-col gap-0.5">
-                  {brands.map((brand) => {
-                    const active = selectedBrands.includes(brand.slug);
-                    return (
-                      <button
-                        key={brand.slug}
-                        onClick={() => toggleBrand(brand.slug)}
-                        className={`flex items-center justify-between rounded-md px-3 py-2.5 text-left font-body text-[14px] transition-colors ${
-                          active
-                            ? "bg-surface font-medium text-text"
-                            : "text-secondary hover:bg-surface/60 hover:text-text"
-                        }`}
-                      >
-                        {brand.name}
-                        {active && (
-                          <svg className="h-4 w-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                          </svg>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </AccordionSection>
-
-              <AccordionSection label="Price" defaultOpen={minPrice !== undefined || maxPrice !== undefined}>
-                <div className="flex items-center gap-3">
-                  <div className="flex-1">
-                    <label className="mb-1 block font-body text-[12px] text-muted">Min</label>
-                    <input
-                      type="number"
-                      placeholder="$0"
-                      value={minPrice ?? ""}
-                      onChange={(e) =>
-                        setParams({ minPrice: e.target.value || null })
-                      }
-                      className="w-full rounded-md border border-surface-dark bg-background px-3 py-2 font-body text-[14px] text-text outline-none focus:border-muted"
-                    />
-                  </div>
-                  <span className="mt-5 font-body text-[14px] text-muted">—</span>
-                  <div className="flex-1">
-                    <label className="mb-1 block font-body text-[12px] text-muted">Max</label>
-                    <input
-                      type="number"
-                      placeholder="$999"
-                      value={maxPrice ?? ""}
-                      onChange={(e) =>
-                        setParams({ maxPrice: e.target.value || null })
-                      }
-                      className="w-full rounded-md border border-surface-dark bg-background px-3 py-2 font-body text-[14px] text-text outline-none focus:border-muted"
-                    />
-                  </div>
-                </div>
-              </AccordionSection>
-            </div>
-
-            <div className="flex items-center gap-3 border-t border-surface-dark px-8 py-5">
-              {hasActiveFilters && (
-                <button
-                  onClick={clearAllFilters}
-                  className="flex-1 rounded-[8px] border border-surface-dark px-5 py-3 font-body text-[14px] font-medium text-text transition-colors hover:bg-surface"
-                >
-                  Clear All
-                </button>
-              )}
               <button
                 onClick={() => setFilterOpen(false)}
-                className="flex-1 rounded-[8px] bg-text px-5 py-3 font-body text-[14px] font-semibold text-background transition-opacity hover:opacity-90"
+                className="flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface hover:text-text"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="flex flex-1 flex-col gap-6 overflow-y-auto px-6 pt-6 pb-6">
+              {sidebarContent}
+            </div>
+
+            <div className="border-t border-surface-dark px-6 py-4">
+              <button
+                onClick={() => setFilterOpen(false)}
+                className="w-full rounded-[8px] bg-text px-5 py-3 font-body text-[14px] font-semibold text-background transition-opacity hover:opacity-90"
               >
                 View {totalCount.toLocaleString()} Product{totalCount !== 1 ? "s" : ""}
               </button>
