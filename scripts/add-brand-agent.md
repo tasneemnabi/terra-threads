@@ -60,12 +60,14 @@ npx tsx scripts/add-brand.ts --dry-run scripts/input/{{BRAND_SLUG}}.json
 
 7. **Fix any validation errors** and re-run until it passes.
 
-8. **Insert into Supabase**:
+8. **Insert into Supabase** (this also auto-downloads the brand logo if `NEXT_PUBLIC_LOGO_DEV_TOKEN` is set in `.env.local`):
 ```bash
 npx tsx scripts/add-brand.ts --insert scripts/input/{{BRAND_SLUG}}.json
 ```
 
-9. **Return a summary** of what was researched and inserted.
+9. If the logo wasn't auto-downloaded, manually save the brand's logo to `public/logos/{domain}.png` (128×128 PNG).
+
+10. **Return a summary** of what was researched and inserted.
 
 ## FIBER Curation Policy
 

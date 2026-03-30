@@ -13,6 +13,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as crypto from "crypto";
+import * as https from "https";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import {
   KNOWN_MATERIALS,
@@ -66,6 +67,48 @@ function validateProduct(product: ProductInput, index: number): ValidationResult
     { name: product.name, materials: product.materials, category: product.category, price: product.price },
     index
   );
+}
+
+// ─── Logo Download ──────────────────────────────────────────────────
+
+function downloadLogo(websiteUrl: string): Promise<boolean> {
+  const domain = new URL(websiteUrl).hostname.replace(/^www\./, "");
+  const outPath = path.resolve(__dirname, "..", "public", "logos", `${domain}.png`);
+
+  if (fs.existsSync(outPath)) {
+    console.log(`  Logo already exists: public/logos/${domain}.png`);
+    return Promise.resolve(true);
+  }
+
+  const env = loadEnv();
+  const token = process.env.NEXT_PUBLIC_LOGO_DEV_TOKEN || env.NEXT_PUBLIC_LOGO_DEV_TOKEN;
+  if (!token) {
+    console.log(`  ⚠ No LOGO_DEV_TOKEN — manually add logo to public/logos/${domain}.png`);
+    return Promise.resolve(false);
+  }
+
+  const url = `https://img.logo.dev/${domain}?token=${token}&size=128&format=png`;
+  return new Promise((resolve) => {
+    const file = fs.createWriteStream(outPath);
+    https.get(url, (res) => {
+      if (res.statusCode !== 200) {
+        fs.unlinkSync(outPath);
+        console.log(`  ⚠ Logo download failed (${res.statusCode}) — manually add public/logos/${domain}.png`);
+        resolve(false);
+        return;
+      }
+      res.pipe(file);
+      file.on("finish", () => {
+        file.close();
+        console.log(`  ✓ Downloaded logo: public/logos/${domain}.png`);
+        resolve(true);
+      });
+    }).on("error", () => {
+      fs.unlinkSync(outPath);
+      console.log(`  ⚠ Logo download failed — manually add public/logos/${domain}.png`);
+      resolve(false);
+    });
+  });
 }
 
 // ─── SQL Generation ─────────────────────────────────────────────────
@@ -360,6 +403,9 @@ async function insertBrand(brand: BrandInput): Promise<void> {
 
     console.log(`  ✓ ${product.name} (${Object.entries(product.materials).map(([m, p]) => `${p}% ${m}`).join(", ")})`);
   }
+
+  // Download logo
+  await downloadLogo(brand.website_url);
 
   console.log(`\nDone! Inserted ${brand.name} with ${products.length} product(s).`);
 }
