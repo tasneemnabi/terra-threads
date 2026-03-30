@@ -165,6 +165,29 @@ export async function getProductTypesForCategory(category: string): Promise<stri
   return types.sort();
 }
 
+export async function getAvailableBrandSlugs(
+  filters: Omit<FilterState, "page" | "brands" | "sort">
+): Promise<string[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.rpc("get_available_brands", {
+    p_category: filters.category || null,
+    p_material_names: filters.materials?.length ? filters.materials : null,
+    p_min_price: filters.minPrice || null,
+    p_max_price: filters.maxPrice || null,
+    p_tier: filters.tier && filters.tier !== "all" ? filters.tier : null,
+    p_audience: filters.audience || null,
+    p_product_type: filters.productTypes?.length ? filters.productTypes : null,
+  });
+
+  if (error) {
+    console.error("Error fetching available brands:", error);
+    return [];
+  }
+
+  return (data as { brand_slug: string }[]).map((r) => r.brand_slug);
+}
+
 export async function getProductsByBrand(brandId: string): Promise<ProductWithBrand[]> {
   const supabase = await createClient();
 

@@ -4,7 +4,7 @@ import { useMemo, useCallback, useState, useEffect, useRef, useTransition } from
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import type { FilterState, ProductWithBrand } from "@/types/database";
 import { ProductCard } from "@/components/product/ProductCard";
-import { fetchProducts, fetchProductTypes } from "@/app/shop/actions";
+import { fetchProducts, fetchProductTypes, fetchAvailableBrands } from "@/app/shop/actions";
 
 type TierFilter = "all" | "natural" | "nearly";
 type SortOption = "newest" | "price-asc" | "price-desc";
@@ -182,6 +182,7 @@ export function ShopContent({
   const [page, setPage] = useState(1);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [productTypes, setProductTypes] = useState(initialProductTypes);
+  const [availableBrandSlugs, setAvailableBrandSlugs] = useState<string[] | null>(null);
 
   useEffect(() => {
     if (filterOpen) {
@@ -228,6 +229,39 @@ export function ShopContent({
     }),
     [selectedCategory, selectedAudience, selectedProductTypes, selectedBrands, selectedFibers, minPrice, maxPrice, sort, tier]
   );
+
+  // Filters excluding brand — used to determine which brands are available
+  const nonBrandFilters = useMemo(
+    () => ({
+      category: selectedCategory || undefined,
+      audience: selectedAudience || undefined,
+      productTypes: selectedProductTypes.length ? selectedProductTypes : undefined,
+      materials: selectedFibers.length ? selectedFibers : undefined,
+      minPrice,
+      maxPrice,
+      tier,
+    }),
+    [selectedCategory, selectedAudience, selectedProductTypes, selectedFibers, minPrice, maxPrice, tier]
+  );
+
+  // Refresh available brands when non-brand filters change
+  useEffect(() => {
+    const hasNonBrandFilter =
+      nonBrandFilters.category ||
+      nonBrandFilters.audience ||
+      nonBrandFilters.productTypes ||
+      nonBrandFilters.materials ||
+      nonBrandFilters.minPrice !== undefined ||
+      nonBrandFilters.maxPrice !== undefined ||
+      (nonBrandFilters.tier && nonBrandFilters.tier !== "all");
+
+    if (!hasNonBrandFilter) {
+      setAvailableBrandSlugs(null); // show all brands when no filters active
+      return;
+    }
+
+    fetchAvailableBrands(nonBrandFilters).then(setAvailableBrandSlugs);
+  }, [nonBrandFilters]);
 
   // When filters change, reset to page 1
   useEffect(() => {
@@ -465,23 +499,32 @@ export function ShopContent({
       </AccordionFilter>
 
       {/* Brand */}
-      <AccordionFilter title="Brand" defaultOpen={selectedBrands.length > 0}>
-        <div className="relative">
-          <div className="max-h-[240px] overflow-y-auto pr-1 scrollbar-thin">
-            {brands.map((brand) => (
-              <FilterCheckbox
-                key={brand.slug}
-                label={brand.name}
-                checked={selectedBrands.includes(brand.slug)}
-                onChange={() => toggleBrand(brand.slug)}
-              />
-            ))}
-          </div>
-          {brands.length > 8 && (
-            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent" />
-          )}
-        </div>
-      </AccordionFilter>
+      {(() => {
+        const visibleBrands = availableBrandSlugs
+          ? brands.filter(
+              (b) => availableBrandSlugs.includes(b.slug) || selectedBrands.includes(b.slug)
+            )
+          : brands;
+        return visibleBrands.length > 0 ? (
+          <AccordionFilter title="Brand" defaultOpen={selectedBrands.length > 0}>
+            <div className="relative">
+              <div className="max-h-[240px] overflow-y-auto pr-1 scrollbar-thin">
+                {visibleBrands.map((brand) => (
+                  <FilterCheckbox
+                    key={brand.slug}
+                    label={brand.name}
+                    checked={selectedBrands.includes(brand.slug)}
+                    onChange={() => toggleBrand(brand.slug)}
+                  />
+                ))}
+              </div>
+              {visibleBrands.length > 8 && (
+                <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent" />
+              )}
+            </div>
+          </AccordionFilter>
+        ) : null;
+      })()}
 
       {/* Price */}
       <AccordionFilter title="Price" defaultOpen={minPrice !== undefined || maxPrice !== undefined}>
