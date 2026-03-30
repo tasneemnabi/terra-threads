@@ -42,7 +42,7 @@ export function BrowseByFiber() {
           {fibers.map((fiber) => (
             <Link
               key={fiber.name}
-              href={`/shop?materials=${encodeURIComponent(fiber.param)}`}
+              href={`/shop?fiber=${encodeURIComponent(fiber.param)}`}
               className="group flex flex-col rounded-[14px] bg-surface px-7 py-7 gap-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
             >
               <h3 className="font-display text-[20px] font-semibold leading-[24px] tracking-[-0.01em] text-text">
