@@ -58,13 +58,16 @@ export function BrowseByFiber() {
           ))}
           <Link
             href="/shop"
-            className="group flex flex-col items-center justify-center rounded-[14px] border border-surface-dark px-7 py-7 gap-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-accent/30"
+            className="group flex flex-col rounded-[14px] bg-surface px-7 py-7 gap-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
           >
-            <span className="font-display text-[32px] font-bold text-accent/40 group-hover:text-accent/60 transition-colors">
-              18+
-            </span>
-            <p className="font-body text-[14px] font-medium text-muted group-hover:text-text transition-colors text-center">
-              All fibers &rarr;
+            <h3 className="font-display text-[20px] font-semibold leading-[24px] tracking-[-0.01em] text-text">
+              All Fibers
+            </h3>
+            <p className="flex-1 font-body text-[15px] leading-[24px] text-secondary">
+              Explore our full library of 18+ natural and semi-synthetic fibers.
+            </p>
+            <p className="pt-1 font-body text-[14px] font-medium leading-[18px] text-accent group-hover:text-accent/80">
+              Browse all &rarr;
             </p>
           </Link>
         </div>
