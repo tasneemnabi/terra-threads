@@ -29,7 +29,7 @@ const fibers = [
 
 export function BrowseByFiber() {
   return (
-    <section className="px-5 sm:px-8 lg:px-20 pt-20">
+    <section className="px-5 sm:px-8 lg:px-20 py-20 sm:py-28">
       <div className="mx-auto max-w-[1280px]">
         <p className="font-body text-[13px] font-medium uppercase leading-[16px] tracking-[0.08em] text-secondary">
           Browse by fiber
@@ -38,12 +38,12 @@ export function BrowseByFiber() {
           Find your material
         </h2>
 
-        <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
           {fibers.map((fiber) => (
             <Link
               key={fiber.name}
-              href={`/brands?fiber=${encodeURIComponent(fiber.param)}`}
-              className="group flex flex-col rounded-[14px] bg-surface px-7 py-7 gap-3"
+              href={`/shop?materials=${encodeURIComponent(fiber.param)}`}
+              className="group flex flex-col rounded-[14px] bg-surface px-7 py-7 gap-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
             >
               <h3 className="font-display text-[20px] font-semibold leading-[24px] tracking-[-0.01em] text-text">
                 {fiber.name}
@@ -52,10 +52,21 @@ export function BrowseByFiber() {
                 {fiber.description}
               </p>
               <p className="pt-1 font-body text-[14px] font-medium leading-[18px] text-accent group-hover:text-accent/80">
-                View brands &rarr;
+                Shop now &rarr;
               </p>
             </Link>
           ))}
+          <Link
+            href="/shop"
+            className="group flex flex-col items-center justify-center rounded-[14px] border border-surface-dark px-7 py-7 gap-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-accent/30"
+          >
+            <span className="font-display text-[32px] font-bold text-accent/40 group-hover:text-accent/60 transition-colors">
+              18+
+            </span>
+            <p className="font-body text-[14px] font-medium text-muted group-hover:text-text transition-colors text-center">
+              All fibers &rarr;
+            </p>
+          </Link>
         </div>
       </div>
     </section>
