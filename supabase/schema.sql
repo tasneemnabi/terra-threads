@@ -17,6 +17,7 @@ create table brands (
   shopify_domain text,
   last_synced_at timestamptz,
   sync_enabled boolean default true,
+  scrape_fallback boolean not null default false,
   created_at timestamptz default now()
 );
 

@@ -18,6 +18,8 @@ import { extractMaterialsRegex, extractMaterialsBatch, type ExtractedMaterials }
 import { slugify, isExtractionBanned, TRUSTED_MATERIALS } from "./lib/curation.js";
 import { loadEnv, getSupabaseAdmin } from "./lib/env.js";
 import { ensureMaterialExists, syncProductMaterials } from "./lib/db-helpers.js";
+import { launchBrowser, closeBrowser, scrapePage } from "./lib/page-scraper.js";
+import { extractMaterialsFromText } from "./lib/material-extractor.js";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -27,6 +29,7 @@ interface BrandRow {
   slug: string;
   shopify_domain: string;
   is_fully_natural: boolean;
+  scrape_fallback: boolean;
 }
 
 interface SyncStats {
@@ -37,6 +40,7 @@ interface SyncStats {
   autoApproved: number;
   skippedBanned: number;
   skippedSettled: number;
+  scrapeHits: number;
   flaggedReview: number;
   removed: number;
   errors: number;
@@ -112,6 +116,7 @@ async function syncBrand(
     autoApproved: 0,
     skippedBanned: 0,
     skippedSettled: 0,
+    scrapeHits: 0,
     flaggedReview: 0,
     removed: 0,
     errors: 0,
@@ -157,6 +162,7 @@ async function syncBrand(
 
   // Regex-only extraction for all products
   let regexHits = 0;
+  const zeroMaterialProducts: Array<{ url: string; productId: string; name: string }> = [];
   for (const shopifyProduct of shopifyProducts) {
     seenShopifyIds.add(shopifyProduct.id);
 
@@ -256,6 +262,12 @@ async function syncBrand(
 
           if (hasMaterials) {
             await syncProductMaterials(supabase, retry.id, extraction!.materials, materialCache);
+          } else if (brand.scrape_fallback) {
+            zeroMaterialProducts.push({
+              url: productData.affiliate_url,
+              productId: retry.id,
+              name: shopifyProduct.title,
+            });
           }
         } else {
           throw upsertError;
@@ -263,6 +275,12 @@ async function syncBrand(
       } else if (upserted) {
         if (hasMaterials) {
           await syncProductMaterials(supabase, upserted.id, extraction!.materials, materialCache);
+        } else if (brand.scrape_fallback) {
+          zeroMaterialProducts.push({
+            url: productData.affiliate_url,
+            productId: upserted.id,
+            name: shopifyProduct.title,
+          });
         }
       }
 
@@ -274,6 +292,56 @@ async function syncBrand(
   }
 
   console.log(`  Regex extracted: ${regexHits}/${shopifyProducts.length}, review: ${stats.flaggedReview}`);
+
+  // ─── Scrape fallback for zero-material products ──────────
+  if (brand.scrape_fallback && zeroMaterialProducts.length > 0) {
+    if (options.dryRun) {
+      console.log(`  Scrape fallback: would scrape ${zeroMaterialProducts.length} products (skipped in dry-run)`);
+    } else {
+      console.log(`  Scrape fallback: scraping ${zeroMaterialProducts.length} products...`);
+      await launchBrowser();
+      try {
+        for (const item of zeroMaterialProducts) {
+          const page = await scrapePage(item.url);
+          if (!page.success || !page.text) continue;
+
+          const scrapeExtraction = extractMaterialsFromText(page.text);
+          if (!scrapeExtraction || Object.keys(scrapeExtraction.materials).length === 0) continue;
+
+          if (isExtractionBanned(scrapeExtraction)) {
+            await supabase
+              .from("products")
+              .update({ sync_status: "rejected", material_confidence: scrapeExtraction.confidence })
+              .eq("id", item.productId);
+            stats.skippedBanned++;
+            stats.flaggedReview--;
+            console.log(`    REJECTED (banned): ${item.name}`);
+            continue;
+          }
+
+          const newStatus = determineSyncStatus(scrapeExtraction);
+          await supabase
+            .from("products")
+            .update({ sync_status: newStatus, material_confidence: scrapeExtraction.confidence })
+            .eq("id", item.productId);
+
+          await syncProductMaterials(supabase, item.productId, scrapeExtraction.materials, materialCache);
+
+          stats.scrapeHits++;
+          if (newStatus === "approved") {
+            stats.autoApproved++;
+            stats.flaggedReview--;
+          }
+
+          const mats = Object.entries(scrapeExtraction.materials).map(([m, p]) => `${p}% ${m}`).join(", ");
+          console.log(`    SCRAPED: ${item.name} → ${mats} [${newStatus}]`);
+        }
+      } finally {
+        await closeBrowser();
+      }
+      console.log(`  Scrape fallback: ${stats.scrapeHits}/${zeroMaterialProducts.length} extracted`);
+    }
+  }
 
   // Remove products no longer in Shopify
   if (!options.dryRun && seenShopifyIds.size > 0) {
@@ -455,7 +523,7 @@ async function main() {
   // Fetch brands to sync
   let query = supabase
     .from("brands")
-    .select("id, name, slug, shopify_domain, is_fully_natural")
+    .select("id, name, slug, shopify_domain, is_fully_natural, scrape_fallback")
     .not("shopify_domain", "is", null)
     .eq("sync_enabled", true);
 
@@ -495,25 +563,29 @@ async function main() {
     totalApproved = 0,
     totalSkipped = 0,
     totalSettled = 0,
+    totalScrapeHits = 0,
     totalReview = 0,
     totalRemoved = 0,
     totalErrors = 0;
 
   for (const s of allStats) {
+    const scrapePart = s.scrapeHits > 0 ? `, ${s.scrapeHits} scraped` : "";
     console.log(
-      `  ${s.brand}: ${s.fetched} fetched, ${s.skippedSettled} settled, ${s.inserted} synced, ${s.autoApproved} auto-approved, ${s.skippedBanned} banned, ${s.flaggedReview} review, ${s.removed} removed`
+      `  ${s.brand}: ${s.fetched} fetched, ${s.skippedSettled} settled, ${s.inserted} synced, ${s.autoApproved} auto-approved, ${s.skippedBanned} banned, ${s.flaggedReview} review${scrapePart}, ${s.removed} removed`
     );
     totalFetched += s.fetched;
     totalInserted += s.inserted;
     totalApproved += s.autoApproved;
     totalSkipped += s.skippedBanned;
     totalSettled += s.skippedSettled;
+    totalScrapeHits += s.scrapeHits;
     totalReview += s.flaggedReview;
     totalRemoved += s.removed;
     totalErrors += s.errors;
   }
 
-  console.log(`\nTotal: ${totalFetched} fetched, ${totalSettled} settled (skipped), ${totalInserted} synced, ${totalApproved} auto-approved, ${totalSkipped} banned, ${totalReview} review, ${totalRemoved} removed, ${totalErrors} errors`);
+  const scrapeTotalPart = totalScrapeHits > 0 ? `, ${totalScrapeHits} scraped` : "";
+  console.log(`\nTotal: ${totalFetched} fetched, ${totalSettled} settled (skipped), ${totalInserted} synced, ${totalApproved} auto-approved, ${totalSkipped} banned, ${totalReview} review${scrapeTotalPart}, ${totalRemoved} removed, ${totalErrors} errors`);
 
   if (totalReview > 0) {
     console.log(`\nRun 'npx tsx scripts/sync-shopify.ts --llm' to extract materials for review products`);
