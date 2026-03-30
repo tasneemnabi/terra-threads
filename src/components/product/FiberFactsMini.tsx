@@ -19,8 +19,8 @@ export function FiberFactsMini({ materials }: FiberFactsMiniProps) {
     <div
       className={`rounded border px-2 py-1 ${
         allNatural
-          ? "border-[#4A7A3D]/30 bg-[#4A7A3D]/5"
-          : "border-surface-dark bg-white"
+          ? "border-natural/30 bg-natural-light"
+          : "border-surface-dark bg-background"
       }`}
     >
       <p className="font-body text-[11px] leading-tight text-muted">
