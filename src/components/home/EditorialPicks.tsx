@@ -37,7 +37,7 @@ function ProductCard({
         )}
       </div>
       <div className="pt-3">
-        <p className="font-body text-[11px] uppercase tracking-[0.5px] text-secondary">
+        <p className="font-body text-[12px] uppercase tracking-[0.08em] text-secondary">
           {product.brand_name}
         </p>
         <h3

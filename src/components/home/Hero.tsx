@@ -60,7 +60,7 @@ export function Hero({ products }: HeroProps) {
                   />
                 )}
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/40 to-transparent p-3 pt-8">
-                  <p className="font-body text-[11px] uppercase tracking-[0.5px] text-white/70">
+                  <p className="font-body text-[12px] uppercase tracking-[0.08em] text-white/70">
                     {product.brand_name}
                   </p>
                 </div>
