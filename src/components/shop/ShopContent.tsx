@@ -395,37 +395,6 @@ export function ShopContent({
         </div>
       )}
 
-      {/* Product Type (shown when a category is selected and types exist) */}
-      {productTypes.length > 0 && selectedCategory && (
-        <div className="border-b border-muted-light/60 pb-4">
-          <p className="mb-2 font-display text-[14px] font-semibold text-text">
-            Type
-          </p>
-          <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
-            {productTypes.map((pt, i) => {
-              const isActive = selectedProductType === pt;
-              return (
-                <span key={pt} className="flex items-center">
-                  <button
-                    onClick={() => setProductType(isActive ? null : pt)}
-                    className={`font-body text-[13px] transition-colors ${
-                      isActive
-                        ? "font-medium text-accent"
-                        : "text-muted hover:text-accent"
-                    }`}
-                  >
-                    {PRODUCT_TYPE_LABELS[pt] || formatCategory(pt)}
-                  </button>
-                  {i < productTypes.length - 1 && (
-                    <span className="ml-1 text-[11px] text-muted-light">/</span>
-                  )}
-                </span>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
       {/* Gender */}
       {audiences.length > 0 && (
         <AccordionFilter title="Gender" defaultOpen={selectedAudience !== null}>
@@ -445,12 +414,34 @@ export function ShopContent({
       {/* Category */}
       <AccordionFilter title="Category" defaultOpen={selectedCategory !== null}>
         {categories.map((cat) => (
-          <FilterCheckbox
-            key={cat}
-            label={formatCategory(cat)}
-            checked={selectedCategory === cat}
-            onChange={() => setCategory(selectedCategory === cat ? null : cat)}
-          />
+          <div key={cat}>
+            <FilterCheckbox
+              label={formatCategory(cat)}
+              checked={selectedCategory === cat}
+              onChange={() => setCategory(selectedCategory === cat ? null : cat)}
+            />
+            {/* Type sub-filter nested under selected category */}
+            {selectedCategory === cat && productTypes.length > 0 && (
+              <div className="ml-6 mt-0.5 mb-1 flex flex-col gap-0.5">
+                {productTypes.map((pt) => {
+                  const isActive = selectedProductType === pt;
+                  return (
+                    <button
+                      key={pt}
+                      onClick={() => setProductType(isActive ? null : pt)}
+                      className={`py-0.5 text-left font-body text-[12px] transition-colors ${
+                        isActive
+                          ? "font-medium text-accent"
+                          : "text-muted hover:text-accent"
+                      }`}
+                    >
+                      {PRODUCT_TYPE_LABELS[pt] || formatCategory(pt)}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         ))}
       </AccordionFilter>
 
