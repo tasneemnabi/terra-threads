@@ -36,6 +36,7 @@ interface SyncStats {
   updated: number;
   autoApproved: number;
   skippedBanned: number;
+  skippedSettled: number;
   flaggedReview: number;
   removed: number;
   errors: number;
@@ -110,6 +111,7 @@ async function syncBrand(
     updated: 0,
     autoApproved: 0,
     skippedBanned: 0,
+    skippedSettled: 0,
     flaggedReview: 0,
     removed: 0,
     errors: 0,
@@ -135,20 +137,21 @@ async function syncBrand(
 
   const seenShopifyIds = new Set<number>();
 
-  // Fetch already-rejected Shopify product IDs so we don't overwrite them
-  const rejectedShopifyIds = new Set<number>();
-  if (!options.dryRun) {
-    const { data: rejected } = await supabase
+  // Fetch existing product statuses so we don't re-process settled products
+  const existingStatusMap = new Map<number, string>();
+  {
+    const { data: existing } = await supabase
       .from("products")
-      .select("shopify_product_id")
+      .select("shopify_product_id, sync_status")
       .eq("brand_id", brand.id)
-      .eq("sync_status", "rejected")
       .not("shopify_product_id", "is", null);
-    for (const r of rejected || []) {
-      rejectedShopifyIds.add(r.shopify_product_id);
+    for (const row of existing || []) {
+      existingStatusMap.set(row.shopify_product_id, row.sync_status);
     }
-    if (rejectedShopifyIds.size > 0) {
-      console.log(`  Skipping ${rejectedShopifyIds.size} previously rejected products`);
+    const rejectedCount = [...existingStatusMap.values()].filter((s) => s === "rejected").length;
+    const approvedCount = [...existingStatusMap.values()].filter((s) => s === "approved").length;
+    if (rejectedCount > 0 || approvedCount > 0) {
+      console.log(`  Skipping ${approvedCount} approved + ${rejectedCount} rejected (already settled)`);
     }
   }
 
@@ -157,8 +160,10 @@ async function syncBrand(
   for (const shopifyProduct of shopifyProducts) {
     seenShopifyIds.add(shopifyProduct.id);
 
-    // Skip products that were previously rejected (non-clothing, banned, manual reject)
-    if (rejectedShopifyIds.has(shopifyProduct.id)) {
+    // Skip products that are already approved or rejected (settled)
+    const existingStatus = existingStatusMap.get(shopifyProduct.id);
+    if (existingStatus === "rejected" || existingStatus === "approved") {
+      stats.skippedSettled++;
       continue;
     }
 
@@ -489,24 +494,26 @@ async function main() {
     totalInserted = 0,
     totalApproved = 0,
     totalSkipped = 0,
+    totalSettled = 0,
     totalReview = 0,
     totalRemoved = 0,
     totalErrors = 0;
 
   for (const s of allStats) {
     console.log(
-      `  ${s.brand}: ${s.fetched} fetched, ${s.inserted} synced, ${s.autoApproved} auto-approved, ${s.skippedBanned} banned, ${s.flaggedReview} review, ${s.removed} removed`
+      `  ${s.brand}: ${s.fetched} fetched, ${s.skippedSettled} settled, ${s.inserted} synced, ${s.autoApproved} auto-approved, ${s.skippedBanned} banned, ${s.flaggedReview} review, ${s.removed} removed`
     );
     totalFetched += s.fetched;
     totalInserted += s.inserted;
     totalApproved += s.autoApproved;
     totalSkipped += s.skippedBanned;
+    totalSettled += s.skippedSettled;
     totalReview += s.flaggedReview;
     totalRemoved += s.removed;
     totalErrors += s.errors;
   }
 
-  console.log(`\nTotal: ${totalFetched} fetched, ${totalInserted} synced, ${totalApproved} auto-approved, ${totalSkipped} banned, ${totalReview} review, ${totalRemoved} removed, ${totalErrors} errors`);
+  console.log(`\nTotal: ${totalFetched} fetched, ${totalSettled} settled (skipped), ${totalInserted} synced, ${totalApproved} auto-approved, ${totalSkipped} banned, ${totalReview} review, ${totalRemoved} removed, ${totalErrors} errors`);
 
   if (totalReview > 0) {
     console.log(`\nRun 'npx tsx scripts/sync-shopify.ts --llm' to extract materials for review products`);
