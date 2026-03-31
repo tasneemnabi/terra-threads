@@ -44,10 +44,8 @@ export default async function BrandsPage() {
           <p className="font-body text-[13px] font-medium uppercase leading-[16px] tracking-[0.12em] text-accent">
             Our Curation
           </p>
-          <h1 className="font-display text-[40px] font-medium leading-[46px] tracking-[-0.03em] text-text sm:text-[56px] sm:leading-[64px]">
-            Brands that never
-            <br />
-            use plastic.
+          <h1 className="font-display text-[40px] font-medium leading-[46px] tracking-[-0.03em] text-text text-balance sm:text-[56px] sm:leading-[64px]">
+            Brands that never use plastic.
           </h1>
           <p className="max-w-[480px] font-body text-[17px] leading-[26px] text-secondary">
             Every brand on Fiber has been vetted for their commitment to natural
