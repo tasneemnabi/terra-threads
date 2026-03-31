@@ -269,7 +269,11 @@ export function ShopContent({
     setIsLoadingMore(true);
     try {
       const result = await fetchProducts({ ...currentFilters, page: nextPage });
-      setProducts((prev) => [...prev, ...result.products]);
+      setProducts((prev) => {
+        const existingIds = new Set(prev.map((p) => p.id));
+        const newProducts = result.products.filter((p) => !existingIds.has(p.id));
+        return [...prev, ...newProducts];
+      });
       setPage(nextPage);
     } finally {
       setIsLoadingMore(false);
