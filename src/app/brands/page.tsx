@@ -41,7 +41,7 @@ export default async function BrandsPage() {
       {/* Page Header */}
       <section className="px-5 sm:px-8 lg:px-20 pt-14">
         <div className="mx-auto max-w-[1280px] flex flex-col gap-5">
-          <p className="font-body text-[13px] font-medium uppercase leading-[16px] tracking-[0.12em] text-accent">
+          <p className="font-body text-[13px] font-medium uppercase leading-[16px] tracking-[0.08em] text-accent">
             Our Curation
           </p>
           <h1 className="font-display text-[40px] font-medium leading-[46px] tracking-[-0.03em] text-text text-balance sm:text-[56px] sm:leading-[64px]">
