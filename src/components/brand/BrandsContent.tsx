@@ -26,7 +26,8 @@ function AccordionSection({
     <div className="border-b border-surface-dark">
       <button
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between py-4 font-body text-[13px] font-semibold uppercase tracking-[0.06em] text-text transition-colors hover:text-secondary"
+        aria-expanded={open}
+        className="flex w-full items-center justify-between py-4 font-body text-[13px] font-semibold uppercase tracking-[0.06em] text-text transition-colors hover:text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:rounded-md"
       >
         {label}
         <svg
@@ -60,6 +61,15 @@ export function BrandsContent({ brands }: BrandsContentProps) {
     return () => {
       document.body.style.overflow = "";
     };
+  }, [filterOpen]);
+
+  // Close filter panel on ESC
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape" && filterOpen) setFilterOpen(false);
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [filterOpen]);
 
   // Read filter state from URL
@@ -199,7 +209,7 @@ export function BrandsContent({ brands }: BrandsContentProps) {
 
       {/* Filter side panel + overlay */}
       {filterOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end">
+        <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true" aria-label="Filter & Sort">
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-text/20"
@@ -207,7 +217,7 @@ export function BrandsContent({ brands }: BrandsContentProps) {
           />
 
           {/* Panel */}
-          <div className="relative flex h-full w-[400px] flex-col bg-white shadow-2xl animate-in slide-in-from-right duration-200">
+          <div className="relative flex h-full w-full max-w-[400px] flex-col bg-white shadow-2xl animate-in slide-in-from-right duration-200">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-surface-dark px-8 py-6">
               <h2 className="font-display text-[20px] font-semibold tracking-[-0.01em] text-text">

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { NavLink } from "./NavLink";
 import { MobileNav } from "./MobileNav";
 
 const navLinks = [
@@ -19,13 +20,9 @@ export function Header() {
 
         <nav className="hidden items-center gap-8 md:flex">
           {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="font-body text-[15px] leading-[18px] text-text transition-colors hover:text-muted py-3"
-            >
+            <NavLink key={link.href} href={link.href}>
               {link.label}
-            </Link>
+            </NavLink>
           ))}
         </nav>
 

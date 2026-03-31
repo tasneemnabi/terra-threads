@@ -11,7 +11,7 @@ export async function getAllBrands(): Promise<Brand[]> {
 
   if (error) {
     console.error("Error fetching brands:", error);
-    return [];
+    throw new Error("Failed to load brands.");
   }
 
   return data as Brand[];
@@ -43,7 +43,7 @@ export async function getBrandsWithDetails(): Promise<BrandWithDetails[]> {
 
   if (error) {
     console.error("Error fetching brands with details:", error);
-    return [];
+    throw new Error("Failed to load brand details.");
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -112,7 +112,7 @@ export async function getBrandBySlug(slug: string): Promise<Brand | null> {
 
   if (error) {
     console.error("Error fetching brand:", error);
-    return null;
+    throw new Error("Failed to load brand.");
   }
 
   return data as Brand;
@@ -128,7 +128,7 @@ export async function getBrandsByCategory(category: string): Promise<Brand[]> {
 
   if (error) {
     console.error("Error fetching brands by category:", error);
-    return [];
+    throw new Error("Failed to load brands for this category.");
   }
 
   return data as Brand[];
