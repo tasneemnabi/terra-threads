@@ -38,9 +38,11 @@ export function ProductCard({ product }: ProductCardProps) {
       <h3 className="mt-0.5 line-clamp-2 font-body text-[14px] font-medium leading-snug text-text transition-colors duration-200 group-hover:text-accent">
         {product.name}
       </h3>
-      <p className="mt-1.5 font-body text-[15px] font-semibold text-text">
-        {formatPrice(product.price, product.currency)}
-      </p>
+      {product.price > 0 && (
+        <p className="mt-1.5 font-body text-[15px] font-semibold text-text">
+          {formatPrice(product.price, product.currency)}
+        </p>
+      )}
       <div className="mt-1">
         <FiberFactsMini materials={product.materials} />
       </div>

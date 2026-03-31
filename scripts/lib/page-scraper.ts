@@ -5,6 +5,18 @@
 
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright";
 
+// ─── Helpers ─────────────────────────────────────────────────────────
+
+const HTML_ENTITIES: Record<string, string> = {
+  "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": '"',
+  "&apos;": "'", "&#39;": "'", "&#x27;": "'", "&nbsp;": " ",
+};
+const ENTITY_RE = /&(?:amp|lt|gt|quot|apos|nbsp|#39|#x27);/gi;
+
+function decodeHtmlEntities(str: string): string {
+  return str.replace(ENTITY_RE, (match) => HTML_ENTITIES[match.toLowerCase()] || match);
+}
+
 // ─── Types ──────────────────────────────────────────────────────────
 
 export interface ScrapedPage {
@@ -145,6 +157,107 @@ export async function scrapePage(url: string, timeoutMs = 30000): Promise<Scrape
   }
 }
 
+// ─── JSON-LD structured data extraction ────────────────────────────
+
+interface JsonLdProduct {
+  name: string | null;
+  price: number | null;
+  currency: string | null;
+  description: string | null;
+  images: string[];
+}
+
+/**
+ * Extract product data from JSON-LD structured data on the page.
+ * This is the most reliable extraction method — structured data is
+ * machine-readable and used by Google/SEO, so sites keep it accurate.
+ */
+async function extractJsonLd(page: Page): Promise<JsonLdProduct | null> {
+  const jsonLdBlocks: string[] = await page.$$eval(
+    'script[type="application/ld+json"]',
+    (scripts) => scripts.map((s) => s.textContent || "")
+  ).catch(() => []);
+
+  for (const block of jsonLdBlocks) {
+    try {
+      const parsed = JSON.parse(block);
+      const product = findProductInJsonLd(parsed);
+      if (product) return product;
+    } catch {
+      // Malformed JSON — skip
+    }
+  }
+  return null;
+}
+
+function findProductInJsonLd(obj: unknown): JsonLdProduct | null {
+  if (!obj || typeof obj !== "object") return null;
+
+  // Handle arrays (e.g. @graph)
+  if (Array.isArray(obj)) {
+    for (const item of obj) {
+      const found = findProductInJsonLd(item);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  const record = obj as Record<string, unknown>;
+
+  // Check @graph array
+  if (Array.isArray(record["@graph"])) {
+    for (const item of record["@graph"]) {
+      const found = findProductInJsonLd(item);
+      if (found) return found;
+    }
+  }
+
+  // Check if this object is a Product
+  const type = record["@type"];
+  if (type !== "Product" && type !== "product") return null;
+
+  // Extract price from offers
+  let price: number | null = null;
+  let currency: string | null = null;
+  const offers = record.offers;
+  if (offers) {
+    const offer = Array.isArray(offers) ? offers[0] : offers;
+    if (offer && typeof offer === "object") {
+      const o = offer as Record<string, unknown>;
+      const rawPrice = o.price ?? o.lowPrice;
+      if (rawPrice !== undefined && rawPrice !== null) {
+        price = typeof rawPrice === "number" ? rawPrice : parseFloat(String(rawPrice));
+        if (isNaN(price)) price = null;
+      }
+      if (typeof o.priceCurrency === "string") currency = o.priceCurrency;
+    }
+  }
+
+  // Extract images
+  const images: string[] = [];
+  const rawImage = record.image;
+  if (typeof rawImage === "string") {
+    images.push(rawImage);
+  } else if (Array.isArray(rawImage)) {
+    for (const img of rawImage) {
+      if (typeof img === "string") images.push(img);
+      else if (img && typeof img === "object" && typeof (img as Record<string, unknown>).url === "string") {
+        images.push((img as Record<string, unknown>).url as string);
+      }
+    }
+  } else if (rawImage && typeof rawImage === "object" && typeof (rawImage as Record<string, unknown>).url === "string") {
+    images.push((rawImage as Record<string, unknown>).url as string);
+  }
+
+  return {
+    name: typeof record.name === "string" ? record.name : null,
+    price,
+    currency,
+    description: typeof record.description === "string" ? record.description : null,
+    images,
+  };
+}
+
 /**
  * Scrape a product page and extract structured data (name, price, images, etc.)
  * in addition to full rendered text for material extraction.
@@ -169,64 +282,87 @@ export async function scrapeProductData(
     await page.waitForTimeout(3000);
     await expandAccordions(page);
 
-    // Extract structured data using individual $eval calls to avoid
-    // TypeScript/esbuild __name() injection issues in page.evaluate().
+    // 1. Try JSON-LD first (most reliable source)
+    const jsonLd = await extractJsonLd(page!);
+
+    // 2. Meta tag fallbacks
     const metaContent = async (prop: string): Promise<string | null> => {
-      return page.$eval(
+      return page!.$eval(
         `meta[property="${prop}"], meta[name="${prop}"]`,
         (el) => el.getAttribute("content")
       ).catch(() => null);
     };
 
-    const name =
+    const rawName =
+      jsonLd?.name ||
       (await metaContent("og:title")) ||
-      (await page.$eval("h1", (el) => el.textContent?.trim() || null).catch(() => null)) ||
-      (await page.title()) ||
+      (await page!.$eval("h1", (el) => el.textContent?.trim() || null).catch(() => null)) ||
+      (await page!.title()) ||
       null;
+    const name = rawName ? decodeHtmlEntities(rawName) : null;
 
-    let priceStr =
-      (await metaContent("product:price:amount")) ||
-      (await metaContent("og:price:amount"));
-    if (!priceStr) {
-      priceStr = await page.$eval(
-        '[data-product-price], .product-price, .price--regular, .price .amount, .product__price',
-        (el) => el.textContent?.replace(/[^0-9.]/g, "") || null
-      ).catch(() => null);
+    // Price: JSON-LD → meta tags → DOM selectors
+    let price: number | null = jsonLd?.price ?? null;
+    if (price === null) {
+      const priceStr =
+        (await metaContent("product:price:amount")) ||
+        (await metaContent("og:price:amount")) ||
+        (await page!.$eval(
+          '[data-product-price], .product-price, .price--regular, .price .amount, .product__price',
+          (el) => el.textContent?.replace(/[^0-9.]/g, "") || null
+        ).catch(() => null));
+      if (priceStr) {
+        const parsed = parseFloat(priceStr);
+        if (!isNaN(parsed)) price = parsed;
+      }
     }
-    const price = priceStr ? parseFloat(priceStr) : null;
 
     const currency =
+      jsonLd?.currency ||
       (await metaContent("product:price:currency")) ||
       (await metaContent("og:price:currency")) ||
       null;
 
-    const description =
+    const rawDescription =
+      jsonLd?.description ||
       (await metaContent("og:description")) ||
       (await metaContent("description")) ||
       null;
+    const description = rawDescription ? decodeHtmlEntities(rawDescription) : null;
 
+    // Images: JSON-LD → og:image → DOM selectors
+    const jsonLdImages = jsonLd?.images || [];
     const ogImage = await metaContent("og:image");
-    const productImages: string[] = await page.$$eval(
+    const productImages: string[] = await page!.$$eval(
       '.product-gallery img, .product__media img, .product-images img, [data-product-image] img',
       (imgs) => imgs.map((img) => (img as HTMLImageElement).src).filter((s) => s && !s.includes("placeholder"))
     ).catch(() => []);
 
-    const allImages = ogImage
-      ? [ogImage, ...productImages.filter((i) => i !== ogImage)]
-      : productImages;
+    // Priority: JSON-LD images first, then og:image, then DOM
+    let allImages: string[];
+    if (jsonLdImages.length > 0) {
+      allImages = jsonLdImages;
+    } else if (ogImage) {
+      allImages = [ogImage, ...productImages.filter((i) => i !== ogImage)];
+    } else {
+      allImages = productImages;
+    }
 
-    const data = { name, price, currency, description, images: allImages };
+    const text = await extractProductText(page!);
 
-    const text = await extractProductText(page);
+    // Log warnings for missing data
+    if (!price) console.warn(`  WARN: No price extracted for ${url}`);
+    if (allImages.length === 0) console.warn(`  WARN: No image extracted for ${url}`);
+    if (!name) console.warn(`  WARN: No product name extracted for ${url}`);
 
     return {
       url,
-      name: data.name,
-      price: data.price && !isNaN(data.price) ? data.price : null,
-      currency: data.currency,
-      description: data.description?.slice(0, 500) || null,
-      imageUrl: data.images[0] || null,
-      additionalImages: data.images.slice(1),
+      name,
+      price: price && !isNaN(price) ? price : null,
+      currency,
+      description: description?.slice(0, 500) || null,
+      imageUrl: allImages[0] || null,
+      additionalImages: allImages.slice(1),
       text,
       success: true,
     };

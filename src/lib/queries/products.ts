@@ -63,6 +63,8 @@ export async function getFeaturedProducts(): Promise<ProductWithBrand[]> {
     .from("products_with_materials")
     .select("*")
     .eq("is_featured", true)
+    .not("image_url", "is", null)
+    .gt("price", 0)
     .order("created_at", { ascending: false })
     .limit(6);
 
@@ -81,6 +83,7 @@ export async function getHomepageProducts(limit = 6): Promise<ProductWithBrand[]
     .from("products_with_materials")
     .select("*")
     .not("image_url", "is", null)
+    .gt("price", 0)
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -104,6 +107,8 @@ export async function getRelatedProducts(
     .select("*")
     .eq("category", category)
     .neq("id", productId)
+    .not("image_url", "is", null)
+    .gt("price", 0)
     .limit(limit);
 
   if (error) {
@@ -179,6 +184,8 @@ export async function getProductsByBrand(brandId: string): Promise<ProductWithBr
     .from("products_with_materials")
     .select("*")
     .eq("brand_id", brandId)
+    .not("image_url", "is", null)
+    .gt("price", 0)
     .order("created_at", { ascending: false });
 
   if (error) {
