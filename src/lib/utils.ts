@@ -55,6 +55,13 @@ export function naturalPercentage(materials: MaterialInfo[]): number {
     .reduce((sum, m) => sum + m.percentage, 0);
 }
 
+export function formatCategory(cat: string): string {
+  return cat
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
 export function affiliateUrl(brandUrl: string, source: string): string {
   try {
     const url = new URL(brandUrl);

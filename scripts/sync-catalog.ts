@@ -58,12 +58,18 @@ interface SyncStats {
   skippedBanned: number;
   skippedDuplicate: number;
   flaggedReview: number;
+  missingPrice: number;
+  missingImage: number;
   errors: number;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
-function determineSyncStatus(extraction: ExtractedMaterials): string {
+function determineSyncStatus(
+  extraction: ExtractedMaterials,
+  price: number | null,
+  imageUrl: string | null
+): string {
   if (extraction.hasBanned) return "rejected";
 
   const materialNames = Object.keys(extraction.materials);
@@ -71,6 +77,8 @@ function determineSyncStatus(extraction: ExtractedMaterials): string {
   const total = Object.values(extraction.materials).reduce((a, b) => a + b, 0);
 
   if (allTrusted && total === 100 && extraction.confidence >= 0.80) {
+    // Data completeness check — can't go live without price and image
+    if (!price || price <= 0 || !imageUrl) return "review";
     return "approved";
   }
   return "review";
@@ -111,6 +119,8 @@ async function syncBrand(
     skippedBanned: 0,
     skippedDuplicate: 0,
     flaggedReview: 0,
+    missingPrice: 0,
+    missingImage: 0,
     errors: 0,
   };
 
@@ -223,9 +233,13 @@ async function syncBrand(
         continue;
       }
 
+      // Track missing data
+      if (!scraped.price) stats.missingPrice++;
+      if (!scraped.imageUrl) stats.missingImage++;
+
       // 6. Classify
       const syncStatus = hasMaterials
-        ? determineSyncStatus(extraction!)
+        ? determineSyncStatus(extraction!, scraped.price, scraped.imageUrl)
         : "review";
       const confidence = hasMaterials ? extraction!.confidence : 0;
       const category = guessCategory(cleanName);
@@ -270,7 +284,7 @@ async function syncBrand(
               name: cleanName,
               description: scraped.description,
               category,
-              price: scraped.price || 0,
+              price: scraped.price ?? null,
               currency: scraped.currency || "USD",
               image_url: scraped.imageUrl,
               additional_images: scraped.additionalImages,
@@ -383,7 +397,7 @@ async function llmPass(
   // (i.e. catalog-scraped products)
   let query = supabase
     .from("products")
-    .select("id, name, affiliate_url, sync_status, brands!inner(slug)")
+    .select("id, name, price, image_url, affiliate_url, sync_status, brands!inner(slug)")
     .eq("sync_status", "review")
     .is("shopify_product_id", null)
     .not("affiliate_url", "is", null);
@@ -431,7 +445,10 @@ async function llmPass(
         continue;
       }
 
-      const newStatus = determineSyncStatus(extraction);
+      // Use scraped values if available, otherwise fall back to existing DB values
+      const effectivePrice = scraped.price ?? product.price;
+      const effectiveImage = scraped.imageUrl ?? product.image_url;
+      const newStatus = determineSyncStatus(extraction, effectivePrice, effectiveImage);
       await supabase
         .from("products")
         .update({
@@ -550,11 +567,16 @@ async function main() {
     totalBanned = 0,
     totalDuplicate = 0,
     totalReview = 0,
+    totalMissingPrice = 0,
+    totalMissingImage = 0,
     totalErrors = 0;
 
   for (const s of allStats) {
+    const missingPart = (s.missingPrice > 0 || s.missingImage > 0)
+      ? `, ${s.missingPrice} no-price, ${s.missingImage} no-image`
+      : "";
     console.log(
-      `  ${s.brand}: ${s.discovered} discovered, ${s.scraped} scraped, ${s.inserted} synced, ${s.autoApproved} approved, ${s.skippedBanned} banned, ${s.skippedNonClothing} non-clothing, ${s.skippedDuplicate} dupes, ${s.flaggedReview} review`
+      `  ${s.brand}: ${s.discovered} discovered, ${s.scraped} scraped, ${s.inserted} synced, ${s.autoApproved} approved, ${s.skippedBanned} banned, ${s.skippedNonClothing} non-clothing, ${s.skippedDuplicate} dupes, ${s.flaggedReview} review${missingPart}`
     );
     totalDiscovered += s.discovered;
     totalScraped += s.scraped;
@@ -564,11 +586,16 @@ async function main() {
     totalBanned += s.skippedBanned;
     totalDuplicate += s.skippedDuplicate;
     totalReview += s.flaggedReview;
+    totalMissingPrice += s.missingPrice;
+    totalMissingImage += s.missingImage;
     totalErrors += s.errors;
   }
 
+  const missingTotalPart = (totalMissingPrice > 0 || totalMissingImage > 0)
+    ? `, ${totalMissingPrice} no-price, ${totalMissingImage} no-image`
+    : "";
   console.log(
-    `\nTotal: ${totalDiscovered} discovered, ${totalScraped} scraped, ${totalInserted} synced, ${totalApproved} approved, ${totalBanned} banned, ${totalNonClothing} non-clothing, ${totalDuplicate} dupes, ${totalReview} review, ${totalErrors} errors`
+    `\nTotal: ${totalDiscovered} discovered, ${totalScraped} scraped, ${totalInserted} synced, ${totalApproved} approved, ${totalBanned} banned, ${totalNonClothing} non-clothing, ${totalDuplicate} dupes, ${totalReview} review${missingTotalPart}, ${totalErrors} errors`
   );
 
   if (totalReview > 0) {
