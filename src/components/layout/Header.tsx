@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { MobileNav } from "./MobileNav";
 
 const navLinks = [
@@ -8,6 +11,8 @@ const navLinks = [
 ];
 
 export function Header() {
+  const pathname = usePathname();
+
   return (
     <header className="bg-background">
       <div className="mx-auto flex h-[84px] max-w-[1440px] items-center justify-between px-5 sm:px-8 lg:px-20">
@@ -22,7 +27,11 @@ export function Header() {
             <Link
               key={link.href}
               href={link.href}
-              className="font-body text-[15px] leading-[18px] text-text transition-colors hover:text-muted py-3"
+              className={`font-body text-[15px] leading-[18px] transition-colors py-3 ${
+                pathname.startsWith(link.href)
+                  ? "font-medium text-text"
+                  : "text-muted hover:text-text"
+              }`}
             >
               {link.label}
             </Link>
