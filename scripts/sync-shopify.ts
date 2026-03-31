@@ -39,6 +39,7 @@ interface SyncStats {
   updated: number;
   autoApproved: number;
   skippedBanned: number;
+  skippedNonClothing: number;
   skippedSettled: number;
   scrapeHits: number;
   flaggedReview: number;
@@ -90,7 +91,7 @@ function getImages(product: ShopifyProduct): { primary: string | null; additiona
   };
 }
 
-import { classifyProductType, mapActivewearType } from "./lib/product-classifier";
+import { classifyProductType, mapActivewearType, shouldRejectProduct } from "./lib/product-classifier";
 
 function guessCategory(product: ShopifyProduct): string {
   const text = `${product.title} ${product.product_type} ${(product.tags || []).join(" ")}`.toLowerCase();
@@ -124,6 +125,7 @@ async function syncBrand(
     updated: 0,
     autoApproved: 0,
     skippedBanned: 0,
+    skippedNonClothing: 0,
     skippedSettled: 0,
     scrapeHits: 0,
     flaggedReview: 0,
@@ -181,6 +183,16 @@ async function syncBrand(
     const existingStatus = existingStatusMap.get(shopifyProduct.id);
     if (existingStatus === "rejected" || existingStatus === "approved") {
       stats.skippedSettled++;
+      continue;
+    }
+
+    // Skip non-clothing products
+    const rejection = shouldRejectProduct(shopifyProduct.title, brand.slug, shopifyProduct.product_type, shopifyProduct.tags);
+    if (rejection.rejected) {
+      stats.skippedNonClothing++;
+      if (options.dryRun) {
+        console.log(`  SKIP (${rejection.reason}): ${shopifyProduct.title}`);
+      }
       continue;
     }
 
@@ -596,7 +608,7 @@ async function main() {
       ? `, ${s.missingPrice} no-price, ${s.missingImage} no-image`
       : "";
     console.log(
-      `  ${s.brand}: ${s.fetched} fetched, ${s.skippedSettled} settled, ${s.inserted} synced, ${s.autoApproved} auto-approved, ${s.skippedBanned} banned, ${s.flaggedReview} review${scrapePart}${missingPart}, ${s.removed} removed`
+      `  ${s.brand}: ${s.fetched} fetched, ${s.skippedSettled} settled, ${s.skippedNonClothing} non-clothing, ${s.inserted} synced, ${s.autoApproved} auto-approved, ${s.skippedBanned} banned, ${s.flaggedReview} review${scrapePart}${missingPart}, ${s.removed} removed`
     );
     totalFetched += s.fetched;
     totalInserted += s.inserted;

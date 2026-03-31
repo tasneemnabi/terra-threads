@@ -316,6 +316,8 @@ export async function scrapeProductData(
         if (!isNaN(parsed)) price = parsed;
       }
     }
+    // Sanity check: clothing shouldn't cost more than $2000
+    if (price && price > 2000) price = null;
 
     const currency =
       jsonLd?.currency ||
