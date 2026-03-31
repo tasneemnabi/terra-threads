@@ -27,7 +27,7 @@ export function Header() {
             <Link
               key={link.href}
               href={link.href}
-              className={`font-body text-[15px] leading-[18px] transition-colors py-3 ${
+              className={`font-body text-[15px] leading-[18px] transition-colors py-[13px] ${
                 pathname.startsWith(link.href)
                   ? "font-medium text-text"
                   : "text-muted hover:text-text"
