@@ -5,9 +5,10 @@ import { brandLogoUrl, formatCategory } from "@/lib/utils";
 
 interface BrandCardProps {
   brand: BrandWithDetails;
+  priority?: boolean;
 }
 
-export function BrandCard({ brand }: BrandCardProps) {
+export function BrandCard({ brand, priority = false }: BrandCardProps) {
   const logoUrl = brandLogoUrl(brand.website_url);
 
   const metaParts = [
@@ -18,7 +19,7 @@ export function BrandCard({ brand }: BrandCardProps) {
   return (
     <Link
       href={`/brand/${brand.slug}`}
-      className="group relative flex flex-col gap-5 rounded-[14px] border border-surface-dark bg-background p-7 transition-all duration-200 hover:-translate-y-0.5 hover:border-muted hover:shadow-lg"
+      className="group relative flex flex-col gap-5 rounded-[14px] border border-[#DDD5CB] bg-white p-7 shadow-[0_2px_8px_rgba(140,120,100,0.07)] transition-all duration-200 hover:-translate-y-0.5 hover:border-muted hover:shadow-lg"
     >
       {/* Top row: Logo + Name */}
       <div className="flex items-center gap-3">
@@ -29,11 +30,12 @@ export function BrandCard({ brand }: BrandCardProps) {
             width={48}
             height={48}
             className="shrink-0 rounded-[10px]"
+            {...(priority && { priority: true })}
           />
         )}
-        <h3 className="font-display text-[28px] font-semibold leading-[32px] tracking-[-0.02em] text-text">
+        <h2 className="font-display text-[28px] font-semibold leading-[32px] tracking-[-0.02em] text-text">
           {brand.name}
-        </h3>
+        </h2>
       </div>
 
       {/* Fiber type pills */}
