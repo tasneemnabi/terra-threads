@@ -5,9 +5,10 @@ import { brandLogoUrl, formatCategory } from "@/lib/utils";
 
 interface BrandCardProps {
   brand: BrandWithDetails;
+  priority?: boolean;
 }
 
-export function BrandCard({ brand }: BrandCardProps) {
+export function BrandCard({ brand, priority = false }: BrandCardProps) {
   const logoUrl = brandLogoUrl(brand.website_url);
 
   const metaParts = [
@@ -29,6 +30,7 @@ export function BrandCard({ brand }: BrandCardProps) {
             width={48}
             height={48}
             className="shrink-0 rounded-[10px]"
+            {...(priority && { priority: true })}
           />
         )}
         <h2 className="font-display text-[28px] font-semibold leading-[32px] tracking-[-0.02em] text-text">

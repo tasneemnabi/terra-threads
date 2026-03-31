@@ -335,8 +335,8 @@ export function BrandsContent({ brands }: BrandsContentProps) {
           </p>
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-8 lg:grid-cols-3">
-            {filtered.map((brand) => (
-              <BrandCard key={brand.id} brand={brand} />
+            {filtered.map((brand, i) => (
+              <BrandCard key={brand.id} brand={brand} priority={i < 6} />
             ))}
             {filtered.length === 0 && (
               <div className="col-span-full flex flex-col items-center gap-4 py-16">
