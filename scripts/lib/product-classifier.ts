@@ -15,27 +15,41 @@ export const CANONICAL_PRODUCT_TYPES = [
   "jackets",
   "bodysuits",
   "jumpsuits",
+  "underwear",
+  "socks",
+  "loungewear",
+  "swimwear",
 ] as const;
 
 export type ProductType = (typeof CANONICAL_PRODUCT_TYPES)[number];
 
 // Non-clothing keywords → should be rejected entirely
+// Blacklist for non-lifestyle brands. Lifestyle brands use whitelist mode instead.
+// Avoid ambiguous words here — if a word commonly appears in clothing names, don't add it.
 const NON_CLOTHING_KEYWORDS =
-  /\b(yoga mat|palo santo|incense|candle|mug|tote bag|gift card|e-gift|sticker|bottle|pouch|wallet|mat strap|loose leaf tea|loofah|sponge|soap)\b/i;
+  /\b(yoga mat|yoga strap|yoga block|yoga bolster|palo santo|incense|candle|wick\b|mug|tote bag|gift card|e-gift|stickers?|pouch|wallet|mat strap|loose leaf tea|loofah|sponge|soap|twine|string light|braided cord|eyeshade|eye ?mask|sleep ?mask|eye ?pillow|seat cover|car seat|cushion cover|pillow ?case|pillow\b|duvet|blanket|comforter|sheet set|fitted sheet|flat sheet|bed ?sheet|towel|washcloth|bath ?mat|shower ?curtain|napkin|tablecloth|placemats?|dish ?cloth|mattress|produce bag|laundry bag|shopping bag|duffel|backpack|doormat|pet bed|dog bed|cat bed|shipping protection|package assurance|carbon offset|postcards?|lip ?balm|swatch ?book|cheese ?cloth|cheesecloth|shoelaces?|gift ?wrapping|drawer liner|sachet|potpourri|donation|bamboo straw|greeting card|wall hanging|baby'?s\b|infant|newborn|toddler|sanitiser|sanitizer|lotion|shampoo|conditioner|deodorant|face cream|body cream|hand cream|aftershave|enamelware|medallion|pendant|necklace|bracelet|earrings?|jewelry|jewellery|keychain|key ?ring|nail polish|perfume|fragrance|reed diffuser|toothbrush|ayurvedic|essential oils?|oil blend|card deck|affirmation|planter|coffee cups?|tea ?cups?|back scrub|body scrub)\b/i;
 
 // Accessories — not rejected but not classified as clothing types
 const ACCESSORY_KEYWORDS =
-  /\b(belt\b|headband|scrunchie|scarf|glove|beanie|hat\b)\b/i;
+  /\b(belt\b|headband|scrunchie|scarf|glove|mittens?|beanie|hat\b|cap\b(?!\s*sleeve)|bandana|wristband|hair tie|apron)\b/i;
 
 // Order matters — more specific patterns first to avoid false matches
 // Use (?:s\b|\b) at end to handle plurals (e.g., "shorts" and "short")
 const TYPE_PATTERNS: [ProductType, RegExp][] = [
+  // Underwear before shorts/tops (so "boxer shorts" matches underwear)
+  ["underwear", /\b(underwear|briefs?|boxers?\b|boxer\s*briefs?|knickers?|panties?|panty|thongs?|bikini(?!\s*top)|long\s*johns?|undershirts?|trunks?)\b/i],
+  // Socks
+  ["socks", /\b(socks?|stockings?|tights?)\b/i],
+  // Swimwear
+  ["swimwear", /\b(swimsuit|swimwear|bikini\s*top|one[- ]?piece|swim\s*trunks?)\b/i],
+  // Loungewear / sleepwear
+  ["loungewear", /\b(pajamas?|pyjamas?|pjs?\b|sleepwear|nightgown|nightshirt|nightdress|lounge\s*set|lounge\s*pants?|slippers?|sleep\s*set|bathrobes?)\b/i],
   // Bras before tops (so "sports bra" doesn't match "top")
   ["bras", /\b(sports?\s*bras?|bralettes?|scoop\s*bras?|v-?neck\s*bras?|yoga\s*bras?|built-?in\s*bras?|\bbras?\b)/i],
   // Dresses before tops (so "t-shirt dress" matches dress)
-  ["dresses", /\b(dress(?:es)?|gowns?)\b/i],
+  ["dresses", /\b(dress(?:es)?|gowns?|tunics?|kaftans?|caftans?|muumuus?|sarongs?)\b/i],
   // Jumpsuits before tops/pants
-  ["jumpsuits", /\b(jumpsuits?|rompers?|playsuits?)\b/i],
+  ["jumpsuits", /\b(jumpsuits?|rompers?|playsuits?|overalls?|dungarees?)\b/i],
   // Bodysuits before tops
   ["bodysuits", /\b(bodysuits?|unitards?|onesies?|catsuits?)\b/i],
   // Leggings before pants (includes flares)
@@ -45,13 +59,13 @@ const TYPE_PATTERNS: [ProductType, RegExp][] = [
   // Shorts before pants
   ["shorts", /\b((?<!sleeve\s)shorts?|biker\s*shorts?)\b/i],
   // Sweaters/knitwear
-  ["sweaters", /\b(sweaters?|cardigans?|pullovers?|crewnecks?|turtlenecks?|jumpers?)\b/i],
+  ["sweaters", /\b(sweaters?|cardigans?|cardi\b|pullovers?|crewnecks?|turtlenecks?|jumpers?|wraps?)\b/i],
   // Jackets/outerwear
-  ["jackets", /\b(jackets?|hoodies?|sweatshirts?|half-?zips?|zip\s+jackets?|coats?|ponchos?|anoraks?|parkas?|robes?)\b/i],
+  ["jackets", /\b(jackets?|hoodies?|sweatshirts?|half-?zips?|zip\s+jackets?|(?<!top\s|nail\s)coats?|ponchos?|anoraks?|parkas?|robes?|gilets?|blazers?|waistcoats?|overshirts?|anoraks?|windbreakers?)\b/i],
   // Pants
   ["pants", /\b(pants?|trousers?|joggers?|sweatpants?|bootcuts?|cargos?|chinos?|jeans?|denims?)\b/i],
   // Tops (broadest — last)
-  ["tops", /\b(tanks?|tees?\b|t-?shirts?|tops?\b|camis?|blouses?|longsleeves?|long\s+sleeves?|crops?\b|henleys?|polos?|singlets?|shirts?|vests?)\b/i],
+  ["tops", /\b(tanks?|tees?\b|t-?shirts?|tops?\b|camis?|camisoles?|blouses?|longsleeves?|long\s+sleeves?|crops?\b|henleys?|polos?|singlets?|shirts?|vests?|tube\b|v-?necks?)\b/i],
 ];
 
 // Shopify product_type normalization map
@@ -114,11 +128,40 @@ const SHOPIFY_TYPE_MAP: Record<string, ProductType> = {
   "jumpsuits": "jumpsuits",
   "romper": "jumpsuits",
   "bodysuit": "bodysuits",
+  "underwear": "underwear",
+  "briefs": "underwear",
+  "boxers": "underwear",
+  "socks": "socks",
+  "sock": "socks",
+  "tights": "socks",
+  "pajamas": "loungewear",
+  "pajama": "loungewear",
+  "sleepwear": "loungewear",
+  "robe": "loungewear",
+  "swimwear": "swimwear",
+  "bikini": "swimwear",
+  "one-piece": "swimwear",
+  "blazer": "jackets",
+  "waistcoat": "jackets",
   "activewear": undefined!, // too broad — fall through to name-based
   "active": undefined!,
-  "loungewear": undefined!,
-  "sleep apparel": undefined!,
 };
+
+/**
+ * Brands that sell mostly non-clothing (home goods, ceramics, etc.).
+ * For these brands we flip to whitelist mode: only products whose name
+ * matches a known clothing type are allowed through.
+ */
+export const CLOTHING_ONLY_BRANDS = new Set([
+  "magic-linen",
+  "beaumont-organic",
+  "aya",
+  "rawganique",
+  "allwear-organic-clothing",
+  "indigo-luna",
+  "nads",
+  "gil-rodriguez",
+]);
 
 export function isNonClothing(title: string): boolean {
   return NON_CLOTHING_KEYWORDS.test(title);
@@ -126,6 +169,37 @@ export function isNonClothing(title: string): boolean {
 
 export function isAccessory(title: string): boolean {
   return ACCESSORY_KEYWORDS.test(title);
+}
+
+/**
+ * Check if a product should be rejected based on brand + name.
+ * - Clothing-only brands: reject unless name matches a known clothing type.
+ * - Other brands: reject if name matches non-clothing or accessory keywords.
+ */
+export function shouldRejectProduct(
+  title: string,
+  brandSlug: string,
+  shopifyProductType?: string,
+  tags?: string[],
+): { rejected: boolean; reason?: string } {
+  const clothingType = classifyProductType(title, shopifyProductType, tags);
+
+  // Whitelist mode for lifestyle brands
+  if (CLOTHING_ONLY_BRANDS.has(brandSlug)) {
+    if (!clothingType) {
+      return { rejected: true, reason: "unrecognized (clothing-only brand)" };
+    }
+    return { rejected: false };
+  }
+
+  // Blacklist mode for other brands
+  if (isNonClothing(title)) {
+    return { rejected: true, reason: "non-clothing" };
+  }
+  if (!clothingType && isAccessory(title)) {
+    return { rejected: true, reason: "accessory" };
+  }
+  return { rejected: false };
 }
 
 // For activewear, map granular types to 4 broad subcategories
@@ -140,6 +214,10 @@ const ACTIVEWEAR_TYPE_MAP: Record<string, string> = {
   sweaters: "outerwear",
   bodysuits: "tops",
   jumpsuits: "bottoms",
+  underwear: "tops", // fallback
+  socks: "tops",
+  loungewear: "tops",
+  swimwear: "tops",
 };
 
 export function mapActivewearType(productType: ProductType): string {

@@ -31,11 +31,31 @@ const BRAND_PRODUCT_PATTERNS: Record<string, RegExp[]> = {
   "maggies-organics": [/^\/[a-z0-9][a-z0-9\-]*\/?$/],
   // Vivid Linen: products under /missy/product/<id>_<slug> or /plus/product/<id>_<slug>
   "vivid-linen": [/^\/(missy|plus|men)\/product\//],
+  // Quince: products at /women/<slug> or /men/<slug> — require hyphen to skip category pages
+  quince: [/^\/(women|men)\/[a-z0-9]+-[a-z0-9\-]+$/],
+  // Pact: hierarchical /women/apparel/<subcategory>/<product-name> (spaces URL-encoded)
+  pact: [/^\/(women|men)\/apparel\/.+\/.+$/],
+  // prAna (Salesforce Commerce Cloud): /p/<slug>/<numeric-id>.html
+  prana: [/^\/p\/[a-z0-9\-]+\/\d+\.html$/],
+  // Icebreaker: /en-us/products/<slug> (Shopify on na.icebreaker.com)
+  icebreaker: [/^\/en-us\/products\/[a-z0-9][a-z0-9\-]*$/],
 };
 
 /** Sitemap URL overrides — non-standard sitemap paths */
 const BRAND_SITEMAP_URLS: Record<string, string[]> = {
   "maggies-organics": ["/xmlsitemap.php?type=products&page=1"],
+  prana: ["/sitemap_index.xml"],
+};
+
+/** Brands that skip sitemap — use crawl only (for scoping to specific collections) */
+const BRAND_CRAWL_ONLY = new Set(["everlane", "quince"]);
+
+/**
+ * Hostname aliases for brands that redirect to a different domain.
+ * Links on the target domain are accepted as same-origin during crawl.
+ */
+const BRAND_HOSTNAME_ALIASES: Record<string, string[]> = {
+  icebreaker: ["na.icebreaker.com"],
 };
 
 /** URL exclusion patterns for sitemap (non-product pages that slip through) */
@@ -45,6 +65,13 @@ const BRAND_SITEMAP_EXCLUDES: Record<string, RegExp[]> = {
     /eco-friendly-shipping/, /return-policy/, /about/, /contact/,
     /gift-certificate/, /faq/, /care-instructions/, /bulk-orders/,
     /sateen-sheet/, /duvet/, /pillow/, // home goods
+  ],
+  // Rawganique sells home goods, fabrics, accessories — exclude non-clothing
+  rawganique: [
+    /sheet|pillow|towel|blanket|curtain|napkin|duvet|mattress/,
+    /fabric|yardage|bolt/,
+    /soap|candle|bag|backpack|wallet|belt|hat|scarf|glove/,
+    /mask|apron|pet-|dog-|cat-/,
   ],
 };
 
@@ -67,6 +94,35 @@ const BRAND_COLLECTION_PATHS: Record<string, string[]> = {
     "/plus/tops-blouses", "/plus/tunics", "/plus/jackets", "/plus/pants",
     "/plus/shirts", "/plus/cardigans-sweaters", "/plus/dresses-skirts", "/plus/tanks-camis",
   ],
+  // Everlane: ACTIVEWEAR ONLY — scope to women's activewear collection
+  everlane: ["/collections/womens-activewear"],
+  // Quince: ACTIVEWEAR ONLY — scope to women's activewear collection
+  quince: ["/all-activewear/women"],
+  // Icebreaker: all women's categories (merino wool performance brand)
+  icebreaker: [
+    "/en-us/collections/womens-baselayers",
+    "/en-us/collections/womens-running",
+    "/en-us/collections/womens-pants-leggings",
+    "/en-us/collections/womens-tshirts",
+    "/en-us/collections/womens-jackets-vests",
+    "/en-us/collections/womens-dresses-skirts",
+    "/en-us/collections/womens-underwear",
+    "/en-us/collections/womens-socks",
+  ],
+  // Pact: women's clothing categories
+  pact: ["/women/apparel"],
+  // prAna: women's activewear & yoga
+  prana: [
+    "/women/activity-collections/activewear.html",
+    "/women/bottoms/yoga-pants.html",
+    "/women/tops/yoga-bra-tops.html",
+  ],
+  // Fair Indigo: all women's organic clothing
+  "fair-indigo": ["/collections/shop-all-fair-indigo"],
+  // Rawganique: women's clothing (hemp/organic cotton/linen)
+  rawganique: ["/collections/women"],
+  // Gil Rodriguez: all products (small catalog, cotton basics)
+  "gil-rodriguez": ["/collections/all"],
 };
 
 // ─── Sitemap discovery ──────────────────────────────────────────────
@@ -210,13 +266,14 @@ async function discoverFromCrawl(
   const origin = new URL(baseUrl).origin;
   let browser: Browser | null = null;
 
-  // Build path list: brand-specific first, then defaults
-  const paths = [
-    ...(brandSlug && BRAND_COLLECTION_PATHS[brandSlug]
-      ? BRAND_COLLECTION_PATHS[brandSlug]
-      : []),
-    ...DEFAULT_COLLECTION_PATHS,
-  ];
+  // Build path list: brand-specific paths, plus defaults (unless crawl-only)
+  const brandPaths = brandSlug && BRAND_COLLECTION_PATHS[brandSlug]
+    ? BRAND_COLLECTION_PATHS[brandSlug]
+    : [];
+  const isCrawlOnly = brandSlug && BRAND_CRAWL_ONLY.has(brandSlug);
+  const paths = isCrawlOnly
+    ? brandPaths  // Crawl-only brands: ONLY visit their specific collection paths
+    : [...brandPaths, ...DEFAULT_COLLECTION_PATHS];
   // Deduplicate
   const uniquePaths = [...new Set(paths)];
 
@@ -245,8 +302,9 @@ async function discoverFromCrawl(
       });
 
       try {
+        // Use domcontentloaded — networkidle often times out on SPA/analytics-heavy sites
         const res = await page.goto(`${origin}${collPath}`, {
-          waitUntil: "networkidle",
+          waitUntil: "domcontentloaded",
           timeout: 30000,
         });
 
@@ -255,7 +313,8 @@ async function discoverFromCrawl(
           continue;
         }
 
-        await page.waitForTimeout(2000);
+        // Wait for product grid to render (SPAs need time after domcontentloaded)
+        await page.waitForTimeout(5000);
 
         // Scroll to load lazy content / infinite scroll (up to 15 scrolls)
         for (let scroll = 0; scroll < 15; scroll++) {
@@ -274,12 +333,19 @@ async function discoverFromCrawl(
         });
 
         const baseHostname = new URL(baseUrl).hostname.replace(/^www\./, "");
+        // Accept aliased hostnames (e.g. icebreaker.com → na.icebreaker.com)
+        const acceptedHosts = new Set([baseHostname]);
+        if (brandSlug && BRAND_HOSTNAME_ALIASES[brandSlug]) {
+          for (const alias of BRAND_HOSTNAME_ALIASES[brandSlug]) {
+            acceptedHosts.add(alias.replace(/^www\./, ""));
+          }
+        }
 
         for (const link of links) {
           try {
             const url = new URL(link, origin);
             const linkHost = url.hostname.replace(/^www\./, "");
-            if (linkHost === baseHostname && isProductUrl(url.pathname, brandSlug)) {
+            if (acceptedHosts.has(linkHost) && isProductUrl(url.pathname, brandSlug)) {
               // Normalize: strip query params and hash to deduplicate color variants
               allUrls.add(`${url.origin}${url.pathname}`);
             }
@@ -313,17 +379,24 @@ export async function discoverProducts(
 ): Promise<DiscoveryResult> {
   const { maxProducts = 500, brandSlug } = options;
 
-  // Try sitemap first (fast, no browser)
-  console.log(`  Trying sitemap discovery for ${websiteUrl}...`);
-  const sitemapUrls = await discoverFromSitemap(websiteUrl, brandSlug, maxProducts);
+  // Some brands skip sitemap to scope discovery to specific collections
+  const crawlOnly = brandSlug && BRAND_CRAWL_ONLY.has(brandSlug);
 
-  if (sitemapUrls && sitemapUrls.length > 0) {
-    console.log(`  Sitemap: found ${sitemapUrls.length} product URLs`);
-    return { urls: sitemapUrls, method: "sitemap" };
+  if (!crawlOnly) {
+    // Try sitemap first (fast, no browser)
+    console.log(`  Trying sitemap discovery for ${websiteUrl}...`);
+    const sitemapUrls = await discoverFromSitemap(websiteUrl, brandSlug, maxProducts);
+
+    if (sitemapUrls && sitemapUrls.length > 0) {
+      console.log(`  Sitemap: found ${sitemapUrls.length} product URLs`);
+      return { urls: sitemapUrls, method: "sitemap" };
+    }
+  } else {
+    console.log(`  Crawl-only mode for ${brandSlug} (scoped to specific collections)`);
   }
 
-  // Fallback: crawl collection pages
-  console.log(`  Sitemap failed, trying collection crawl...`);
+  // Fallback (or crawl-only): crawl collection pages
+  console.log(`  ${crawlOnly ? "Crawling" : "Sitemap failed, trying"} collection pages...`);
   const crawlUrls = await discoverFromCrawl(websiteUrl, brandSlug, maxProducts);
 
   if (crawlUrls && crawlUrls.length > 0) {

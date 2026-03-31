@@ -187,13 +187,32 @@ export async function scrapeProductData(
     let priceStr =
       (await metaContent("product:price:amount")) ||
       (await metaContent("og:price:amount"));
+    // Try JSON-LD structured data (more reliable than DOM selectors)
+    if (!priceStr) {
+      priceStr = await page.$$eval(
+        'script[type="application/ld+json"]',
+        (scripts) => {
+          for (const s of scripts) {
+            try {
+              const data = JSON.parse(s.textContent || "");
+              const offers = data.offers || data[0]?.offers;
+              const price = offers?.price ?? offers?.[0]?.price ?? offers?.lowPrice;
+              if (price) return String(price);
+            } catch {}
+          }
+          return null;
+        }
+      ).catch(() => null);
+    }
     if (!priceStr) {
       priceStr = await page.$eval(
         '[data-product-price], .product-price, .price--regular, .price .amount, .product__price',
         (el) => el.textContent?.replace(/[^0-9.]/g, "") || null
       ).catch(() => null);
     }
-    const price = priceStr ? parseFloat(priceStr) : null;
+    let price = priceStr ? parseFloat(priceStr) : null;
+    // Sanity check: clothing shouldn't cost more than $2000
+    if (price && price > 2000) price = null;
 
     const currency =
       (await metaContent("product:price:currency")) ||

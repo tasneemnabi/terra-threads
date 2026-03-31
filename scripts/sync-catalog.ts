@@ -32,8 +32,7 @@ import { loadEnv, getSupabaseAdmin } from "./lib/env.js";
 import { ensureMaterialExists, syncProductMaterials } from "./lib/db-helpers.js";
 import {
   classifyProductType,
-  isNonClothing,
-  isAccessory,
+  shouldRejectProduct,
 } from "./lib/product-classifier.js";
 
 // ─── Types ──────────────────────────────────────────────────────────
@@ -188,21 +187,15 @@ async function syncBrand(
       }
 
       // Clean up name: strip trailing " | Brand Name" suffixes (common in og:title)
-      const cleanName = scraped.name.replace(/\s*[|–—-]\s*[^|–—-]+$/, "").trim();
+      // Require spaces around separator to avoid stripping hyphenated words like "Ultra-Soft"
+      const cleanName = scraped.name.replace(/\s+[|–—-]\s+[^|–—-]+$/, "").trim();
 
-      // 4. Skip non-clothing
-      if (isNonClothing(cleanName)) {
+      // 4. Skip non-clothing products
+      const rejection = shouldRejectProduct(cleanName, brand.slug);
+      if (rejection.rejected) {
         stats.skippedNonClothing++;
         if (options.dryRun) {
-          console.log(`  SKIP (non-clothing): ${cleanName}`);
-        }
-        continue;
-      }
-
-      if (isAccessory(cleanName)) {
-        stats.skippedNonClothing++;
-        if (options.dryRun) {
-          console.log(`  SKIP (accessory): ${cleanName}`);
+          console.log(`  SKIP (${rejection.reason}): ${cleanName}`);
         }
         continue;
       }
