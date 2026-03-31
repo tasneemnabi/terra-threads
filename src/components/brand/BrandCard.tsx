@@ -31,9 +31,9 @@ export function BrandCard({ brand }: BrandCardProps) {
             className="shrink-0 rounded-[10px]"
           />
         )}
-        <h3 className="font-display text-[28px] font-semibold leading-[32px] tracking-[-0.02em] text-text">
+        <h2 className="font-display text-[28px] font-semibold leading-[32px] tracking-[-0.02em] text-text">
           {brand.name}
-        </h3>
+        </h2>
       </div>
 
       {/* Fiber type pills */}
