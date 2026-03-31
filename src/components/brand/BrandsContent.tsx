@@ -334,7 +334,7 @@ export function BrandsContent({ brands }: BrandsContentProps) {
             {filtered.length} brand{filtered.length !== 1 ? "s" : ""}
           </p>
 
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-8 lg:grid-cols-3">
             {filtered.map((brand) => (
               <BrandCard key={brand.id} brand={brand} />
             ))}
