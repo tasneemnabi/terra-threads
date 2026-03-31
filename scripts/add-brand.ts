@@ -107,42 +107,30 @@ async function insertBrand(brand: BrandInput): Promise<void> {
   const brandSlug = slugify(brand.name);
   const supabase = getSupabaseAdmin();
 
+  const brandFields = {
+    name: brand.name,
+    slug: brandSlug,
+    description: brand.description,
+    website_url: brand.website_url,
+    is_fully_natural: true, // default, updated after catalog sync
+    sync_enabled: true,
+    audience: brand.audience,
+    fiber_types: brand.fiber_types,
+    categories: brand.categories,
+  };
+
   const { data: brandData, error: brandError } = await supabase
     .from("brands")
-    .insert({
-      name: brand.name,
-      slug: brandSlug,
-      description: brand.description,
-      website_url: brand.website_url,
-      is_fully_natural: true, // default, updated after catalog sync
-      audience: brand.audience,
-      fiber_types: brand.fiber_types,
-      categories: brand.categories,
-    })
+    .upsert(brandFields, { onConflict: "slug", ignoreDuplicates: false })
     .select("id")
     .single();
 
   if (brandError) {
-    if (brandError.code === "23505") {
-      const { data: existing } = await supabase
-        .from("brands")
-        .select("id")
-        .eq("slug", brandSlug)
-        .single();
-
-      if (!existing) {
-        console.error(`Brand "${brand.name}" exists but could not be looked up.`);
-        process.exit(1);
-      }
-
-      console.log(`\n→ Brand "${brand.name}" already exists (${existing.id})`);
-    } else {
-      console.error("Failed to insert brand:", brandError.message);
-      process.exit(1);
-    }
-  } else {
-    console.log(`\n✓ Inserted brand: ${brand.name} (${brandData!.id})`);
+    console.error("Failed to upsert brand:", brandError.message);
+    process.exit(1);
   }
+
+  console.log(`\n✓ Brand ready: ${brand.name} (${brandData!.id})`)
 
   // Download logo
   await downloadLogo(brand.website_url);
