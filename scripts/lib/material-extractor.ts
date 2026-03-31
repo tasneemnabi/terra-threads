@@ -87,6 +87,9 @@ const MATERIAL_ALIASES: [string, string][] = [
   ["organic cotton", "Organic Cotton"],
   ["organic linen", "Linen"],
   ["organic hemp", "Hemp"],
+  ["regenerative organic certified cotton", "Organic Cotton"],
+  ["regenerative organic cotton", "Organic Cotton"],
+  ["regenerative cotton", "Cotton"],
   ["regenerative hemp", "Hemp"],
   ["turkish hemp", "Hemp"],
   ["recycled merino wool", "Merino Wool"],
@@ -103,6 +106,7 @@ const MATERIAL_ALIASES: [string, string][] = [
   ["lenzing modal", "Modal"],
   ["lenzing ecovero", "Viscose"],
   ["ecovero viscose", "Viscose"],
+  ["ecoviscose", "Viscose"],
   ["tencel modal", "Modal"],
   ["cotton modal", "Modal"],
   ["micro modal", "Modal"],
@@ -507,10 +511,12 @@ Rules:
  * Used by both extractMaterialsRegex (ShopifyProduct) and extractMaterialsFromText (raw text).
  */
 function extractFromCombinedText(combinedText: string): ExtractedMaterials | null {
-  const regexResult = extractWithRegex(combinedText);
+  // Strip ®, ™, © symbols so they don't break regex word captures
+  const cleaned = combinedText.replace(/[®™©]/g, "");
+  const regexResult = extractWithRegex(cleaned);
   if (regexResult) return regexResult;
 
-  const dictResult = extractWithDictionary(combinedText);
+  const dictResult = extractWithDictionary(cleaned);
   if (dictResult) return dictResult;
 
   return null;

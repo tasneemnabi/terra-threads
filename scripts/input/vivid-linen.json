@@ -1,0 +1,70 @@
+{
+  "name": "Vivid Linen",
+  "website_url": "https://vividlinen.com",
+  "description": "Linen clothing specialist offering pre-shrunk 100% natural linen dresses, tops, and pants in both standard and plus sizes.",
+  "audience": ["Women"],
+  "fiber_types": ["Linen"],
+  "categories": ["Dresses", "Tops"],
+  "products": [
+    {
+      "name": "Linen A-line Maxi Dress",
+      "description": "Relaxed A-line maxi dress in 100% pre-shrunk natural linen.",
+      "category": "dresses",
+      "price": 158.00,
+      "affiliate_url": "https://www.vividlinen.com/missy/product/d3657_1127_linen-a-line-maxi-dress&tgid=5",
+      "image_url": "/products/vivid-linen-linen-a-line-maxi-dress.jpg",
+      "is_featured": true,
+      "materials": {
+        "Linen": 100
+      }
+    },
+    {
+      "name": "Linen Boxy Top",
+      "description": "Casual boxy-fit top in 100% pre-shrunk natural linen.",
+      "category": "tops",
+      "price": 68.00,
+      "affiliate_url": "https://www.vividlinen.com/missy/product/v3928_1530_linen-boxy-top&tgid=11",
+      "image_url": "/products/vivid-linen-linen-boxy-top.jpg",
+      "is_featured": true,
+      "materials": {
+        "Linen": 100
+      }
+    },
+    {
+      "name": "Linen Shirt Dress",
+      "description": "Button-front shirt dress in 100% pre-shrunk natural linen.",
+      "category": "dresses",
+      "price": 178.00,
+      "affiliate_url": "https://www.vividlinen.com/missy/product/t3682_1160_172_linen-shirt-dress",
+      "image_url": "/products/vivid-linen-linen-shirt-dress.jpg",
+      "is_featured": false,
+      "materials": {
+        "Linen": 100
+      }
+    },
+    {
+      "name": "Linen Loose-Fitting Sleeveless Dress",
+      "description": "Relaxed sleeveless dress with double pockets in 100% pre-shrunk natural linen.",
+      "category": "dresses",
+      "price": 188.00,
+      "affiliate_url": "https://www.vividlinen.com/missy/product/d4268_1980_linen-loose-fitting-double-pockets-sleeveless-dress&tgid=5",
+      "image_url": "/products/vivid-linen-linen-loose-fitting-sleeveless-dress.jpg",
+      "is_featured": false,
+      "materials": {
+        "Linen": 100
+      }
+    },
+    {
+      "name": "Linen A-line Long Dress",
+      "description": "Elegant long A-line dress in 100% pre-shrunk natural linen.",
+      "category": "dresses",
+      "price": 158.00,
+      "affiliate_url": "https://www.vividlinen.com/missy/product/d3891_1465_linen-a-line-long-dress&tgid=5",
+      "image_url": "/products/vivid-linen-linen-a-line-long-dress.jpg",
+      "is_featured": false,
+      "materials": {
+        "Linen": 100
+      }
+    }
+  ]
+}

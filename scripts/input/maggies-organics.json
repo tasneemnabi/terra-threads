@@ -1,0 +1,60 @@
+{
+  "name": "Maggie's Organics",
+  "website_url": "https://maggiesorganics.com",
+  "description": "Employee-owned, GOTS-certified brand making organic cotton basics and leggings in the USA and India since 1992.",
+  "audience": ["Women", "Men"],
+  "fiber_types": ["Organic Cotton"],
+  "categories": ["Basics", "Tops", "Loungewear"],
+  "products": [
+    {
+      "name": "Classic Crew Neck Tee",
+      "description": "Everyday tee in 100% Regenerative Organic Certified cotton, GOTS certified.",
+      "category": "tops",
+      "price": 55.00,
+      "affiliate_url": "https://maggiesorganics.com/100-regenerative-organic-certified-cotton-classic-crew-neck-tee/",
+      "image_url": "/products/maggies-organics-classic-crew-neck-tee.jpg",
+      "is_featured": true,
+      "materials": {
+        "Organic Cotton": 100
+      }
+    },
+    {
+      "name": "Workwear Shirt",
+      "description": "Long-sleeve button-up in 100% organic cotton French terry, garment-dyed and GOTS certified.",
+      "category": "tops",
+      "price": 99.00,
+      "affiliate_url": "https://maggiesorganics.com/100-regenerative-organic-certified-cotton-workwear-shirt/",
+      "image_url": "/products/maggies-organics-workwear-shirt.jpg",
+      "is_featured": true,
+      "materials": {
+        "Organic Cotton": 100
+      }
+    },
+    {
+      "name": "Organic Cotton Kimono",
+      "description": "Relaxed kimono in organic cotton jersey with 10% spandex for stretch, made in India.",
+      "category": "loungewear",
+      "price": 69.00,
+      "affiliate_url": "https://maggiesorganics.com/organic-cotton-kimono/",
+      "image_url": "/products/maggies-organics-organic-cotton-kimono.jpg",
+      "is_featured": false,
+      "materials": {
+        "Organic Cotton": 90,
+        "Elastane": 10
+      }
+    },
+    {
+      "name": "Base Layer Ankle Leggings",
+      "description": "Everyday leggings in 90% organic cotton with 10% spandex for stretch, GOTS certified.",
+      "category": "basics",
+      "price": 45.00,
+      "affiliate_url": "https://maggiesorganics.com/organic-cotton-basic-ankle-leggings-solid",
+      "image_url": "/products/maggies-organics-base-layer-ankle-leggings.jpg",
+      "is_featured": false,
+      "materials": {
+        "Organic Cotton": 90,
+        "Elastane": 10
+      }
+    }
+  ]
+}
