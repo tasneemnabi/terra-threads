@@ -8,7 +8,7 @@ interface BrandCardProps {
 }
 
 export function BrandCard({ brand }: BrandCardProps) {
-  const logoUrl = brandLogoUrl(brand.website_url, 128);
+  const logoUrl = brandLogoUrl(brand.website_url);
   const formatCategory = (cat: string) =>
     cat
       .split("-")
@@ -34,7 +34,6 @@ export function BrandCard({ brand }: BrandCardProps) {
             width={48}
             height={48}
             className="shrink-0 rounded-[10px]"
-            unoptimized
           />
         )}
         <h3 className="font-display text-[28px] font-semibold leading-[32px] tracking-[-0.02em] text-text">

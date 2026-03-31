@@ -1,6 +1,6 @@
 "use server";
 
-import { getFilteredProducts, getProductTypesForCategory } from "@/lib/queries/products";
+import { getFilteredProducts, getProductTypesForCategory, getAvailableBrandSlugs } from "@/lib/queries/products";
 import type { FilterState, ProductWithBrand } from "@/types/database";
 
 export async function fetchProducts(
@@ -11,4 +11,10 @@ export async function fetchProducts(
 
 export async function fetchProductTypes(category: string): Promise<string[]> {
   return getProductTypesForCategory(category);
+}
+
+export async function fetchAvailableBrands(
+  filters: Omit<FilterState, "page" | "brands" | "sort">
+): Promise<string[]> {
+  return getAvailableBrandSlugs(filters);
 }

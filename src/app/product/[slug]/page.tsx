@@ -31,7 +31,7 @@ export default async function ProductPage({ params }: Props) {
   if (!product) notFound();
 
   const relatedProducts = await getRelatedProducts(product.id, product.category);
-  const logoUrl = brandLogoUrl(product.brand_website_url, 48);
+  const logoUrl = brandLogoUrl(product.brand_website_url);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -95,7 +95,6 @@ export default async function ProductPage({ params }: Props) {
                   width={32}
                   height={32}
                   className="shrink-0 rounded-md"
-                  unoptimized
                 />
               )}
               <span className="font-body text-sm font-medium uppercase tracking-wide text-muted">

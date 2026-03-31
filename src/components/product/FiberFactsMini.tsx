@@ -16,13 +16,12 @@ export function FiberFactsMini({ materials }: FiberFactsMiniProps) {
     .join(", ");
 
   return (
-    <div
-      className={`rounded border px-2 py-1 ${
-        allNatural
-          ? "border-[#4A7A3D]/30 bg-[#4A7A3D]/5"
-          : "border-surface-dark bg-white"
-      }`}
-    >
+    <div className="flex items-center gap-1.5">
+      <span
+        className={`inline-block h-[6px] w-[6px] shrink-0 rounded-full ${
+          allNatural ? "bg-natural" : "bg-accent"
+        }`}
+      />
       <p className="font-body text-[11px] leading-tight text-muted">
         {fibers}
       </p>

@@ -4,7 +4,7 @@ import { useMemo, useCallback, useState, useEffect, useRef, useTransition } from
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import type { FilterState, ProductWithBrand } from "@/types/database";
 import { ProductCard } from "@/components/product/ProductCard";
-import { fetchProducts, fetchProductTypes } from "@/app/shop/actions";
+import { fetchProducts, fetchProductTypes, fetchAvailableBrands } from "@/app/shop/actions";
 
 type TierFilter = "all" | "natural" | "nearly";
 type SortOption = "newest" | "price-asc" | "price-desc";
@@ -69,7 +69,7 @@ function FilterCheckbox({
       <div
         className={`flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-[3px] border transition-all duration-150 ${
           checked
-            ? "border-text bg-text"
+            ? "border-accent bg-accent"
             : "border-muted-light group-hover/cb:border-muted"
         }`}
       >
@@ -144,7 +144,7 @@ function ActiveFilterChip({
   return (
     <button
       onClick={onRemove}
-      className="flex items-center gap-1.5 rounded-[4px] border border-text px-3 py-1.5 font-body text-[12px] font-medium text-text transition-colors hover:bg-surface"
+      className="flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1.5 font-body text-[12px] font-medium text-accent transition-colors hover:bg-accent/20"
     >
       {label}
       <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -182,6 +182,7 @@ export function ShopContent({
   const [page, setPage] = useState(1);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [productTypes, setProductTypes] = useState(initialProductTypes);
+  const [availableBrandSlugs, setAvailableBrandSlugs] = useState<string[] | null>(null);
 
   useEffect(() => {
     if (filterOpen) {
@@ -198,7 +199,10 @@ export function ShopContent({
   const tier = (searchParams.get("tier") as TierFilter) || "all";
   const selectedCategory = searchParams.get("category") || null;
   const selectedAudience = searchParams.get("audience") || null;
-  const selectedProductType = searchParams.get("type") || null;
+  const selectedProductTypes = useMemo(
+    () => searchParams.get("type")?.split(",").filter(Boolean) ?? [],
+    [searchParams]
+  );
   const selectedFibers = useMemo(
     () => searchParams.get("fiber")?.split(",").filter(Boolean) ?? [],
     [searchParams]
@@ -215,7 +219,7 @@ export function ShopContent({
     () => ({
       category: selectedCategory || undefined,
       audience: selectedAudience || undefined,
-      productType: selectedProductType || undefined,
+      productTypes: selectedProductTypes.length ? selectedProductTypes : undefined,
       brands: selectedBrands.length ? selectedBrands : undefined,
       materials: selectedFibers.length ? selectedFibers : undefined,
       minPrice,
@@ -223,8 +227,41 @@ export function ShopContent({
       sort,
       tier,
     }),
-    [selectedCategory, selectedAudience, selectedProductType, selectedBrands, selectedFibers, minPrice, maxPrice, sort, tier]
+    [selectedCategory, selectedAudience, selectedProductTypes, selectedBrands, selectedFibers, minPrice, maxPrice, sort, tier]
   );
+
+  // Filters excluding brand — used to determine which brands are available
+  const nonBrandFilters = useMemo(
+    () => ({
+      category: selectedCategory || undefined,
+      audience: selectedAudience || undefined,
+      productTypes: selectedProductTypes.length ? selectedProductTypes : undefined,
+      materials: selectedFibers.length ? selectedFibers : undefined,
+      minPrice,
+      maxPrice,
+      tier,
+    }),
+    [selectedCategory, selectedAudience, selectedProductTypes, selectedFibers, minPrice, maxPrice, tier]
+  );
+
+  // Refresh available brands when non-brand filters change
+  useEffect(() => {
+    const hasNonBrandFilter =
+      nonBrandFilters.category ||
+      nonBrandFilters.audience ||
+      nonBrandFilters.productTypes ||
+      nonBrandFilters.materials ||
+      nonBrandFilters.minPrice !== undefined ||
+      nonBrandFilters.maxPrice !== undefined ||
+      (nonBrandFilters.tier && nonBrandFilters.tier !== "all");
+
+    if (!hasNonBrandFilter) {
+      setAvailableBrandSlugs(null); // show all brands when no filters active
+      return;
+    }
+
+    fetchAvailableBrands(nonBrandFilters).then(setAvailableBrandSlugs);
+  }, [nonBrandFilters]);
 
   // When filters change, reset to page 1
   useEffect(() => {
@@ -298,7 +335,12 @@ export function ShopContent({
     }
   };
   const setAudience = (a: string | null) => setParams({ audience: a });
-  const setProductType = (t: string | null) => setParams({ type: t });
+  const toggleProductType = (t: string) => {
+    const next = selectedProductTypes.includes(t)
+      ? selectedProductTypes.filter((pt) => pt !== t)
+      : [...selectedProductTypes, t];
+    setParams({ type: next.length ? next.join(",") : null });
+  };
 
   // Build fiber groups filtered to only materials that exist in the DB
   const fiberGroups = useMemo(
@@ -342,7 +384,7 @@ export function ShopContent({
   const hasActiveFilters =
     selectedAudience !== null ||
     selectedCategory !== null ||
-    selectedProductType !== null ||
+    selectedProductTypes.length > 0 ||
     selectedFibers.length > 0 ||
     selectedBrands.length > 0 ||
     minPrice !== undefined ||
@@ -362,8 +404,8 @@ export function ShopContent({
   if (selectedCategory) {
     activeChips.push({ label: formatCategory(selectedCategory), onRemove: () => setCategory(null) });
   }
-  if (selectedProductType) {
-    activeChips.push({ label: PRODUCT_TYPE_LABELS[selectedProductType] || selectedProductType, onRemove: () => setProductType(null) });
+  for (const pt of selectedProductTypes) {
+    activeChips.push({ label: PRODUCT_TYPE_LABELS[pt] || formatCategory(pt), onRemove: () => toggleProductType(pt) });
   }
   for (const fam of allFiberFamilies) {
     if (fam.members.some((m) => selectedFibers.includes(m))) {
@@ -414,28 +456,28 @@ export function ShopContent({
       {/* Category */}
       <AccordionFilter title="Category" defaultOpen={selectedCategory !== null}>
         {categories.map((cat) => (
-          <FilterCheckbox
-            key={cat}
-            label={formatCategory(cat)}
-            checked={selectedCategory === cat}
-            onChange={() => setCategory(selectedCategory === cat ? null : cat)}
-          />
+          <div key={cat}>
+            <FilterCheckbox
+              label={formatCategory(cat)}
+              checked={selectedCategory === cat}
+              onChange={() => setCategory(selectedCategory === cat ? null : cat)}
+            />
+            {/* Type sub-filter nested under selected category */}
+            {selectedCategory === cat && productTypes.length > 0 && (
+              <div className="ml-6 mt-0.5 mb-1 flex flex-col gap-0.5">
+                {productTypes.map((pt) => (
+                  <FilterCheckbox
+                    key={pt}
+                    label={PRODUCT_TYPE_LABELS[pt] || formatCategory(pt)}
+                    checked={selectedProductTypes.includes(pt)}
+                    onChange={() => toggleProductType(pt)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         ))}
       </AccordionFilter>
-
-      {/* Product Type (shown when a category is selected and types exist) */}
-      {productTypes.length > 0 && selectedCategory && (
-        <AccordionFilter title="Type" defaultOpen={selectedProductType !== null}>
-          {productTypes.map((pt) => (
-            <FilterCheckbox
-              key={pt}
-              label={PRODUCT_TYPE_LABELS[pt] || formatCategory(pt)}
-              checked={selectedProductType === pt}
-              onChange={() => setProductType(selectedProductType === pt ? null : pt)}
-            />
-          ))}
-        </AccordionFilter>
-      )}
 
       {/* Fiber Type */}
       <AccordionFilter title="Fiber Type" defaultOpen={selectedFibers.length > 0}>
@@ -457,23 +499,32 @@ export function ShopContent({
       </AccordionFilter>
 
       {/* Brand */}
-      <AccordionFilter title="Brand" defaultOpen={selectedBrands.length > 0}>
-        <div className="relative">
-          <div className="max-h-[240px] overflow-y-auto pr-1 scrollbar-thin">
-            {brands.map((brand) => (
-              <FilterCheckbox
-                key={brand.slug}
-                label={brand.name}
-                checked={selectedBrands.includes(brand.slug)}
-                onChange={() => toggleBrand(brand.slug)}
-              />
-            ))}
-          </div>
-          {brands.length > 8 && (
-            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent" />
-          )}
-        </div>
-      </AccordionFilter>
+      {(() => {
+        const visibleBrands = availableBrandSlugs
+          ? brands.filter(
+              (b) => availableBrandSlugs.includes(b.slug) || selectedBrands.includes(b.slug)
+            )
+          : brands;
+        return visibleBrands.length > 0 ? (
+          <AccordionFilter title="Brand" defaultOpen={selectedBrands.length > 0}>
+            <div className="relative">
+              <div className="max-h-[240px] overflow-y-auto pr-1 scrollbar-thin">
+                {visibleBrands.map((brand) => (
+                  <FilterCheckbox
+                    key={brand.slug}
+                    label={brand.name}
+                    checked={selectedBrands.includes(brand.slug)}
+                    onChange={() => toggleBrand(brand.slug)}
+                  />
+                ))}
+              </div>
+              {visibleBrands.length > 8 && (
+                <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent" />
+              )}
+            </div>
+          </AccordionFilter>
+        ) : null;
+      })()}
 
       {/* Price */}
       <AccordionFilter title="Price" defaultOpen={minPrice !== undefined || maxPrice !== undefined}>

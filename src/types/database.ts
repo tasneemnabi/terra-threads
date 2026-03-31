@@ -93,5 +93,5 @@ export interface FilterState {
   sort?: "newest" | "price-asc" | "price-desc";
   tier?: "all" | "natural" | "nearly";
   audience?: string;
-  productType?: string;
+  productTypes?: string[];
 }

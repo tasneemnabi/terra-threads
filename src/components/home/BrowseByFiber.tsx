@@ -29,21 +29,21 @@ const fibers = [
 
 export function BrowseByFiber() {
   return (
-    <section className="px-5 sm:px-8 lg:px-20 pt-20">
+    <section className="px-5 sm:px-8 lg:px-20 py-20 sm:py-28">
       <div className="mx-auto max-w-[1280px]">
         <p className="font-body text-[13px] font-medium uppercase leading-[16px] tracking-[0.08em] text-secondary">
           Browse by fiber
         </p>
-        <h2 className="mt-2 font-display text-[28px] font-semibold leading-[34px] tracking-[-0.01em] text-text">
+        <h2 className="mt-2 font-display text-[28px] font-semibold leading-[34px] tracking-[-0.01em] text-text text-balance">
           Find your material
         </h2>
 
-        <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
           {fibers.map((fiber) => (
             <Link
               key={fiber.name}
-              href={`/brands?fiber=${encodeURIComponent(fiber.param)}`}
-              className="group flex flex-col rounded-[14px] bg-surface px-7 py-7 gap-3"
+              href={`/shop?fiber=${encodeURIComponent(fiber.param)}`}
+              className="group flex flex-col rounded-[14px] bg-surface px-7 py-7 gap-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
             >
               <h3 className="font-display text-[20px] font-semibold leading-[24px] tracking-[-0.01em] text-text">
                 {fiber.name}
@@ -52,10 +52,24 @@ export function BrowseByFiber() {
                 {fiber.description}
               </p>
               <p className="pt-1 font-body text-[14px] font-medium leading-[18px] text-accent group-hover:text-accent/80">
-                View brands &rarr;
+                Shop now &rarr;
               </p>
             </Link>
           ))}
+          <Link
+            href="/shop"
+            className="group flex flex-col rounded-[14px] bg-surface px-7 py-7 gap-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <h3 className="font-display text-[20px] font-semibold leading-[24px] tracking-[-0.01em] text-text">
+              All Fibers
+            </h3>
+            <p className="flex-1 font-body text-[15px] leading-[24px] text-secondary">
+              Explore our full library of 18+ natural and semi-synthetic fibers.
+            </p>
+            <p className="pt-1 font-body text-[14px] font-medium leading-[18px] text-accent group-hover:text-accent/80">
+              Browse all &rarr;
+            </p>
+          </Link>
         </div>
       </div>
     </section>

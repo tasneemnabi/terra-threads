@@ -32,13 +32,15 @@ No `products` array — product ingestion is handled automatically by the catalo
 - **`fiber_types`**: The primary natural fibers the brand uses (brand-level). Use names like: `Organic Cotton`, `Merino Wool`, `Cashmere`, `Linen`, `Hemp`, `Silk`, `Tencel Lyocell`, `Alpaca`, `Wool`, etc.
 - **`categories`**: What the brand sells. Use values from: `Activewear`, `Basics`, `Knitwear`, `Dresses`, `Tops`, `Underwear`, `Loungewear`, `Swimwear`, `Socks`, `Denim`, `Yoga`, `Kids`
 
-3. **Validate and insert the brand**:
+3. **Validate and insert the brand** (this also auto-downloads the brand logo if `NEXT_PUBLIC_LOGO_DEV_TOKEN` is set in `.env.local`):
 ```bash
 npx tsx scripts/add-brand.ts --dry-run scripts/input/{{BRAND_SLUG}}.json
 npx tsx scripts/add-brand.ts --insert scripts/input/{{BRAND_SLUG}}.json
 ```
 
-4. **Run the catalog scraper** to discover and ingest all products:
+4. If the logo wasn't auto-downloaded, manually save the brand's logo to `public/logos/{domain}.png` (128×128 PNG).
+
+5. **Run the catalog scraper** to discover and ingest all products:
 ```bash
 # First, check what products are found
 npx tsx scripts/sync-catalog.ts --discover-only --brand {{BRAND_SLUG}}
@@ -50,7 +52,7 @@ npx tsx scripts/sync-catalog.ts --dry-run --brand {{BRAND_SLUG}}
 npx tsx scripts/sync-catalog.ts --brand {{BRAND_SLUG}}
 ```
 
-5. **Return a summary** of what was researched and inserted — include product count, approval rate, and any issues.
+6. **Return a summary** of what was researched and inserted — include product count, approval rate, and any issues.
 
 ## FIBER Curation Policy
 

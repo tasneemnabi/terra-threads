@@ -5,11 +5,11 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "img.logo.dev",
+        hostname: "**",
       },
       {
-        protocol: "https",
-        hostname: "cdn.shopify.com",
+        protocol: "http",
+        hostname: "**",
       },
     ],
   },

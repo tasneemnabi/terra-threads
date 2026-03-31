@@ -30,7 +30,7 @@ export default async function BrandPage({ params }: Props) {
   if (!brand) notFound();
 
   const products = await getProductsByBrand(brand.id);
-  const logoUrl = brandLogoUrl(brand.website_url, 128);
+  const logoUrl = brandLogoUrl(brand.website_url);
   const domain = brandDomain(brand.website_url);
   const formatCategory = (cat: string) =>
     cat
@@ -85,7 +85,6 @@ export default async function BrandPage({ params }: Props) {
                 width={64}
                 height={64}
                 className="shrink-0 rounded-[10px]"
-                unoptimized
               />
             )}
             <h1 className="font-display text-[48px] font-medium leading-[54px] tracking-[-0.03em] text-text">

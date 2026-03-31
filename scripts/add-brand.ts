@@ -9,6 +9,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
+import * as https from "https";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { slugify } from "./lib/curation.js";
 
@@ -22,6 +23,48 @@ interface BrandInput {
   fiber_types: string[];    // e.g. ["Organic Cotton", "Merino Wool"]
   categories: string[];     // e.g. ["Activewear", "Basics"]
   products?: unknown[];     // deprecated — ignored with warning
+}
+
+// ─── Logo Download ──────────────────────────────────────────────────
+
+function downloadLogo(websiteUrl: string): Promise<boolean> {
+  const domain = new URL(websiteUrl).hostname.replace(/^www\./, "");
+  const outPath = path.resolve(__dirname, "..", "public", "logos", `${domain}.png`);
+
+  if (fs.existsSync(outPath)) {
+    console.log(`  Logo already exists: public/logos/${domain}.png`);
+    return Promise.resolve(true);
+  }
+
+  const env = loadEnv();
+  const token = process.env.NEXT_PUBLIC_LOGO_DEV_TOKEN || env.NEXT_PUBLIC_LOGO_DEV_TOKEN;
+  if (!token) {
+    console.log(`  ⚠ No LOGO_DEV_TOKEN — manually add logo to public/logos/${domain}.png`);
+    return Promise.resolve(false);
+  }
+
+  const url = `https://img.logo.dev/${domain}?token=${token}&size=128&format=png`;
+  return new Promise((resolve) => {
+    const file = fs.createWriteStream(outPath);
+    https.get(url, (res) => {
+      if (res.statusCode !== 200) {
+        fs.unlinkSync(outPath);
+        console.log(`  ⚠ Logo download failed (${res.statusCode}) — manually add public/logos/${domain}.png`);
+        resolve(false);
+        return;
+      }
+      res.pipe(file);
+      file.on("finish", () => {
+        file.close();
+        console.log(`  ✓ Downloaded logo: public/logos/${domain}.png`);
+        resolve(true);
+      });
+    }).on("error", () => {
+      fs.unlinkSync(outPath);
+      console.log(`  ⚠ Logo download failed — manually add public/logos/${domain}.png`);
+      resolve(false);
+    });
+  });
 }
 
 // ─── Env Loading ────────────────────────────────────────────────────
@@ -101,6 +144,9 @@ async function insertBrand(brand: BrandInput): Promise<void> {
     console.log(`\n✓ Inserted brand: ${brand.name} (${brandData!.id})`);
   }
 
+  // Download logo
+  await downloadLogo(brand.website_url);
+
   console.log(`\nNext: run 'npx tsx scripts/sync-catalog.ts --brand ${brandSlug}' to ingest products.`);
 }
 
@@ -144,7 +190,7 @@ async function main() {
   }
 
   // Warn if products array is present (deprecated)
-  if (input.products && input.products.length > 0) {
+  if (input.products && (input.products as unknown[]).length > 0) {
     console.warn(`\n⚠ Products array ignored — use 'npx tsx scripts/sync-catalog.ts --brand ${slugify(input.name)}' to ingest products.\n`);
   }
 

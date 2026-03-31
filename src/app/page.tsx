@@ -1,26 +1,20 @@
 import { Hero } from "@/components/home/Hero";
-import { FeaturedBrands } from "@/components/home/FeaturedBrands";
-import { FeaturedProducts } from "@/components/home/FeaturedProducts";
-import { WhyNaturalFibers } from "@/components/home/WhyNaturalFibers";
+import { EditorialPicks } from "@/components/home/EditorialPicks";
+import { FiberFactsShowcase } from "@/components/home/FiberFactsShowcase";
 import { BrowseByFiber } from "@/components/home/BrowseByFiber";
-import { BrandStrip } from "@/components/home/BrandStrip";
-import { getAllBrands } from "@/lib/queries/brands";
+import { FinalCTA } from "@/components/home/FinalCTA";
 import { getHomepageProducts } from "@/lib/queries/products";
 
 export default async function HomePage() {
-  const [brands, products] = await Promise.all([
-    getAllBrands(),
-    getHomepageProducts(),
-  ]);
+  const products = await getHomepageProducts(5);
 
   return (
     <>
-      <Hero brandCount={brands.length} />
-      <FeaturedBrands brands={brands} />
-      <FeaturedProducts products={products} />
-      <WhyNaturalFibers />
+      <Hero />
+      <EditorialPicks products={products} />
+      {products[0] && <FiberFactsShowcase product={products[0]} />}
       <BrowseByFiber />
-      <BrandStrip brands={brands} />
+      <FinalCTA />
     </>
   );
 }
