@@ -44,6 +44,8 @@ interface SyncStats {
   scrapeHits: number;
   flaggedReview: number;
   removed: number;
+  missingPrice: number;
+  missingImage: number;
   errors: number;
 }
 
@@ -55,7 +57,11 @@ interface SyncStats {
  * Auto-approve when: confidence >= 0.80, all materials are trusted canonical
  * names, percentages sum to 100, no banned materials.
  */
-function determineSyncStatus(extraction: ExtractedMaterials): string {
+function determineSyncStatus(
+  extraction: ExtractedMaterials,
+  price: number | null,
+  imageUrl: string | null
+): string {
   if (extraction.hasBanned) return "rejected";
 
   const materialNames = Object.keys(extraction.materials);
@@ -63,15 +69,18 @@ function determineSyncStatus(extraction: ExtractedMaterials): string {
   const total = Object.values(extraction.materials).reduce((a, b) => a + b, 0);
 
   if (allTrusted && total === 100 && extraction.confidence >= 0.80) {
+    // Data completeness check — can't go live without price and image
+    if (!price || price <= 0 || !imageUrl) return "review";
     return "approved";
   }
   return "review";
 }
 
-function getFirstVariantPrice(product: ShopifyProduct): number {
+function getFirstVariantPrice(product: ShopifyProduct): number | null {
   const variant = product.variants?.[0];
-  if (!variant) return 0;
-  return parseFloat(variant.price) || 0;
+  if (!variant || !variant.price) return null;
+  const parsed = parseFloat(variant.price);
+  return isNaN(parsed) || parsed <= 0 ? null : parsed;
 }
 
 function getImages(product: ShopifyProduct): { primary: string | null; additional: string[] } {
@@ -121,6 +130,8 @@ async function syncBrand(
     scrapeHits: 0,
     flaggedReview: 0,
     removed: 0,
+    missingPrice: 0,
+    missingImage: 0,
     errors: 0,
   };
 
@@ -164,7 +175,7 @@ async function syncBrand(
 
   // Regex-only extraction for all products
   let regexHits = 0;
-  const zeroMaterialProducts: Array<{ url: string; productId: string; name: string }> = [];
+  const zeroMaterialProducts: Array<{ url: string; productId: string; name: string; price: number | null; imageUrl: string | null }> = [];
   for (const shopifyProduct of shopifyProducts) {
     seenShopifyIds.add(shopifyProduct.id);
 
@@ -199,14 +210,18 @@ async function syncBrand(
       continue;
     }
 
-    // Determine sync status: auto-approve if trusted materials + high confidence
-    const syncStatus = hasMaterials ? determineSyncStatus(extraction!) : "review";
-    if (syncStatus === "review") stats.flaggedReview++;
-    const confidence = hasMaterials ? extraction!.confidence : 0;
-
     const variant = shopifyProduct.variants?.[0];
     const images = getImages(shopifyProduct);
     const price = getFirstVariantPrice(shopifyProduct);
+
+    // Track missing data
+    if (!price) stats.missingPrice++;
+    if (!images.primary) stats.missingImage++;
+
+    // Determine sync status: auto-approve if trusted materials + high confidence + complete data
+    const syncStatus = hasMaterials ? determineSyncStatus(extraction!, price, images.primary) : "review";
+    if (syncStatus === "review") stats.flaggedReview++;
+    const confidence = hasMaterials ? extraction!.confidence : 0;
     const category = guessCategory(shopifyProduct);
     const rawProductType = classifyProductType(shopifyProduct.title, shopifyProduct.product_type, shopifyProduct.tags);
     const productType = rawProductType && category === "activewear" ? mapActivewearType(rawProductType) : rawProductType;
@@ -221,7 +236,7 @@ async function syncBrand(
       const icon = syncStatus === "approved" ? "✓" : syncStatus === "review" ? "?" : "+";
       console.log(`  ${icon} ${shopifyProduct.title} [${syncStatus}]`);
       console.log(`    Materials: ${mats} [regex, conf=${confidence.toFixed(2)}]`);
-      console.log(`    Price: $${price.toFixed(2)} | Category: ${category}`);
+      console.log(`    Price: ${price ? `$${price.toFixed(2)}` : "?"} | Category: ${category}`);
       continue;
     }
 
@@ -280,6 +295,8 @@ async function syncBrand(
               url: productData.affiliate_url,
               productId: retry.id,
               name: shopifyProduct.title,
+              price,
+              imageUrl: images.primary,
             });
           }
         } else {
@@ -293,6 +310,8 @@ async function syncBrand(
             url: productData.affiliate_url,
             productId: upserted.id,
             name: shopifyProduct.title,
+            price,
+            imageUrl: images.primary,
           });
         }
       }
@@ -332,7 +351,7 @@ async function syncBrand(
             continue;
           }
 
-          const newStatus = determineSyncStatus(scrapeExtraction);
+          const newStatus = determineSyncStatus(scrapeExtraction, item.price, item.imageUrl);
           await supabase
             .from("products")
             .update({ sync_status: newStatus, material_confidence: scrapeExtraction.confidence })
@@ -405,7 +424,7 @@ async function llmPass(
   // Query products (pending or review) that have raw_body_html
   let query = supabase
     .from("products")
-    .select("id, name, raw_body_html, sync_status, brands!inner(slug)")
+    .select("id, name, price, image_url, raw_body_html, sync_status, brands!inner(slug)")
     .in("sync_status", ["pending", "review"])
     .not("raw_body_html", "is", null);
 
@@ -477,7 +496,7 @@ async function llmPass(
     }
 
     // Update product with new confidence and status (uses same auto-approve logic)
-    const newStatus = determineSyncStatus(extraction);
+    const newStatus = determineSyncStatus(extraction, product.price, product.image_url);
     await supabase
       .from("products")
       .update({
@@ -579,12 +598,17 @@ async function main() {
     totalScrapeHits = 0,
     totalReview = 0,
     totalRemoved = 0,
+    totalMissingPrice = 0,
+    totalMissingImage = 0,
     totalErrors = 0;
 
   for (const s of allStats) {
     const scrapePart = s.scrapeHits > 0 ? `, ${s.scrapeHits} scraped` : "";
+    const missingPart = (s.missingPrice > 0 || s.missingImage > 0)
+      ? `, ${s.missingPrice} no-price, ${s.missingImage} no-image`
+      : "";
     console.log(
-      `  ${s.brand}: ${s.fetched} fetched, ${s.skippedSettled} settled, ${s.skippedNonClothing} non-clothing, ${s.inserted} synced, ${s.autoApproved} auto-approved, ${s.skippedBanned} banned, ${s.flaggedReview} review${scrapePart}, ${s.removed} removed`
+      `  ${s.brand}: ${s.fetched} fetched, ${s.skippedSettled} settled, ${s.skippedNonClothing} non-clothing, ${s.inserted} synced, ${s.autoApproved} auto-approved, ${s.skippedBanned} banned, ${s.flaggedReview} review${scrapePart}${missingPart}, ${s.removed} removed`
     );
     totalFetched += s.fetched;
     totalInserted += s.inserted;
@@ -594,11 +618,16 @@ async function main() {
     totalScrapeHits += s.scrapeHits;
     totalReview += s.flaggedReview;
     totalRemoved += s.removed;
+    totalMissingPrice += s.missingPrice;
+    totalMissingImage += s.missingImage;
     totalErrors += s.errors;
   }
 
   const scrapeTotalPart = totalScrapeHits > 0 ? `, ${totalScrapeHits} scraped` : "";
-  console.log(`\nTotal: ${totalFetched} fetched, ${totalSettled} settled (skipped), ${totalInserted} synced, ${totalApproved} auto-approved, ${totalSkipped} banned, ${totalReview} review${scrapeTotalPart}, ${totalRemoved} removed, ${totalErrors} errors`);
+  const missingTotalPart = (totalMissingPrice > 0 || totalMissingImage > 0)
+    ? `, ${totalMissingPrice} no-price, ${totalMissingImage} no-image`
+    : "";
+  console.log(`\nTotal: ${totalFetched} fetched, ${totalSettled} settled (skipped), ${totalInserted} synced, ${totalApproved} auto-approved, ${totalSkipped} banned, ${totalReview} review${scrapeTotalPart}${missingTotalPart}, ${totalRemoved} removed, ${totalErrors} errors`);
 
   if (totalReview > 0) {
     console.log(`\nRun 'npx tsx scripts/sync-shopify.ts --llm' to extract materials for review products`);

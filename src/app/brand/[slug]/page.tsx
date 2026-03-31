@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { getBrandBySlug } from "@/lib/queries/brands";
 import { getProductsByBrand } from "@/lib/queries/products";
 import { ProductGrid } from "@/components/product/ProductGrid";
-import { brandLogoUrl, affiliateUrl, brandDomain } from "@/lib/utils";
+import { brandLogoUrl, affiliateUrl, brandDomain, formatCategory } from "@/lib/utils";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -32,11 +32,6 @@ export default async function BrandPage({ params }: Props) {
   const products = await getProductsByBrand(brand.id);
   const logoUrl = brandLogoUrl(brand.website_url);
   const domain = brandDomain(brand.website_url);
-  const formatCategory = (cat: string) =>
-    cat
-      .split("-")
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(" ");
 
   const metaParts = [
     ...brand.audience,

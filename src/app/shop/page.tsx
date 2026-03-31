@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { getFilteredProducts, getDistinctCategories, getAllMaterials, getProductTypesForCategory } from "@/lib/queries/products";
+import { getFilteredProducts, getDistinctCategories, getProductTypesForCategory } from "@/lib/queries/products";
+import { getAllMaterials } from "@/lib/queries/materials";
 import { getAllBrands } from "@/lib/queries/brands";
 import { ShopContent } from "@/components/shop/ShopContent";
 import type { FilterState } from "@/types/database";
