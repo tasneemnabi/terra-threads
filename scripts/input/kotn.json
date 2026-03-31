@@ -1,0 +1,71 @@
+{
+  "name": "Kotn",
+  "website_url": "https://kotn.com",
+  "description": "Canadian brand crafting everyday basics from 100% Egyptian cotton, ethically made in Egypt, Portugal, and Turkey.",
+  "audience": ["Women", "Men"],
+  "fiber_types": ["Egyptian Cotton", "Viscose"],
+  "categories": ["Basics", "Tops", "Dresses", "Denim"],
+  "products": [
+    {
+      "name": "Women's Curved Hem 3/4 Sleeve",
+      "description": "Midweight jersey tee with boatneck and flared sleeves in 100% Egyptian cotton.",
+      "category": "tops",
+      "price": 42.00,
+      "affiliate_url": "https://kotn.com/products/womens-curved-hem-3-4-sleeve-in-dusty-grape",
+      "image_url": "/products/kotn-womens-curved-hem-3-4-sleeve.jpg",
+      "is_featured": true,
+      "materials": {
+        "Egyptian Cotton": 100
+      }
+    },
+    {
+      "name": "Women's Shortsleeve Cardigan",
+      "description": "Micro rib short-sleeve cardigan in 100% Egyptian cotton, perfect for layering.",
+      "category": "tops",
+      "price": 42.00,
+      "affiliate_url": "https://kotn.com/products/womens-shortsleeve-cardigan-in-blue-aura",
+      "image_url": "/products/kotn-womens-shortsleeve-cardigan.jpg",
+      "is_featured": false,
+      "materials": {
+        "Egyptian Cotton": 100
+      }
+    },
+    {
+      "name": "Women's Set Tank",
+      "description": "Ribbed tank in Egyptian cotton with a hint of stretch, modern scoop neckline.",
+      "category": "basics",
+      "price": 23.00,
+      "affiliate_url": "https://kotn.com/products/womens-set-tank",
+      "image_url": "/products/kotn-womens-set-tank.jpg",
+      "is_featured": true,
+      "materials": {
+        "Egyptian Cotton": 95,
+        "Elastane": 5
+      }
+    },
+    {
+      "name": "Women's Solis Ribbed Knit 2-in-1",
+      "description": "Versatile two-piece set with fitted cami and bolero in 100% EcoVero Viscose, made in Portugal.",
+      "category": "tops",
+      "price": 101.00,
+      "affiliate_url": "https://kotn.com/products/womens-solis-ribbed-knit-2-in-1-in-charcoal-mix",
+      "image_url": "/products/kotn-womens-solis-ribbed-knit-2-in-1.jpg",
+      "is_featured": false,
+      "materials": {
+        "Viscose": 100
+      }
+    },
+    {
+      "name": "Women's Twisted Seam Long Denim Short",
+      "description": "Relaxed baggy-fit denim shorts in 100% cotton with signature twisted seams, made in Turkey.",
+      "category": "denim",
+      "price": 115.00,
+      "affiliate_url": "https://kotn.com/products/womens-twisted-seam-long-denim-short-in-vintage-wash",
+      "image_url": "/products/kotn-womens-twisted-seam-long-denim-short.jpg",
+      "is_featured": false,
+      "materials": {
+        "Cotton": 100
+      }
+    }
+  ]
+}

@@ -14,6 +14,19 @@ export interface ScrapedPage {
   error?: string;
 }
 
+export interface ScrapedProduct {
+  url: string;
+  name: string | null;
+  price: number | null;
+  currency: string | null;
+  description: string | null;
+  imageUrl: string | null;
+  additionalImages: string[];
+  text: string;
+  success: boolean;
+  error?: string;
+}
+
 // ─── Browser management ─────────────────────────────────────────────
 
 let browser: Browser | null = null;
@@ -127,6 +140,109 @@ export async function scrapePage(url: string, timeoutMs = 30000): Promise<Scrape
     return { url, text, success: true };
   } catch (err) {
     return { url, text: "", success: false, error: (err as Error).message };
+  } finally {
+    if (page) await page.close().catch(() => {});
+  }
+}
+
+/**
+ * Scrape a product page and extract structured data (name, price, images, etc.)
+ * in addition to full rendered text for material extraction.
+ */
+export async function scrapeProductData(
+  url: string,
+  timeoutMs = 30000
+): Promise<ScrapedProduct> {
+  if (!context) throw new Error("Browser not launched — call launchBrowser() first");
+
+  let page: Page | null = null;
+  try {
+    page = await context.newPage();
+
+    await page.route("**/*", (route) => {
+      const type = route.request().resourceType();
+      if (["font", "media"].includes(type)) return route.abort();
+      return route.continue();
+    });
+
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await page.waitForTimeout(3000);
+    await expandAccordions(page);
+
+    // Extract structured data using individual $eval calls to avoid
+    // TypeScript/esbuild __name() injection issues in page.evaluate().
+    const metaContent = async (prop: string): Promise<string | null> => {
+      return page.$eval(
+        `meta[property="${prop}"], meta[name="${prop}"]`,
+        (el) => el.getAttribute("content")
+      ).catch(() => null);
+    };
+
+    const name =
+      (await metaContent("og:title")) ||
+      (await page.$eval("h1", (el) => el.textContent?.trim() || null).catch(() => null)) ||
+      (await page.title()) ||
+      null;
+
+    let priceStr =
+      (await metaContent("product:price:amount")) ||
+      (await metaContent("og:price:amount"));
+    if (!priceStr) {
+      priceStr = await page.$eval(
+        '[data-product-price], .product-price, .price--regular, .price .amount, .product__price',
+        (el) => el.textContent?.replace(/[^0-9.]/g, "") || null
+      ).catch(() => null);
+    }
+    const price = priceStr ? parseFloat(priceStr) : null;
+
+    const currency =
+      (await metaContent("product:price:currency")) ||
+      (await metaContent("og:price:currency")) ||
+      null;
+
+    const description =
+      (await metaContent("og:description")) ||
+      (await metaContent("description")) ||
+      null;
+
+    const ogImage = await metaContent("og:image");
+    const productImages: string[] = await page.$$eval(
+      '.product-gallery img, .product__media img, .product-images img, [data-product-image] img',
+      (imgs) => imgs.map((img) => (img as HTMLImageElement).src).filter((s) => s && !s.includes("placeholder"))
+    ).catch(() => []);
+
+    const allImages = ogImage
+      ? [ogImage, ...productImages.filter((i) => i !== ogImage)]
+      : productImages;
+
+    const data = { name, price, currency, description, images: allImages };
+
+    const text = await extractProductText(page);
+
+    return {
+      url,
+      name: data.name,
+      price: data.price && !isNaN(data.price) ? data.price : null,
+      currency: data.currency,
+      description: data.description?.slice(0, 500) || null,
+      imageUrl: data.images[0] || null,
+      additionalImages: data.images.slice(1),
+      text,
+      success: true,
+    };
+  } catch (err) {
+    return {
+      url,
+      name: null,
+      price: null,
+      currency: null,
+      description: null,
+      imageUrl: null,
+      additionalImages: [],
+      text: "",
+      success: false,
+      error: (err as Error).message,
+    };
   } finally {
     if (page) await page.close().catch(() => {});
   }
