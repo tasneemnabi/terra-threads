@@ -131,22 +131,6 @@ export async function getDistinctCategories(): Promise<string[]> {
   return categories.sort();
 }
 
-export async function getAllMaterials(): Promise<{ name: string; is_natural: boolean }[]> {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("materials")
-    .select("name, is_natural")
-    .order("name");
-
-  if (error) {
-    console.error("Error fetching materials:", error);
-    return [];
-  }
-
-  return data as { name: string; is_natural: boolean }[];
-}
-
 export async function getProductTypesForCategory(category: string): Promise<string[]> {
   const supabase = await createClient();
 

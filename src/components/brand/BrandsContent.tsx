@@ -4,6 +4,7 @@ import { useMemo, useCallback, useState, useEffect } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import type { BrandWithDetails } from "@/types/database";
 import { BrandCard } from "./BrandCard";
+import { formatCategory } from "@/lib/utils";
 
 type TierFilter = "all" | "natural" | "nearly";
 
@@ -134,13 +135,6 @@ export function BrandsContent({ brands }: BrandsContentProps) {
     });
   }, [brands, tier, selectedFiber, selectedCategory, selectedAudience]);
 
-  // Format category name for display
-  const formatCategory = (cat: string) => {
-    return cat
-      .split("-")
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(" ");
-  };
 
   return (
     <>

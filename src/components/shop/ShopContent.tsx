@@ -5,6 +5,7 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import type { FilterState, ProductWithBrand } from "@/types/database";
 import { ProductCard } from "@/components/product/ProductCard";
 import { fetchProducts, fetchProductTypes, fetchAvailableBrands } from "@/app/shop/actions";
+import { formatCategory } from "@/lib/utils";
 
 type TierFilter = "all" | "natural" | "nearly";
 type SortOption = "newest" | "price-asc" | "price-desc";
@@ -388,11 +389,6 @@ export function ShopContent({
     minPrice !== undefined ||
     maxPrice !== undefined;
 
-  const formatCategory = (cat: string) =>
-    cat
-      .split("-")
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(" ");
 
   // Build active filter chips
   const activeChips: { label: string; onRemove: () => void }[] = [];

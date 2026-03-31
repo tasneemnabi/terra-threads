@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { BrandWithDetails } from "@/types/database";
-import { brandLogoUrl } from "@/lib/utils";
+import { brandLogoUrl, formatCategory } from "@/lib/utils";
 
 interface BrandCardProps {
   brand: BrandWithDetails;
@@ -9,11 +9,6 @@ interface BrandCardProps {
 
 export function BrandCard({ brand }: BrandCardProps) {
   const logoUrl = brandLogoUrl(brand.website_url);
-  const formatCategory = (cat: string) =>
-    cat
-      .split("-")
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(" ");
 
   const metaParts = [
     ...brand.audience,
