@@ -14,7 +14,7 @@ export function ProductCard({ product }: ProductCardProps) {
       href={`/product/${product.slug}`}
       className="group block"
     >
-      <div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-surface">
+      <div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-surface ring-1 ring-black/[0.04]">
         {product.image_url && product.image_url.startsWith("http") ? (
           <Image
             src={product.image_url}
@@ -32,19 +32,17 @@ export function ProductCard({ product }: ProductCardProps) {
         )}
       </div>
 
-      <div className="flex flex-col pt-3">
-        <p className="font-body text-[11px] font-normal uppercase tracking-[0.5px] text-secondary">
-          {product.brand_name}
-        </p>
-        <h3 className="mt-1 min-h-[2.75em] line-clamp-2 font-body text-[14px] font-medium leading-snug text-text transition-colors duration-200 group-hover:text-accent">
-          {product.name}
-        </h3>
-        <div className="mt-1.5">
-          <FiberFactsMini materials={product.materials} />
-        </div>
-        <p className="mt-2 font-body text-[15px] font-semibold text-text">
-          {formatPrice(product.price, product.currency)}
-        </p>
+      <p className="pt-3 font-body text-[11px] font-normal uppercase tracking-[0.5px] text-secondary">
+        {product.brand_name}
+      </p>
+      <h3 className="mt-0.5 line-clamp-2 font-body text-[14px] font-medium leading-snug text-text transition-colors duration-200 group-hover:text-accent">
+        {product.name}
+      </h3>
+      <p className="mt-1.5 font-body text-[15px] font-semibold text-text">
+        {formatPrice(product.price, product.currency)}
+      </p>
+      <div className="mt-1">
+        <FiberFactsMini materials={product.materials} />
       </div>
     </Link>
   );
