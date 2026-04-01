@@ -11,7 +11,7 @@ export async function getAllMaterials(): Promise<Material[]> {
 
   if (error) {
     console.error("Error fetching materials:", error);
-    return [];
+    throw new Error("Failed to load materials.");
   }
 
   return data as Material[];
@@ -27,7 +27,7 @@ export async function getMaterialsByCategory(category: string): Promise<Material
 
   if (error) {
     console.error("Error fetching materials by category:", error);
-    return [];
+    throw new Error("Failed to load materials for this category.");
   }
 
   return data as Material[];

@@ -27,7 +27,7 @@ export async function getFilteredProducts(
 
   if (error) {
     console.error("Error fetching filtered products:", error);
-    return { products: [], totalCount: 0 };
+    throw new Error("Failed to load products. Please try again.");
   }
 
   const rows = data as ProductWithBrandAndCount[];
@@ -50,7 +50,7 @@ export async function getProductBySlug(slug: string): Promise<ProductWithBrand |
 
   if (error) {
     console.error("Error fetching product:", error);
-    return null;
+    throw new Error("Failed to load product details.");
   }
 
   return data as ProductWithBrand;
@@ -70,7 +70,7 @@ export async function getFeaturedProducts(): Promise<ProductWithBrand[]> {
 
   if (error) {
     console.error("Error fetching featured products:", error);
-    return [];
+    throw new Error("Failed to load featured products.");
   }
 
   return data as ProductWithBrand[];
@@ -89,7 +89,7 @@ export async function getHomepageProducts(limit = 6): Promise<ProductWithBrand[]
 
   if (error) {
     console.error("Error fetching homepage products:", error);
-    return [];
+    throw new Error("Failed to load homepage products.");
   }
 
   return data as ProductWithBrand[];
@@ -113,7 +113,7 @@ export async function getRelatedProducts(
 
   if (error) {
     console.error("Error fetching related products:", error);
-    return [];
+    throw new Error("Failed to load related products.");
   }
 
   return data as ProductWithBrand[];
@@ -129,7 +129,7 @@ export async function getDistinctCategories(): Promise<string[]> {
 
   if (error) {
     console.error("Error fetching categories:", error);
-    return [];
+    throw new Error("Failed to load categories.");
   }
 
   const categories = [...new Set((data as { category: string }[]).map((r) => r.category))];
@@ -147,7 +147,7 @@ export async function getProductTypesForCategory(category: string): Promise<stri
 
   if (error) {
     console.error("Error fetching product types:", error);
-    return [];
+    throw new Error("Failed to load product types.");
   }
 
   const types = [...new Set((data as { product_type: string }[]).map((r) => r.product_type))];
@@ -171,7 +171,7 @@ export async function getAvailableBrandSlugs(
 
   if (error) {
     console.error("Error fetching available brands:", error);
-    return [];
+    throw new Error("Failed to load available brands.");
   }
 
   return (data as { brand_slug: string }[]).map((r) => r.brand_slug);
@@ -190,7 +190,7 @@ export async function getProductsByBrand(brandId: string): Promise<ProductWithBr
 
   if (error) {
     console.error("Error fetching brand products:", error);
-    return [];
+    throw new Error("Failed to load brand products.");
   }
 
   return data as ProductWithBrand[];

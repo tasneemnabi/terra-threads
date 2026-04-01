@@ -64,8 +64,10 @@ function FilterCheckbox({
 }) {
   return (
     <button
+      role="checkbox"
+      aria-checked={checked}
       onClick={onChange}
-      className="group/cb flex items-center gap-2.5 rounded-md px-1 py-1 text-left transition-colors hover:bg-surface/60"
+      className="group/cb flex items-center gap-2.5 rounded-md px-1 py-1 text-left transition-colors hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:rounded-md"
     >
       <div
         className={`flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-[3px] border transition-all duration-150 ${
@@ -111,7 +113,8 @@ function AccordionFilter({
     <div className="border-b border-muted-light/60">
       <button
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between py-4 text-left focus:outline-none"
+        aria-expanded={open}
+        className="flex w-full items-center justify-between py-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:rounded-md"
       >
         <span className="font-display text-[14px] font-semibold text-text">
           {title}
@@ -195,6 +198,18 @@ export function ShopContent({
       document.body.style.overflow = "";
     };
   }, [filterOpen]);
+
+  // Close filter panel or sort dropdown on ESC
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        if (sortOpen) setSortOpen(false);
+        if (filterOpen) setFilterOpen(false);
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [filterOpen, sortOpen]);
 
   // Read filter state from URL
   const tier = (searchParams.get("tier") as TierFilter) || "all";
@@ -520,25 +535,31 @@ export function ShopContent({
       {/* Price */}
       <AccordionFilter title="Price" defaultOpen={minPrice !== undefined || maxPrice !== undefined}>
         <div className="flex items-center gap-2">
-          <input
-            type="number"
-            placeholder="$0"
-            value={minPrice ?? ""}
-            onChange={(e) =>
-              setParams({ minPrice: e.target.value || null })
-            }
-            className="w-full rounded-md border border-muted-light bg-background px-3 py-2 font-body text-[13px] text-text outline-none focus:border-muted"
-          />
+          <label className="w-full">
+            <span className="sr-only">Minimum price</span>
+            <input
+              type="number"
+              placeholder="$0"
+              value={minPrice ?? ""}
+              onChange={(e) =>
+                setParams({ minPrice: e.target.value || null })
+              }
+              className="w-full rounded-md border border-muted-light bg-background px-3 py-2 font-body text-[13px] text-text outline-none focus:border-muted focus-visible:ring-2 focus-visible:ring-accent/50"
+            />
+          </label>
           <span className="font-body text-[13px] text-muted">–</span>
-          <input
-            type="number"
-            placeholder="$500"
-            value={maxPrice ?? ""}
-            onChange={(e) =>
-              setParams({ maxPrice: e.target.value || null })
-            }
-            className="w-full rounded-md border border-muted-light bg-background px-3 py-2 font-body text-[13px] text-text outline-none focus:border-muted"
-          />
+          <label className="w-full">
+            <span className="sr-only">Maximum price</span>
+            <input
+              type="number"
+              placeholder="$500"
+              value={maxPrice ?? ""}
+              onChange={(e) =>
+                setParams({ maxPrice: e.target.value || null })
+              }
+              className="w-full rounded-md border border-muted-light bg-background px-3 py-2 font-body text-[13px] text-text outline-none focus:border-muted focus-visible:ring-2 focus-visible:ring-accent/50"
+            />
+          </label>
         </div>
       </AccordionFilter>
     </>
@@ -584,7 +605,9 @@ export function ShopContent({
           <div className="relative">
             <button
               onClick={() => setSortOpen(!sortOpen)}
-              className="flex items-center gap-1.5 font-body text-[14px] text-text transition-colors hover:text-secondary"
+              aria-haspopup="listbox"
+              aria-expanded={sortOpen}
+              className="flex items-center gap-1.5 font-body text-[14px] text-text transition-colors hover:text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:rounded-md"
             >
               Sort by{" "}
               <span className="font-medium">{SORT_LABELS[sort]}</span>
@@ -602,11 +625,13 @@ export function ShopContent({
             {sortOpen && (
               <>
                 <div className="fixed inset-0 z-30" onClick={() => setSortOpen(false)} />
-                <div className="absolute right-0 top-full z-40 mt-2 w-[200px] rounded-lg border border-muted-light bg-white py-1 shadow-lg">
+                <div role="listbox" aria-label="Sort options" className="absolute right-0 top-full z-40 mt-2 w-[200px] rounded-lg border border-muted-light bg-white py-1 shadow-lg">
                   {(Object.entries(SORT_LABELS) as [SortOption, string][]).map(
                     ([value, label]) => (
                       <button
                         key={value}
+                        role="option"
+                        aria-selected={sort === value}
                         onClick={() => setSort(value)}
                         className={`flex w-full items-center justify-between px-4 py-2.5 text-left font-body text-[13px] transition-colors ${
                           sort === value
@@ -686,7 +711,7 @@ export function ShopContent({
 
       {/* Mobile slide-out filter panel (from left) */}
       {filterOpen && (
-        <div className="fixed inset-0 z-50 flex justify-start lg:hidden">
+        <div className="fixed inset-0 z-50 flex justify-start lg:hidden" role="dialog" aria-modal="true" aria-label="Filters">
           <div
             className="absolute inset-0 bg-text/20"
             onClick={() => setFilterOpen(false)}
