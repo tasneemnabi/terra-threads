@@ -224,6 +224,66 @@ export function mapActivewearType(productType: ProductType): string {
   return ACTIVEWEAR_TYPE_MAP[productType] || "tops";
 }
 
+// ─── Audience Classification ────────────────────────────────────────
+
+export type Audience = "Women" | "Men" | "Unisex";
+
+// Tier 1: Shopify tag patterns (highest confidence)
+const AUDIENCE_TAG_PATTERNS: [Audience, RegExp][] = [
+  ["Women", /\b(shop[- ]?women|womens?|female|ladies)\b/i],
+  ["Men", /\b(shop[- ]?men|mens?\b|male|gentlemen)\b/i],
+  ["Unisex", /\b(unisex|gender[- ]?neutral|all[- ]?gender)\b/i],
+];
+
+// Tier 2: Title prefix patterns
+const AUDIENCE_TITLE_PATTERNS: [Audience, RegExp][] = [
+  ["Women", /^women'?s?\b/i],
+  ["Men", /^men'?s?\b/i],
+  ["Unisex", /^unisex\b/i],
+];
+
+// Tier 3: Unambiguously gendered product types (conservative list)
+const WOMEN_ONLY_TYPES = new Set(["sports bra", "bralette", "bikini"]);
+const MEN_ONLY_TYPES = new Set(["boxer briefs", "boxers"]);
+
+export function classifyAudience(
+  title: string,
+  tags?: string[],
+  productType?: string | null,
+  brandAudience?: string[]
+): Audience {
+  // Tier 1: Shopify tags
+  if (tags?.length) {
+    const tagText = tags.join(" ");
+    for (const [audience, pattern] of AUDIENCE_TAG_PATTERNS) {
+      if (pattern.test(tagText)) return audience;
+    }
+  }
+
+  // Tier 2: Title prefix
+  for (const [audience, pattern] of AUDIENCE_TITLE_PATTERNS) {
+    if (pattern.test(title)) return audience;
+  }
+
+  // Tier 3: Product type (conservative)
+  if (productType) {
+    const ptLower = productType.toLowerCase();
+    if (WOMEN_ONLY_TYPES.has(ptLower)) return "Women";
+    if (MEN_ONLY_TYPES.has(ptLower)) return "Men";
+  }
+
+  // Tier 4: Brand audience fallback (single-gender brands)
+  if (brandAudience?.length === 1) {
+    const sole = brandAudience[0];
+    if (sole === "Women" || sole === "Men") return sole;
+  }
+
+  // Default: multi-gender brand with no signal → Unisex
+  return "Unisex";
+}
+
+// ─── Product Type Classification ────────────────────────────────────
+
 export function classifyProductType(
   title: string,
   shopifyProductType?: string,

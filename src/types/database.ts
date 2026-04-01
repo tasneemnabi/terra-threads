@@ -35,6 +35,7 @@ export interface Product {
   sync_status: "pending" | "review" | "approved" | "rejected" | null;
   material_confidence: number | null;
   raw_body_html: string | null;
+  audience: string | null;
 }
 
 export interface Material {

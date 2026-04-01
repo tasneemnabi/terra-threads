@@ -32,6 +32,7 @@ import { loadEnv, getSupabaseAdmin } from "./lib/env.js";
 import { ensureMaterialExists, syncProductMaterials } from "./lib/db-helpers.js";
 import {
   classifyProductType,
+  classifyAudience,
   shouldRejectProduct,
 } from "./lib/product-classifier.js";
 
@@ -45,6 +46,7 @@ interface BrandRow {
   is_fully_natural: boolean;
   scrape_fallback: boolean;
   shopify_domain: string | null;
+  audience: string[];
 }
 
 interface SyncStats {
@@ -237,6 +239,7 @@ async function syncBrand(
       const confidence = hasMaterials ? extraction!.confidence : 0;
       const category = guessCategory(cleanName);
       const productType = classifyProductType(cleanName);
+      const audience = classifyAudience(cleanName, undefined, productType, brand.audience);
       const productSlug = `${brand.slug}-${slugify(cleanName)}`;
 
       if (syncStatus === "approved") stats.autoApproved++;
@@ -282,6 +285,7 @@ async function syncBrand(
               image_url: scraped.imageUrl,
               additional_images: scraped.additionalImages,
               product_type: productType,
+              audience,
               last_synced_at: new Date().toISOString(),
               sync_status: syncStatus,
               material_confidence: confidence,
@@ -304,6 +308,7 @@ async function syncBrand(
             additional_images: scraped.additionalImages,
             affiliate_url: url,
             product_type: productType,
+            audience,
             last_synced_at: new Date().toISOString(),
             sync_status: syncStatus,
             material_confidence: confidence,
@@ -508,7 +513,7 @@ async function main() {
   let query = supabase
     .from("brands")
     .select(
-      "id, name, slug, website_url, is_fully_natural, scrape_fallback, shopify_domain"
+      "id, name, slug, website_url, is_fully_natural, scrape_fallback, shopify_domain, audience"
     )
     .eq("sync_enabled", true)
     .not("website_url", "is", null);
