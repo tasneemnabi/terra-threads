@@ -49,6 +49,7 @@ create table products (
   sync_status text default null,
   material_confidence numeric(3,2),
   raw_body_html text,
+  audience text,
   created_at timestamptz default now(),
   constraint uq_brand_shopify_product unique (brand_id, shopify_product_id)
 );
@@ -72,6 +73,7 @@ create index idx_brands_slug on brands(slug);
 create index idx_product_materials_product on product_materials(product_id);
 create index idx_product_materials_material on product_materials(material_id);
 create index idx_products_sync_status on products(sync_status);
+create index idx_products_audience on products(audience);
 create index idx_products_shopify_product_id on products(shopify_product_id);
 create index idx_brands_shopify_domain on brands(shopify_domain) where shopify_domain is not null;
 

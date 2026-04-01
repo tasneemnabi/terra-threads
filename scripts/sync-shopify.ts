@@ -30,6 +30,7 @@ interface BrandRow {
   shopify_domain: string;
   is_fully_natural: boolean;
   scrape_fallback: boolean;
+  audience: string[];
 }
 
 interface SyncStats {
@@ -91,7 +92,7 @@ function getImages(product: ShopifyProduct): { primary: string | null; additiona
   };
 }
 
-import { classifyProductType, mapActivewearType, shouldRejectProduct } from "./lib/product-classifier";
+import { classifyProductType, mapActivewearType, shouldRejectProduct, classifyAudience } from "./lib/product-classifier";
 
 function guessCategory(product: ShopifyProduct): string {
   const text = `${product.title} ${product.product_type} ${(product.tags || []).join(" ")}`.toLowerCase();
@@ -225,6 +226,7 @@ async function syncBrand(
     const category = guessCategory(shopifyProduct);
     const rawProductType = classifyProductType(shopifyProduct.title, shopifyProduct.product_type, shopifyProduct.tags);
     const productType = rawProductType && category === "activewear" ? mapActivewearType(rawProductType) : rawProductType;
+    const audience = classifyAudience(shopifyProduct.title, shopifyProduct.tags, productType, brand.audience);
     const productSlug = `${brand.slug}-${slugify(shopifyProduct.title)}`;
 
     if (syncStatus === "approved") stats.autoApproved++;
@@ -256,6 +258,7 @@ async function syncBrand(
         affiliate_url: `https://${brand.shopify_domain}/products/${shopifyProduct.handle}`,
         product_type: productType,
         shopify_product_type: shopifyProduct.product_type || null,
+        audience,
         shopify_product_id: shopifyProduct.id,
         shopify_variant_id: variant?.id || null,
         last_synced_at: new Date().toISOString(),
@@ -555,7 +558,7 @@ async function main() {
   // Fetch brands to sync
   let query = supabase
     .from("brands")
-    .select("id, name, slug, shopify_domain, is_fully_natural, scrape_fallback")
+    .select("id, name, slug, shopify_domain, is_fully_natural, scrape_fallback, audience")
     .not("shopify_domain", "is", null)
     .eq("sync_enabled", true);
 
