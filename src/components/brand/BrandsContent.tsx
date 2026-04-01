@@ -191,7 +191,7 @@ export function BrandsContent({ brands }: BrandsContentProps) {
             {/* Filter button */}
             <button
               onClick={() => setFilterOpen(true)}
-              className="flex items-center gap-2 rounded-[8px] border border-surface-dark px-5 py-[10px] font-body text-[14px] font-medium text-text transition-colors hover:border-muted"
+              className="flex items-center gap-2 rounded-[8px] border border-surface-dark px-5 py-[10px] font-body text-[14px] font-medium text-text transition-all hover:border-muted hover:bg-surface hover:shadow-sm"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
@@ -344,9 +344,9 @@ export function BrandsContent({ brands }: BrandsContentProps) {
             {filtered.length} brand{filtered.length !== 1 ? "s" : ""}
           </p>
 
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((brand) => (
-              <BrandCard key={brand.id} brand={brand} />
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-8 lg:grid-cols-3">
+            {filtered.map((brand, i) => (
+              <BrandCard key={brand.id} brand={brand} priority={i < 6} />
             ))}
             {filtered.length === 0 && (
               <div className="col-span-full flex flex-col items-center gap-4 py-16">

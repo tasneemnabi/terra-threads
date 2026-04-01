@@ -37,12 +37,12 @@ export function Footer() {
             <h4 className="font-body text-[13px] font-medium uppercase leading-[16px] tracking-[0.08em] text-text">
               Shop
             </h4>
-            <ul className="mt-4 flex flex-col gap-3">
+            <ul className="mt-4 flex flex-col gap-1">
               {shopLinks.map((link) => (
                 <li key={link.label}>
                   <Link
                     href={link.href}
-                    className="font-body text-[15px] leading-[18px] text-muted transition-colors hover:text-text"
+                    className="inline-flex items-center min-h-[44px] font-body text-[15px] leading-[18px] text-muted transition-colors hover:text-text"
                   >
                     {link.label}
                   </Link>
@@ -55,12 +55,12 @@ export function Footer() {
             <h4 className="font-body text-[13px] font-medium uppercase leading-[16px] tracking-[0.08em] text-text">
               Learn
             </h4>
-            <ul className="mt-4 flex flex-col gap-3">
+            <ul className="mt-4 flex flex-col gap-1">
               {learnLinks.map((link) => (
                 <li key={link.label}>
                   <Link
                     href={link.href}
-                    className="font-body text-[15px] leading-[18px] text-muted transition-colors hover:text-text"
+                    className="inline-flex items-center min-h-[44px] font-body text-[15px] leading-[18px] text-muted transition-colors hover:text-text"
                   >
                     {link.label}
                   </Link>
@@ -73,10 +73,10 @@ export function Footer() {
             <h4 className="font-body text-[13px] font-medium uppercase leading-[16px] tracking-[0.08em] text-text">
               Connect
             </h4>
-            <ul className="mt-4 flex flex-col gap-3">
+            <ul className="mt-4 flex flex-col gap-1">
               {connectLinks.map((link) => (
                 <li key={link.label}>
-                  <span className="font-body text-[15px] leading-[18px] text-muted">
+                  <span className="inline-flex items-center min-h-[44px] font-body text-[15px] leading-[18px] text-muted">
                     {link.label}
                   </span>
                 </li>
