@@ -23,7 +23,7 @@ async function main() {
   console.log(`\n${dryRun ? "DRY RUN" : "APPLYING"} — backfill product_type\n`);
 
   // Fetch all visible products with brand slug (paginated to avoid 1000-row limit)
-  const products: { id: string; name: string; category: string; brands: { slug: string } }[] = [];
+  const products: { id: string; name: string; category: string; brands: { slug: string }[] }[] = [];
   const PAGE = 1000;
   let offset = 0;
   while (true) {
@@ -62,7 +62,7 @@ async function main() {
   const unclassified: string[] = [];
 
   for (const product of products) {
-    const brandSlug = (product as any).brands?.slug ?? "";
+    const brandSlug = product.brands?.[0]?.slug ?? "";
 
     // Check for non-clothing (brand-aware: uses whitelist mode for lifestyle brands)
     const rejection = shouldRejectProduct(product.name, brandSlug);
