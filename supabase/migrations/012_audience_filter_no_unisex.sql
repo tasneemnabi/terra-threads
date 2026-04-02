@@ -1,15 +1,7 @@
--- Add product-level audience classification.
--- Previously the gender filter only checked brands.audience, which showed
--- men's items from mixed-gender brands when filtering for "Women".
+-- Fix audience filter: stop including Unisex products when a specific gender is selected.
+-- Previously `OR p.audience = 'Unisex'` caused the Men filter to show ~1400 Unisex products
+-- (many of which are visually women's items with female models).
 
--- 1. Add column + index
-ALTER TABLE products ADD COLUMN IF NOT EXISTS audience text;
-CREATE INDEX IF NOT EXISTS idx_products_audience ON products(audience);
-
--- 2. Recreate filtered_product_ids with:
---    a) Product-level audience filtering (fallback to brand-level for NULL)
---    b) Data quality guards (price + image) that 010_shared_product_filter
---       accidentally dropped from 010_data_quality_guards
 DROP FUNCTION IF EXISTS filtered_product_ids CASCADE;
 
 CREATE FUNCTION filtered_product_ids(
@@ -67,7 +59,8 @@ AS $$
     );
 $$;
 
--- 3. Recreate filter_products using the shared filter function
+-- Recreate dependent functions
+
 DROP FUNCTION IF EXISTS filter_products;
 
 CREATE FUNCTION filter_products(
@@ -149,7 +142,6 @@ AS $$
   OFFSET p_offset;
 $$;
 
--- 4. Recreate get_available_brands using the shared filter function
 DROP FUNCTION IF EXISTS get_available_brands;
 
 CREATE FUNCTION get_available_brands(

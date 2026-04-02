@@ -27,7 +27,7 @@ export type ProductType = (typeof CANONICAL_PRODUCT_TYPES)[number];
 // Blacklist for non-lifestyle brands. Lifestyle brands use whitelist mode instead.
 // Avoid ambiguous words here — if a word commonly appears in clothing names, don't add it.
 const NON_CLOTHING_KEYWORDS =
-  /\b(yoga mat|yoga strap|yoga block|yoga bolster|palo santo|incense|candle|wick\b|mug|tote bag|gift card|e-gift|stickers?|pouch|wallet|mat strap|loose leaf tea|loofah|sponge|soap|twine|string light|braided cord|eyeshade|eye ?mask|sleep ?mask|eye ?pillow|seat cover|car seat|cushion cover|pillow ?case|pillow\b|duvet|blanket|comforter|sheet set|fitted sheet|flat sheet|bed ?sheet|towel|washcloth|bath ?mat|shower ?curtain|napkin|tablecloth|placemats?|dish ?cloth|mattress|produce bag|laundry bag|shopping bag|duffel|backpack|doormat|pet bed|dog bed|cat bed|shipping protection|package assurance|carbon offset|postcards?|lip ?balm|swatch ?book|cheese ?cloth|cheesecloth|shoelaces?|gift ?wrapping|drawer liner|sachet|potpourri|donation|bamboo straw|greeting card|wall hanging|baby'?s\b|infant|newborn|toddler|sanitiser|sanitizer|lotion|shampoo|conditioner|deodorant|face cream|body cream|hand cream|aftershave|enamelware|medallion|pendant|necklace|bracelet|earrings?|jewelry|jewellery|keychain|key ?ring|nail polish|perfume|fragrance|reed diffuser|toothbrush|ayurvedic|essential oils?|oil blend|card deck|affirmation|planter|coffee cups?|tea ?cups?|back scrub|body scrub)\b/i;
+  /\b(yoga mat|yoga strap|yoga block|yoga bolster|palo santo|incense|candle|wick\b|mug|tote bag|gift card|e-gift|stickers?|pouch|wallet|mat strap|loose leaf tea|loofah|sponge|soap|twine|string light|braided cord|eyeshade|eye ?mask|sleep ?mask|eye ?pillow|seat cover|car seat|cushion cover|pillow ?case|pillow\b|duvet|blanket|comforter|sheet set|fitted sheet|flat sheet|bed ?sheet|towel|washcloth|bath ?mat|shower ?curtain|napkin|tablecloth|placemats?|dish ?cloth|mattress|produce bag|laundry bag|shopping bag|duffel|backpack|doormat|pet bed|dog bed|cat bed|shipping protection|package assurance|carbon offset|postcards?|lip ?balm|swatch ?book|shoelaces?|gift ?wrapping|drawer liner|sachet|potpourri|donation|bamboo straw|greeting card|wall hanging|baby'?s\b|infant|newborn|toddler|sanitiser|sanitizer|lotion|shampoo|conditioner|deodorant|face cream|body cream|hand cream|aftershave|enamelware|medallion|pendant|necklace|bracelet|earrings?|jewelry|jewellery|keychain|key ?ring|nail polish|perfume|fragrance|reed diffuser|toothbrush|ayurvedic|essential oils?|oil blend|card deck|affirmation|planter|coffee cups?|tea ?cups?|back scrub|body scrub|shoes?\b|sneakers?|high tops?\b|boots?\b|sandals?|flip ?flops?|slippers?|footwear|oxford\s+shoe|menstrual|pantyliner|sanitary\s*pads?|hemp\s+yarn|beading|craft\s*kit|face\s*wash|body\s*wash)\b/i;
 
 // Accessories — not rejected but not classified as clothing types
 const ACCESSORY_KEYWORDS =
@@ -43,11 +43,12 @@ const TYPE_PATTERNS: [ProductType, RegExp][] = [
   // Swimwear
   ["swimwear", /\b(swimsuit|swimwear|bikini\s*top|one[- ]?piece|swim\s*trunks?)\b/i],
   // Loungewear / sleepwear
-  ["loungewear", /\b(pajamas?|pyjamas?|pjs?\b|sleepwear|nightgown|nightshirt|nightdress|lounge\s*set|lounge\s*pants?|slippers?|sleep\s*set|bathrobes?)\b/i],
+  ["loungewear", /\b(pajamas?|pyjamas?|pjs?\b|sleepwear|nightgown|nightshirt|nightdress|lounge\s*set|lounge\s*pants?|sleep\s*set|bathrobes?)\b/i],
   // Bras before tops (so "sports bra" doesn't match "top")
   ["bras", /\b(sports?\s*bras?|bralettes?|scoop\s*bras?|v-?neck\s*bras?|yoga\s*bras?|built-?in\s*bras?|\bbras?\b)/i],
   // Dresses before tops (so "t-shirt dress" matches dress)
-  ["dresses", /\b(dress(?:es)?|gowns?|tunics?|kaftans?|caftans?|muumuus?|sarongs?)\b/i],
+  // Negative lookahead excludes "dress shoes" and "dress shirt"
+  ["dresses", /\b(dress(?:es)?(?!\s+(?:shoes?|shirts?))|gowns?|tunics?|kaftans?|caftans?|muumuus?|sarongs?)\b/i],
   // Jumpsuits before tops/pants
   ["jumpsuits", /\b(jumpsuits?|rompers?|playsuits?|overalls?|dungarees?)\b/i],
   // Bodysuits before tops
@@ -65,7 +66,8 @@ const TYPE_PATTERNS: [ProductType, RegExp][] = [
   // Pants
   ["pants", /\b(pants?|trousers?|joggers?|sweatpants?|bootcuts?|cargos?|chinos?|jeans?|denims?)\b/i],
   // Tops (broadest — last)
-  ["tops", /\b(tanks?|tees?\b|t-?shirts?|tops?\b|camis?|camisoles?|blouses?|longsleeves?|long\s+sleeves?|crops?\b|henleys?|polos?|singlets?|shirts?|vests?|tube\b|v-?necks?)\b/i],
+  // Negative lookbehind excludes "high tops" and "high-top" (shoes)
+  ["tops", /\b(tanks?|tees?\b|t-?shirts?|(?<!high[\s-])tops?\b|camis?|camisoles?|blouses?|longsleeves?|long\s+sleeves?|crops?\b|henleys?|polos?|singlets?|shirts?|vests?|tube\b|v-?necks?)\b/i],
 ];
 
 // Shopify product_type normalization map
@@ -193,11 +195,14 @@ export function shouldRejectProduct(
   }
 
   // Blacklist mode for other brands
-  if (isNonClothing(title)) {
-    return { rejected: true, reason: "non-clothing" };
-  }
-  if (!clothingType && isAccessory(title)) {
-    return { rejected: true, reason: "accessory" };
+  // If the product has a valid clothing type, trust it over keyword matches
+  if (!clothingType) {
+    if (isNonClothing(title)) {
+      return { rejected: true, reason: "non-clothing" };
+    }
+    if (isAccessory(title)) {
+      return { rejected: true, reason: "accessory" };
+    }
   }
   return { rejected: false };
 }
@@ -242,8 +247,19 @@ const AUDIENCE_TITLE_PATTERNS: [Audience, RegExp][] = [
   ["Unisex", /^unisex\b/i],
 ];
 
-// Tier 3: Unambiguously gendered product types (conservative list)
-const WOMEN_ONLY_TYPES = new Set(["sports bra", "bralette", "bikini"]);
+// Tier 2b: Gendered keywords anywhere in title
+const AUDIENCE_TITLE_ANYWHERE: [Audience, RegExp][] = [
+  ["Unisex", /\bunisex\b/i],
+  ["Women", /\b(women'?s?|ladies'?|lady'?s)\b/i],
+  ["Men", /\b(men'?s)\b/i],
+];
+
+// Tier 2c: Gendered product-name patterns (unambiguous)
+const WOMEN_NAME_PATTERNS = /\b(panty|panties|bralette|off[- ]?shoulder|nightgown|nightdress)\b/i;
+const MEN_NAME_PATTERNS = /\b(boxers?\s*(?:briefs?|shorts?)?)\b/i;
+
+// Tier 3: Unambiguously gendered product types (Shopify or classified)
+const WOMEN_ONLY_TYPES = new Set(["sports bra", "bralette", "bikini", "bras", "skirts", "dresses"]);
 const MEN_ONLY_TYPES = new Set(["boxer briefs", "boxers"]);
 
 export function classifyAudience(
@@ -264,6 +280,15 @@ export function classifyAudience(
   for (const [audience, pattern] of AUDIENCE_TITLE_PATTERNS) {
     if (pattern.test(title)) return audience;
   }
+
+  // Tier 2b: Gendered keywords anywhere in title
+  for (const [audience, pattern] of AUDIENCE_TITLE_ANYWHERE) {
+    if (pattern.test(title)) return audience;
+  }
+
+  // Tier 2c: Gendered product-name patterns
+  if (WOMEN_NAME_PATTERNS.test(title)) return "Women";
+  if (MEN_NAME_PATTERNS.test(title)) return "Men";
 
   // Tier 3: Product type (conservative)
   if (productType) {

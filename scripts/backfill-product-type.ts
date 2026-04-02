@@ -6,7 +6,7 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
-import { classifyProductType, mapActivewearType, isNonClothing } from "./lib/product-classifier";
+import { classifyProductType, mapActivewearType, shouldRejectProduct } from "./lib/product-classifier";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SECRET_KEY!;
@@ -22,11 +22,26 @@ const dryRun = !process.argv.includes("--apply");
 async function main() {
   console.log(`\n${dryRun ? "DRY RUN" : "APPLYING"} — backfill product_type\n`);
 
-  // Fetch all visible products
-  const { data: products, error } = await supabase
-    .from("products")
-    .select("id, name, category")
-    .or("sync_status.is.null,sync_status.eq.approved");
+  // Fetch all visible products with brand slug (paginated to avoid 1000-row limit)
+  const products: { id: string; name: string; category: string; brands: { slug: string } }[] = [];
+  const PAGE = 1000;
+  let offset = 0;
+  while (true) {
+    const { data, error: fetchErr } = await supabase
+      .from("products")
+      .select("id, name, category, brands!inner(slug)")
+      .or("sync_status.is.null,sync_status.eq.approved")
+      .range(offset, offset + PAGE - 1);
+    if (fetchErr) {
+      console.error("Error fetching products:", fetchErr);
+      process.exit(1);
+    }
+    if (!data || data.length === 0) break;
+    products.push(...(data as typeof products));
+    if (data.length < PAGE) break;
+    offset += PAGE;
+  }
+  const error = null;
 
   if (error) {
     console.error("Error fetching products:", error);
@@ -47,8 +62,11 @@ async function main() {
   const unclassified: string[] = [];
 
   for (const product of products) {
-    // Check for non-clothing
-    if (isNonClothing(product.name)) {
+    const brandSlug = (product as any).brands?.slug ?? "";
+
+    // Check for non-clothing (brand-aware: uses whitelist mode for lifestyle brands)
+    const rejection = shouldRejectProduct(product.name, brandSlug);
+    if (rejection.rejected) {
       stats.rejected++;
       rejects.push({ id: product.id, name: product.name });
       continue;
