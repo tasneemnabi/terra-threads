@@ -115,7 +115,7 @@ export default async function BrandPage({ params }: Props) {
               href={affiliateUrl(brand.website_url, "brand-detail")}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-3 min-h-[44px] font-body text-[14px] font-medium text-white transition-colors hover:bg-accent/90"
+              className="self-start inline-flex items-center gap-2 rounded-full bg-accent px-5 py-3 min-h-[44px] font-body text-[14px] font-medium text-white transition-colors hover:bg-accent/90"
             >
               Shop {brand.name}
               <svg
