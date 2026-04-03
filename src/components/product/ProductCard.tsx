@@ -6,9 +6,10 @@ import type { ProductWithBrand } from "@/types/database";
 
 interface ProductCardProps {
   product: ProductWithBrand;
+  hideBrand?: boolean;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, hideBrand }: ProductCardProps) {
   return (
     <Link
       href={`/product/${product.slug}`}
@@ -32,9 +33,11 @@ export function ProductCard({ product }: ProductCardProps) {
         )}
       </div>
 
-      <p className="pt-3 font-body text-[11px] font-normal uppercase tracking-[0.5px] text-secondary">
-        {product.brand_name}
-      </p>
+      {!hideBrand && (
+        <p className="pt-3 font-body text-[11px] font-normal uppercase tracking-[0.5px] text-secondary">
+          {product.brand_name}
+        </p>
+      )}
       <h3 className="mt-0.5 line-clamp-2 font-body text-[14px] font-medium leading-snug text-text transition-colors duration-200 group-hover:text-accent">
         {product.name}
       </h3>

@@ -8,9 +8,10 @@ const PAGE_SIZE = 24;
 
 interface PaginatedProductGridProps {
   products: ProductWithBrand[];
+  hideBrand?: boolean;
 }
 
-export function PaginatedProductGrid({ products }: PaginatedProductGridProps) {
+export function PaginatedProductGrid({ products, hideBrand }: PaginatedProductGridProps) {
   const [shown, setShown] = useState(PAGE_SIZE);
   const visible = products.slice(0, shown);
   const remaining = products.length - shown;
@@ -18,7 +19,7 @@ export function PaginatedProductGrid({ products }: PaginatedProductGridProps) {
 
   return (
     <>
-      <ProductGrid products={visible} />
+      <ProductGrid products={visible} hideBrand={hideBrand} />
       {hasMore && (
         <div className="mt-10 text-center">
           <button
