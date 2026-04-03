@@ -4,8 +4,8 @@ import Image from "next/image";
 import type { Metadata } from "next";
 import { getBrandBySlug } from "@/lib/queries/brands";
 import { getProductsByBrand } from "@/lib/queries/products";
-import { PaginatedProductGrid } from "@/components/product/PaginatedProductGrid";
-import { brandLogoUrl, affiliateUrl, brandDomain, formatCategory } from "@/lib/utils";
+import { BrandProducts } from "@/components/brand/BrandProducts";
+import { brandLogoUrl, affiliateUrl, formatCategory } from "@/lib/utils";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -31,7 +31,6 @@ export default async function BrandPage({ params }: Props) {
 
   const products = await getProductsByBrand(brand.id);
   const logoUrl = brandLogoUrl(brand.website_url);
-  const domain = brandDomain(brand.website_url);
 
   const metaParts = [
     ...brand.audience,
@@ -112,88 +111,67 @@ export default async function BrandPage({ params }: Props) {
           )}
 
           {brand.website_url && (
-            <div className="flex items-center gap-3">
-              <a
-                href={affiliateUrl(brand.website_url, "brand-detail")}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-3 min-h-[44px] font-body text-[14px] font-medium text-white transition-colors hover:bg-accent/90"
+            <a
+              href={affiliateUrl(brand.website_url, "brand-detail")}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-3 min-h-[44px] font-body text-[14px] font-medium text-white transition-colors hover:bg-accent/90"
+            >
+              Shop {brand.name}
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
               >
-                Visit Website
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                  />
-                </svg>
-              </a>
-              {domain && (
-                <span className="font-body text-[14px] text-muted">
-                  {domain}
-                </span>
-              )}
-            </div>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                />
+              </svg>
+            </a>
           )}
         </div>
       </section>
 
-      {/* Products Section */}
+      {/* Products */}
       <section className="px-5 sm:px-8 lg:px-20 pb-16">
         <div className="mx-auto max-w-[1280px]">
-          <p className="font-body text-[13px] font-medium uppercase leading-[16px] tracking-[0.08em] text-accent">
-            Natural Fiber Products
-          </p>
-          <h2 className="mt-3 font-display text-[28px] font-medium leading-[34px] tracking-[-0.02em] text-text">
-            Their Collection
-          </h2>
-          {products.length > 0 && (
-            <p className="mt-1 font-body text-[14px] leading-[20px] text-muted">
-              {products.length} piece{products.length === 1 ? "" : "s"} in natural fibers
-            </p>
-          )}
-
-          <div className="mt-8">
-            {products.length > 0 ? (
-              <PaginatedProductGrid products={products} hideBrand />
-            ) : (
-              <div className="rounded-[14px] border border-surface-dark bg-background p-10 text-center">
-                <p className="font-body text-[17px] leading-[26px] text-secondary">
-                  We&apos;re curating {brand.name}&apos;s natural fiber
-                  collection. Check back soon.
-                </p>
-                {brand.website_url && (
-                  <a
-                    href={affiliateUrl(brand.website_url, "brand-detail-empty")}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-4 inline-flex items-center gap-1 font-body text-[14px] font-medium text-accent hover:text-accent/80 transition-colors"
+          {products.length > 0 ? (
+            <BrandProducts products={products} />
+          ) : (
+            <div className="rounded-[14px] border border-surface-dark bg-background p-10 text-center">
+              <p className="font-body text-[17px] leading-[26px] text-secondary">
+                We&apos;re curating {brand.name}&apos;s natural fiber
+                collection. Check back soon.
+              </p>
+              {brand.website_url && (
+                <a
+                  href={affiliateUrl(brand.website_url, "brand-detail-empty")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 inline-flex items-center gap-1 font-body text-[14px] font-medium text-accent hover:text-accent/80 transition-colors"
+                >
+                  Shop {brand.name} directly
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
                   >
-                    Shop {brand.name} directly
-                    <svg
-                      className="h-4 w-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                      />
-                    </svg>
-                  </a>
-                )}
-              </div>
-            )}
-          </div>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                    />
+                  </svg>
+                </a>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
