@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { PaginatedProductGrid } from "@/components/product/PaginatedProductGrid";
 import { formatCategory } from "@/lib/utils";
 import type { ProductWithBrand } from "@/types/database";
@@ -13,16 +13,52 @@ const SORT_LABELS: Record<SortOption, string> = {
   "price-desc": "Price: High to Low",
 };
 
+// Same fiber family grouping as ShopContent — maps individual materials to display labels
+const FIBER_FAMILIES: { label: string; members: string[] }[] = [
+  { label: "Cotton", members: ["Cotton", "Organic Cotton", "Organic Pima Cotton", "Pima Cotton"] },
+  { label: "Wool", members: ["Wool", "Merino Wool", "Lambswool", "Cashmere", "Mohair", "Alpaca"] },
+  { label: "Linen", members: ["Linen"] },
+  { label: "Hemp", members: ["Hemp"] },
+  { label: "Silk", members: ["Silk"] },
+  { label: "Lyocell", members: ["Tencel Lyocell", "Bamboo Lyocell"] },
+  { label: "Modal", members: ["Modal"] },
+  { label: "Viscose", members: ["Viscose"] },
+  { label: "Spandex", members: ["Spandex"] },
+];
+
 interface BrandProductsProps {
   products: ProductWithBrand[];
 }
 
+function FilterPill({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`rounded-full px-4 py-2 font-body text-[13px] font-medium transition-colors ${
+        active
+          ? "bg-text text-background"
+          : "border border-muted-light text-secondary hover:border-text hover:text-text"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
 export function BrandProducts({ products }: BrandProductsProps) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [activeFiber, setActiveFiber] = useState<string | null>(null);
   const [sort, setSort] = useState<SortOption>("newest");
   const [sortOpen, setSortOpen] = useState(false);
 
-  // Close sort dropdown on ESC
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape" && sortOpen) setSortOpen(false);
@@ -43,10 +79,29 @@ export function BrandProducts({ products }: BrandProductsProps) {
       .map(([slug, count]) => ({ slug, label: formatCategory(slug), count }));
   }, [products]);
 
+  // Build fiber families that actually exist in this brand's products
+  const fibers = useMemo(() => {
+    const materialNames = new Set(
+      products.flatMap((p) => p.materials.map((m) => m.name))
+    );
+    return FIBER_FAMILIES.filter((fam) =>
+      fam.members.some((m) => materialNames.has(m))
+    );
+  }, [products]);
+
   const filtered = useMemo(() => {
     let result = activeCategory
       ? products.filter((p) => p.category === activeCategory)
       : products;
+
+    if (activeFiber) {
+      const family = FIBER_FAMILIES.find((f) => f.label === activeFiber);
+      if (family) {
+        result = result.filter((p) =>
+          p.materials.some((m) => family.members.includes(m.name))
+        );
+      }
+    }
 
     if (sort === "price-asc") {
       result = [...result].sort((a, b) => a.price - b.price);
@@ -55,13 +110,14 @@ export function BrandProducts({ products }: BrandProductsProps) {
     }
 
     return result;
-  }, [products, activeCategory, sort]);
+  }, [products, activeCategory, activeFiber, sort]);
 
-  const showFilters = categories.length > 1;
+  const showCategories = categories.length > 1;
+  const showFibers = fibers.length > 1;
 
   return (
     <>
-      {/* Top bar: count + sort — matches shop page pattern */}
+      {/* Top bar: count + sort */}
       <div className="mb-6 flex items-center justify-between">
         <p className="font-body text-[13px] text-muted">
           {filtered.length.toLocaleString()} product{filtered.length !== 1 ? "s" : ""}
@@ -119,43 +175,56 @@ export function BrandProducts({ products }: BrandProductsProps) {
         </div>
       </div>
 
-      {/* Category pills */}
-      {showFilters && (
-        <div className="mb-8 flex flex-wrap gap-2">
-          <button
-            onClick={() => setActiveCategory(null)}
-            className={`rounded-full px-4 py-2 font-body text-[13px] font-medium transition-colors ${
-              activeCategory === null
-                ? "bg-text text-background"
-                : "border border-muted-light text-secondary hover:border-text hover:text-text"
-            }`}
-          >
-            All
-          </button>
-          {categories.map((cat) => (
-            <button
-              key={cat.slug}
-              onClick={() =>
-                setActiveCategory(
-                  activeCategory === cat.slug ? null : cat.slug
-                )
-              }
-              className={`rounded-full px-4 py-2 font-body text-[13px] font-medium transition-colors ${
-                activeCategory === cat.slug
-                  ? "bg-text text-background"
-                  : "border border-muted-light text-secondary hover:border-text hover:text-text"
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
+      {/* Filter pills */}
+      {(showCategories || showFibers) && (
+        <div className="mb-8 flex flex-col gap-3">
+          {/* Category row */}
+          {showCategories && (
+            <div className="flex flex-wrap gap-2">
+              <FilterPill
+                label="All"
+                active={activeCategory === null}
+                onClick={() => setActiveCategory(null)}
+              />
+              {categories.map((cat) => (
+                <FilterPill
+                  key={cat.slug}
+                  label={cat.label}
+                  active={activeCategory === cat.slug}
+                  onClick={() =>
+                    setActiveCategory(
+                      activeCategory === cat.slug ? null : cat.slug
+                    )
+                  }
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Fiber row */}
+          {showFibers && (
+            <div className="flex flex-wrap gap-2">
+              {fibers.map((fam) => (
+                <FilterPill
+                  key={fam.label}
+                  label={fam.label}
+                  active={activeFiber === fam.label}
+                  onClick={() =>
+                    setActiveFiber(
+                      activeFiber === fam.label ? null : fam.label
+                    )
+                  }
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
       <PaginatedProductGrid
         products={filtered}
         hideBrand
-        key={`${activeCategory || "all"}-${sort}`}
+        key={`${activeCategory || "all"}-${activeFiber || "all"}-${sort}`}
       />
     </>
   );

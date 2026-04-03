@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { getBrandBySlug } from "@/lib/queries/brands";
 import { getProductsByBrand } from "@/lib/queries/products";
 import { BrandProducts } from "@/components/brand/BrandProducts";
-import { brandLogoUrl, affiliateUrl, formatCategory } from "@/lib/utils";
+import { brandLogoUrl, affiliateUrl } from "@/lib/utils";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -31,11 +31,6 @@ export default async function BrandPage({ params }: Props) {
 
   const products = await getProductsByBrand(brand.id);
   const logoUrl = brandLogoUrl(brand.website_url);
-
-  const metaParts = [
-    ...brand.audience,
-    ...brand.categories.map(formatCategory),
-  ];
 
   return (
     <>
@@ -86,27 +81,9 @@ export default async function BrandPage({ params }: Props) {
             </h1>
           </div>
 
-          {/* Fiber type pills */}
-          <div className="flex flex-wrap gap-2">
-            {brand.fiber_types.map((fiber) => (
-              <span
-                key={fiber}
-                className="rounded-full border border-muted-light px-3 py-1 font-body text-[13px] leading-[16px] text-secondary"
-              >
-                {fiber}
-              </span>
-            ))}
-          </div>
-
           {brand.description && (
             <p className="max-w-[640px] font-body text-[17px] leading-[26px] text-secondary">
               {brand.description}
-            </p>
-          )}
-
-          {metaParts.length > 0 && (
-            <p className="font-body text-[14px] leading-[20px] text-muted">
-              {metaParts.join(" \u00B7 ")}
             </p>
           )}
 
