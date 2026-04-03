@@ -57,11 +57,11 @@ export default async function BrandPage({ params }: Props) {
       {/* Breadcrumb */}
       <nav className="px-5 sm:px-8 lg:px-20 pt-8">
         <div className="mx-auto max-w-[1280px] flex items-center gap-1 font-body text-[14px] leading-[20px] text-muted">
-          <Link href="/" className="hover:text-text transition-colors">
+          <Link href="/" className="inline-flex items-center min-h-[44px] hover:text-text transition-colors">
             Home
           </Link>
           <span>/</span>
-          <Link href="/brands" className="hover:text-text transition-colors">
+          <Link href="/brands" className="inline-flex items-center min-h-[44px] hover:text-text transition-colors">
             Brands
           </Link>
           <span>/</span>
@@ -117,7 +117,7 @@ export default async function BrandPage({ params }: Props) {
                 href={affiliateUrl(brand.website_url, "brand-detail")}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 font-body text-[14px] font-medium text-white transition-colors hover:bg-accent/90"
+                className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-3 min-h-[44px] font-body text-[14px] font-medium text-white transition-colors hover:bg-accent/90"
               >
                 Visit Website
                 <svg
@@ -202,7 +202,7 @@ export default async function BrandPage({ params }: Props) {
         <div className="mx-auto max-w-[1280px]">
           <Link
             href="/brands"
-            className="inline-flex items-center gap-1 font-body text-[14px] font-medium text-accent hover:text-accent/80 transition-colors"
+            className="inline-flex items-center gap-1 min-h-[44px] font-body text-[14px] font-medium text-accent hover:text-accent/80 transition-colors"
           >
             <svg
               className="h-4 w-4"
