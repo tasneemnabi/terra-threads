@@ -86,7 +86,7 @@ export default async function ProductPage({ params }: Props) {
             {/* Brand identity */}
             <Link
               href={`/brand/${product.brand_slug}`}
-              className="inline-flex items-center gap-2.5 transition-opacity hover:opacity-80"
+              className="group inline-flex items-center gap-2.5 transition-colors hover:text-text"
             >
               {logoUrl && (
                 <Image
@@ -97,9 +97,12 @@ export default async function ProductPage({ params }: Props) {
                   className="shrink-0 rounded-md"
                 />
               )}
-              <span className="font-body text-sm font-medium uppercase tracking-wide text-muted">
+              <span className="font-body text-sm font-medium uppercase tracking-wide text-muted group-hover:text-text transition-colors">
                 {product.brand_name}
               </span>
+              <svg className="h-3.5 w-3.5 text-muted-light group-hover:text-text transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
             </Link>
 
             {/* Product name */}
