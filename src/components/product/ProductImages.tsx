@@ -34,10 +34,19 @@ export function ProductImages({
   const allImages = [mainImage, ...additionalImages].filter(Boolean) as string[];
   const [selectedIndex, setSelectedIndex] = useState(0);
   const currentImage = allImages[selectedIndex];
+  const hasMultiple = allImages.length > 1;
+
+  function goNext() {
+    setSelectedIndex((i) => (i + 1) % allImages.length);
+  }
+
+  function goPrev() {
+    setSelectedIndex((i) => (i - 1 + allImages.length) % allImages.length);
+  }
 
   return (
     <div className="space-y-4">
-      <div className="relative aspect-square overflow-hidden rounded-xl bg-surface">
+      <div className="group relative aspect-square overflow-hidden rounded-xl bg-surface">
         {currentImage && isRemoteUrl(currentImage) ? (
           <Image
             src={currentImage}
@@ -50,18 +59,42 @@ export function ProductImages({
         ) : (
           <Placeholder />
         )}
+
+        {/* Navigation arrows */}
+        {hasMultiple && (
+          <>
+            <button
+              onClick={goPrev}
+              className="absolute left-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-text opacity-0 shadow-sm backdrop-blur-sm transition-opacity hover:bg-white group-hover:opacity-100"
+              aria-label="Previous image"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button
+              onClick={goNext}
+              className="absolute right-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-text opacity-0 shadow-sm backdrop-blur-sm transition-opacity hover:bg-white group-hover:opacity-100"
+              aria-label="Next image"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </>
+        )}
       </div>
 
-      {allImages.length > 1 && (
-        <div className="flex gap-3 overflow-x-auto">
+      {hasMultiple && (
+        <div className="flex gap-3 overflow-x-auto scrollbar-hide">
           {allImages.map((img, index) => (
             <button
               key={index}
               onClick={() => setSelectedIndex(index)}
-              className={`relative h-16 w-16 shrink-0 rounded-lg bg-surface overflow-hidden ${
+              className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-surface transition-opacity ${
                 index === selectedIndex
-                  ? "ring-2 ring-accent"
-                  : "ring-1 ring-surface-dark"
+                  ? "opacity-100"
+                  : "opacity-60 hover:opacity-90"
               }`}
               aria-label={`View image ${index + 1} of ${productName}`}
             >
@@ -71,7 +104,7 @@ export function ProductImages({
                   alt={`${productName} ${index + 1}`}
                   fill
                   className="object-cover"
-                  sizes="64px"
+                  sizes="80px"
                 />
               ) : (
                 <Placeholder className="h-6 w-6" />
