@@ -103,7 +103,7 @@ export default async function ProductPage({ params }: Props) {
             </Link>
 
             {/* Product name */}
-            <h1 className="font-display text-[32px] font-semibold leading-[38px] tracking-[-0.02em] text-text sm:text-[36px] sm:leading-[42px]">
+            <h1 className="font-display text-[32px] font-semibold leading-[1.15] tracking-[-0.02em] text-text sm:text-[36px] lg:text-[44px]">
               {product.name}
             </h1>
 
