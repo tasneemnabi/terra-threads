@@ -13,7 +13,7 @@ export function Hero() {
             <span className="text-accent">the plastic.</span>
           </h1>
           <p className="mt-6 sm:mt-8 max-w-[420px] font-body text-[17px] sm:text-[18px] leading-[28px] text-secondary">
-            We find the brands making clothes from merino, cotton, linen, and silk — so you don&apos;t have to.
+            Merino, cotton, linen, silk — clothes that breathe, last, and never shed microplastics.
           </p>
           <div className="mt-10 sm:mt-14 flex flex-col sm:flex-row items-start gap-4">
             <Link
