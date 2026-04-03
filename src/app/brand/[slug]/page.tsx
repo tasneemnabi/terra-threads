@@ -114,7 +114,7 @@ export default async function BrandPage({ params }: Props) {
       </section>
 
       {/* Products */}
-      <section className="px-5 sm:px-8 lg:px-20 pb-16">
+      <section className="px-5 sm:px-8 lg:px-20 pb-20">
         <div className="mx-auto max-w-[1280px]">
           {products.length > 0 ? (
             <BrandProducts products={products} />

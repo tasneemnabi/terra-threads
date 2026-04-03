@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { PaginatedProductGrid } from "@/components/product/PaginatedProductGrid";
+import { ProductCard } from "@/components/product/ProductCard";
 import { formatCategory } from "@/lib/utils";
 import type { ProductWithBrand } from "@/types/database";
 
@@ -13,94 +13,200 @@ const SORT_LABELS: Record<SortOption, string> = {
   "price-desc": "Price: High to Low",
 };
 
-// Same fiber family grouping as ShopContent — maps individual materials to display labels
-const FIBER_FAMILIES: { label: string; members: string[] }[] = [
-  { label: "Cotton", members: ["Cotton", "Organic Cotton", "Organic Pima Cotton", "Pima Cotton"] },
-  { label: "Wool", members: ["Wool", "Merino Wool", "Lambswool", "Cashmere", "Mohair", "Alpaca"] },
-  { label: "Linen", members: ["Linen"] },
-  { label: "Hemp", members: ["Hemp"] },
-  { label: "Silk", members: ["Silk"] },
-  { label: "Lyocell", members: ["Tencel Lyocell", "Bamboo Lyocell"] },
-  { label: "Modal", members: ["Modal"] },
-  { label: "Viscose", members: ["Viscose"] },
-  { label: "Spandex", members: ["Spandex"] },
+// Same fiber family grouping as ShopContent
+const FIBER_GROUPS: { heading: string; families: { label: string; members: string[] }[] }[] = [
+  {
+    heading: "Natural",
+    families: [
+      { label: "Cotton", members: ["Cotton", "Organic Cotton", "Organic Pima Cotton", "Pima Cotton"] },
+      { label: "Wool", members: ["Wool", "Merino Wool", "Lambswool", "Cashmere", "Mohair", "Alpaca"] },
+      { label: "Linen", members: ["Linen"] },
+      { label: "Hemp", members: ["Hemp"] },
+      { label: "Silk", members: ["Silk"] },
+    ],
+  },
+  {
+    heading: "Semi-Synthetic",
+    families: [
+      { label: "Lyocell", members: ["Tencel Lyocell", "Bamboo Lyocell"] },
+      { label: "Modal", members: ["Modal"] },
+      { label: "Viscose", members: ["Viscose"] },
+    ],
+  },
+  {
+    heading: "Synthetic",
+    families: [
+      { label: "Spandex", members: ["Spandex"] },
+    ],
+  },
 ];
+
+const PAGE_SIZE = 24;
+
+// --- Shared UI components (same as ShopContent) ---
+
+function FilterCheckbox({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: () => void;
+}) {
+  return (
+    <button
+      role="checkbox"
+      aria-checked={checked}
+      onClick={onChange}
+      className="group/cb flex items-center gap-2.5 rounded-md px-1 py-1 text-left transition-colors hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:rounded-md"
+    >
+      <div
+        className={`flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-[3px] border transition-all duration-150 ${
+          checked
+            ? "border-accent bg-accent"
+            : "border-muted-light group-hover/cb:border-muted"
+        }`}
+      >
+        {checked && (
+          <svg className="h-2.5 w-2.5 text-background" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+        )}
+      </div>
+      <span className={`font-body text-[13px] transition-colors ${checked ? "font-medium text-text" : "text-text group-hover/cb:text-secondary"}`}>
+        {label}
+      </span>
+    </button>
+  );
+}
+
+function AccordionFilter({
+  title,
+  children,
+  defaultOpen = false,
+}: {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="border-b border-muted-light/60">
+      <button
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between py-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:rounded-md"
+      >
+        <span className="font-display text-[14px] font-semibold text-text">{title}</span>
+        <svg className="h-4 w-4 shrink-0 text-text" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          {open ? (
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
+          ) : (
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m-7-7h14" />
+          )}
+        </svg>
+      </button>
+      {open && <div className="flex flex-col gap-1.5 pb-4">{children}</div>}
+    </div>
+  );
+}
+
+function ActiveFilterChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <button
+      onClick={onRemove}
+      className="flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1.5 font-body text-[12px] font-medium text-accent transition-colors hover:bg-accent/20"
+    >
+      {label}
+      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+  );
+}
+
+// --- Main component ---
 
 interface BrandProductsProps {
   products: ProductWithBrand[];
 }
 
-function FilterPill({
-  label,
-  active,
-  onClick,
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`rounded-full px-4 py-2 font-body text-[13px] font-medium transition-colors ${
-        active
-          ? "bg-text text-background"
-          : "border border-muted-light text-secondary hover:border-text hover:text-text"
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
-
 export function BrandProducts({ products }: BrandProductsProps) {
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [activeFiber, setActiveFiber] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedFibers, setSelectedFibers] = useState<string[]>([]);
+  const [minPrice, setMinPrice] = useState<number | undefined>();
+  const [maxPrice, setMaxPrice] = useState<number | undefined>();
   const [sort, setSort] = useState<SortOption>("newest");
   const [sortOpen, setSortOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [shown, setShown] = useState(PAGE_SIZE);
 
+  // Lock body scroll when mobile filter is open
+  useEffect(() => {
+    if (filterOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [filterOpen]);
+
+  // ESC to close
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape" && sortOpen) setSortOpen(false);
+      if (e.key === "Escape") {
+        if (sortOpen) setSortOpen(false);
+        if (filterOpen) setFilterOpen(false);
+      }
     }
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [sortOpen]);
+  }, [sortOpen, filterOpen]);
 
+  // Derive categories from products
   const categories = useMemo(() => {
     const counts = new Map<string, number>();
     for (const p of products) {
-      if (p.category) {
-        counts.set(p.category, (counts.get(p.category) || 0) + 1);
-      }
+      if (p.category) counts.set(p.category, (counts.get(p.category) || 0) + 1);
     }
-    return [...counts.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .map(([slug, count]) => ({ slug, label: formatCategory(slug), count }));
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([slug]) => slug);
   }, [products]);
 
-  // Build fiber families that actually exist in this brand's products
-  const fibers = useMemo(() => {
-    const materialNames = new Set(
-      products.flatMap((p) => p.materials.map((m) => m.name))
-    );
-    return FIBER_FAMILIES.filter((fam) =>
-      fam.members.some((m) => materialNames.has(m))
-    );
-  }, [products]);
+  // Build fiber groups filtered to materials that exist in this brand's products
+  const materialNames = useMemo(
+    () => new Set(products.flatMap((p) => p.materials.map((m) => m.name))),
+    [products]
+  );
+  const fiberGroups = useMemo(
+    () =>
+      FIBER_GROUPS.map((group) => ({
+        ...group,
+        families: group.families
+          .map((fam) => ({ ...fam, members: fam.members.filter((m) => materialNames.has(m)) }))
+          .filter((fam) => fam.members.length > 0),
+      })).filter((group) => group.families.length > 0),
+    [materialNames]
+  );
+  const allFiberFamilies = useMemo(() => fiberGroups.flatMap((g) => g.families), [fiberGroups]);
 
+  // Filter + sort
   const filtered = useMemo(() => {
-    let result = activeCategory
-      ? products.filter((p) => p.category === activeCategory)
-      : products;
+    let result = products;
 
-    if (activeFiber) {
-      const family = FIBER_FAMILIES.find((f) => f.label === activeFiber);
-      if (family) {
-        result = result.filter((p) =>
-          p.materials.some((m) => family.members.includes(m.name))
-        );
-      }
+    if (selectedCategory) {
+      result = result.filter((p) => p.category === selectedCategory);
+    }
+    if (selectedFibers.length > 0) {
+      result = result.filter((p) =>
+        p.materials.some((m) => selectedFibers.includes(m.name))
+      );
+    }
+    if (minPrice !== undefined) {
+      result = result.filter((p) => p.price >= minPrice);
+    }
+    if (maxPrice !== undefined) {
+      result = result.filter((p) => p.price <= maxPrice);
     }
 
     if (sort === "price-asc") {
@@ -110,19 +216,159 @@ export function BrandProducts({ products }: BrandProductsProps) {
     }
 
     return result;
-  }, [products, activeCategory, activeFiber, sort]);
+  }, [products, selectedCategory, selectedFibers, minPrice, maxPrice, sort]);
 
-  const showCategories = categories.length > 1;
-  const showFibers = fibers.length > 1;
+  // Reset pagination when filters change
+  useEffect(() => { setShown(PAGE_SIZE); }, [selectedCategory, selectedFibers, minPrice, maxPrice, sort]);
+
+  const visible = filtered.slice(0, shown);
+  const hasMore = shown < filtered.length;
+
+  // Toggle helpers
+  const toggleCategory = (cat: string) =>
+    setSelectedCategory(selectedCategory === cat ? null : cat);
+
+  const toggleFiberFamily = (family: { label: string; members: string[] }) => {
+    const allSelected = family.members.every((m) => selectedFibers.includes(m));
+    setSelectedFibers(
+      allSelected
+        ? selectedFibers.filter((f) => !family.members.includes(f))
+        : [...new Set([...selectedFibers, ...family.members])]
+    );
+  };
+
+  const hasActiveFilters =
+    selectedCategory !== null ||
+    selectedFibers.length > 0 ||
+    minPrice !== undefined ||
+    maxPrice !== undefined;
+
+  const clearAllFilters = () => {
+    setSelectedCategory(null);
+    setSelectedFibers([]);
+    setMinPrice(undefined);
+    setMaxPrice(undefined);
+  };
+
+  // Active filter chips
+  const activeChips: { label: string; onRemove: () => void }[] = [];
+  if (selectedCategory) {
+    activeChips.push({ label: formatCategory(selectedCategory), onRemove: () => setSelectedCategory(null) });
+  }
+  for (const fam of allFiberFamilies) {
+    if (fam.members.some((m) => selectedFibers.includes(m))) {
+      activeChips.push({ label: fam.label, onRemove: () => toggleFiberFamily(fam) });
+    }
+  }
+  if (minPrice !== undefined || maxPrice !== undefined) {
+    activeChips.push({
+      label: `$${minPrice ?? 0} – $${maxPrice ?? "∞"}`,
+      onRemove: () => { setMinPrice(undefined); setMaxPrice(undefined); },
+    });
+  }
+
+  const sidebarContent = (
+    <>
+      {activeChips.length > 0 && (
+        <div className="flex flex-wrap gap-2 pb-2">
+          {activeChips.map((chip) => (
+            <ActiveFilterChip key={chip.label} label={chip.label} onRemove={chip.onRemove} />
+          ))}
+        </div>
+      )}
+
+      {/* Category */}
+      {categories.length > 1 && (
+        <AccordionFilter title="Category" defaultOpen={selectedCategory !== null}>
+          {categories.map((cat) => (
+            <FilterCheckbox
+              key={cat}
+              label={formatCategory(cat)}
+              checked={selectedCategory === cat}
+              onChange={() => toggleCategory(cat)}
+            />
+          ))}
+        </AccordionFilter>
+      )}
+
+      {/* Fiber Type */}
+      {fiberGroups.length > 0 && (
+        <AccordionFilter title="Fiber Type" defaultOpen={selectedFibers.length > 0}>
+          {fiberGroups.map((group, i) => (
+            <div key={group.heading} className={i > 0 ? "mt-3" : ""}>
+              <p className="mb-1.5 px-1 font-body text-[11px] font-semibold uppercase tracking-[0.08em] text-secondary">
+                {group.heading}
+              </p>
+              {group.families.map((fam) => (
+                <FilterCheckbox
+                  key={fam.label}
+                  label={fam.label}
+                  checked={fam.members.some((m) => selectedFibers.includes(m))}
+                  onChange={() => toggleFiberFamily(fam)}
+                />
+              ))}
+            </div>
+          ))}
+        </AccordionFilter>
+      )}
+
+      {/* Price */}
+      <AccordionFilter title="Price" defaultOpen={minPrice !== undefined || maxPrice !== undefined}>
+        <div className="flex items-center gap-2">
+          <label className="w-full">
+            <span className="sr-only">Minimum price</span>
+            <input
+              type="number"
+              placeholder="$0"
+              value={minPrice ?? ""}
+              onBlur={(e) => setMinPrice(e.target.value ? Number(e.target.value) : undefined)}
+              onChange={(e) => setMinPrice(e.target.value ? Number(e.target.value) : undefined)}
+              className="w-full rounded-md border border-muted-light bg-background px-3 py-2 font-body text-[13px] text-text outline-none focus:border-muted focus-visible:ring-2 focus-visible:ring-accent/50"
+            />
+          </label>
+          <span className="font-body text-[13px] text-muted">–</span>
+          <label className="w-full">
+            <span className="sr-only">Maximum price</span>
+            <input
+              type="number"
+              placeholder="$500"
+              value={maxPrice ?? ""}
+              onBlur={(e) => setMaxPrice(e.target.value ? Number(e.target.value) : undefined)}
+              onChange={(e) => setMaxPrice(e.target.value ? Number(e.target.value) : undefined)}
+              className="w-full rounded-md border border-muted-light bg-background px-3 py-2 font-body text-[13px] text-text outline-none focus:border-muted focus-visible:ring-2 focus-visible:ring-accent/50"
+            />
+          </label>
+        </div>
+      </AccordionFilter>
+    </>
+  );
 
   return (
     <>
-      {/* Top bar: count + sort */}
-      <div className="mb-6 flex items-center justify-between">
-        <p className="font-body text-[13px] text-muted">
+      {/* Top bar: mobile filter button + sort dropdown */}
+      <div className="flex items-center justify-between">
+        {/* Mobile filter toggle */}
+        <button
+          onClick={() => setFilterOpen(true)}
+          className="flex items-center gap-1.5 font-body text-[14px] font-medium text-text transition-colors hover:text-secondary lg:hidden"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+          </svg>
+          Filters
+          {activeChips.length > 0 && (
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[11px] font-semibold text-background">
+              {activeChips.length}
+            </span>
+          )}
+        </button>
+
+        {/* Product count — desktop only */}
+        <p className="hidden font-body text-[13px] text-muted lg:block">
           {filtered.length.toLocaleString()} product{filtered.length !== 1 ? "s" : ""}
         </p>
 
+        {/* Sort dropdown */}
         <div className="relative">
           <button
             onClick={() => setSortOpen(!sortOpen)}
@@ -134,10 +380,7 @@ export function BrandProducts({ products }: BrandProductsProps) {
             <span className="font-medium">{SORT_LABELS[sort]}</span>
             <svg
               className={`h-3.5 w-3.5 transition-transform duration-200 ${sortOpen ? "rotate-180" : ""}`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
             </svg>
@@ -175,57 +418,87 @@ export function BrandProducts({ products }: BrandProductsProps) {
         </div>
       </div>
 
-      {/* Filter pills */}
-      {(showCategories || showFibers) && (
-        <div className="mb-8 flex flex-col gap-3">
-          {/* Category row */}
-          {showCategories && (
-            <div className="flex flex-wrap gap-2">
-              <FilterPill
-                label="All"
-                active={activeCategory === null}
-                onClick={() => setActiveCategory(null)}
-              />
-              {categories.map((cat) => (
-                <FilterPill
-                  key={cat.slug}
-                  label={cat.label}
-                  active={activeCategory === cat.slug}
-                  onClick={() =>
-                    setActiveCategory(
-                      activeCategory === cat.slug ? null : cat.slug
-                    )
-                  }
-                />
-              ))}
+      {/* Main area: Sidebar + Grid */}
+      <div className="flex gap-10 pt-2">
+        {/* Persistent sidebar — desktop only */}
+        <aside className="hidden w-[240px] shrink-0 pt-4 lg:block">
+          {sidebarContent}
+        </aside>
+
+        {/* Content column */}
+        <div className="min-w-0 flex-1">
+          {/* Mobile product count */}
+          <p className="pb-6 pt-4 font-body text-[13px] text-muted lg:hidden">
+            {filtered.length.toLocaleString()} product{filtered.length !== 1 ? "s" : ""}
+          </p>
+
+          <div className="grid grid-cols-2 gap-x-5 gap-y-8 pt-4 sm:grid-cols-3 lg:grid-cols-3">
+            {visible.map((product) => (
+              <ProductCard key={product.id} product={product} hideBrand />
+            ))}
+          </div>
+
+          {hasMore && (
+            <div className="mt-10 text-center">
+              <button
+                onClick={() => setShown((s) => Math.min(s + PAGE_SIZE, filtered.length))}
+                className="inline-flex items-center gap-2 rounded-full border border-muted-light px-6 py-3 font-body text-[14px] font-medium text-text transition-colors hover:border-text"
+              >
+                Show more ({filtered.length - shown} remaining)
+              </button>
             </div>
           )}
 
-          {/* Fiber row */}
-          {showFibers && (
-            <div className="flex flex-wrap gap-2">
-              {fibers.map((fam) => (
-                <FilterPill
-                  key={fam.label}
-                  label={fam.label}
-                  active={activeFiber === fam.label}
-                  onClick={() =>
-                    setActiveFiber(
-                      activeFiber === fam.label ? null : fam.label
-                    )
-                  }
-                />
-              ))}
+          {filtered.length === 0 && (
+            <div className="flex flex-col items-center gap-4 py-16">
+              <p className="font-body text-[16px] text-secondary">
+                No products match the selected filters.
+              </p>
+              {hasActiveFilters && (
+                <button
+                  onClick={clearAllFilters}
+                  className="rounded-full border border-surface-dark px-5 py-2.5 font-body text-[14px] font-medium text-text transition-colors hover:bg-surface"
+                >
+                  Clear all filters
+                </button>
+              )}
             </div>
           )}
         </div>
-      )}
+      </div>
 
-      <PaginatedProductGrid
-        products={filtered}
-        hideBrand
-        key={`${activeCategory || "all"}-${activeFiber || "all"}-${sort}`}
-      />
+      {/* Mobile slide-out filter panel */}
+      {filterOpen && (
+        <div className="fixed inset-0 z-50 flex justify-start lg:hidden" role="dialog" aria-modal="true" aria-label="Filters">
+          <div className="absolute inset-0 bg-text/20" onClick={() => setFilterOpen(false)} />
+          <div className="relative flex h-full w-full max-w-[320px] flex-col bg-white shadow-2xl animate-in slide-in-from-left duration-200">
+            <div className="flex items-center justify-between border-b border-surface-dark px-6 py-5">
+              <h2 className="font-display text-[18px] font-semibold tracking-[-0.01em] text-text">Filters</h2>
+              <button
+                onClick={() => setFilterOpen(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface hover:text-text"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 pt-4 pb-6">
+              {sidebarContent}
+            </div>
+
+            <div className="border-t border-surface-dark px-6 py-4">
+              <button
+                onClick={() => setFilterOpen(false)}
+                className="w-full rounded-[8px] bg-text px-5 py-3 font-body text-[14px] font-semibold text-background transition-opacity hover:opacity-90"
+              >
+                View {filtered.length.toLocaleString()} Product{filtered.length !== 1 ? "s" : ""}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
