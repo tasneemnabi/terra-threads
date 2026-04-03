@@ -1,6 +1,6 @@
 /**
  * add-brand.ts — Validate and insert a brand into Supabase.
- * Products are handled separately by sync-catalog.ts.
+ * Products are handled separately by sync-shopify.ts (Shopify) or sync-catalog.ts (non-Shopify).
  *
  * Usage:
  *   npx tsx scripts/add-brand.ts --insert <input.json>   (validate + insert into DB)

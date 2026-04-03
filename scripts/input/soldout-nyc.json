@@ -1,0 +1,8 @@
+{
+  "name": "Sold Out NYC",
+  "website_url": "https://soldout.nyc",
+  "description": "NYC-based women's brand crafting luxe wardrobe essentials from natural fibers including organic Peruvian cotton, Merino wool, cashmere, linen, and silk.",
+  "audience": ["Women"],
+  "fiber_types": ["Organic Cotton", "Cotton", "Merino Wool", "Cashmere", "Linen", "Silk", "Viscose", "Modal", "Tencel Lyocell"],
+  "categories": ["Basics", "Knitwear", "Tops", "Dresses"]
+}

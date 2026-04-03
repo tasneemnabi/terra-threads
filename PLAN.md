@@ -248,7 +248,7 @@ Server-side filtering by category, product_type, brand slugs, material names, pr
 - [ ] Per-page Open Graph images
 - [x] ~~JSON-LD structured data on brands page~~ — ItemList schema with all brands
 - [ ] Deploy to production on Vercel
-- [ ] Non-Shopify brand scraper — sitemap/Playwright pipeline for 8 remaining brands (Everlane, Icebreaker, Pact, prAna, Quince, Fair Indigo, Rawganique, Gil Rodriguez)
+- [x] ~~Non-Shopify brand scraper~~ — 6 of 8 scraped (Icebreaker, Pact, Quince, Fair Indigo, Rawganique, Gil Rodriguez). Everlane & prAna dropped (too much effort).
 - [x] ~~Brand detail pages — link brand cards to `/brand/[slug]` instead of external sites now that products exist~~ — featured brands on homepage now link internally
 - [x] ~~Category/filter UX~~ — replaced by `/shop` page with brand-grouped browsing, audience tabs, category + product type filtering
 - [x] ~~Homepage featured products — DB-driven product cards on homepage~~ — FeaturedProducts component with 6 recent products
@@ -267,13 +267,13 @@ Automated via `scripts/sync-shopify.ts`:
 5. Non-clothing (home goods, gift cards, shoes, accessories) auto-rejected
 6. Rejected products preserved across re-syncs
 
-**Stats**: ~4,400 approved (867 with product_type classified), ~1,100 rejected, 0 in review
+**Stats**: ~4,400 Shopify-sourced approved (867 with product_type classified), ~1,100 rejected, 0 in review
 
-### Non-Shopify Brands (8 brands — TODO)
+### Non-Shopify Brands (6 of 8 — DONE ✅)
 
-Everlane, Icebreaker, Pact, prAna, Quince, Fair Indigo, Rawganique, Gil Rodriguez
-
-Need: sitemap crawler → Playwright scraper → LLM extraction → same approval pipeline
+Scraped via Playwright + LLM extraction:
+- ✅ Rawganique (226 approved), Pact (68), Fair Indigo (28), Gil Rodriguez (15), Quince (14), Icebreaker (8)
+- ❌ Everlane & prAna — dropped (too much scraping effort, diminishing returns)
 
 ### Materials (18 canonical)
 
@@ -281,16 +281,3 @@ Alpaca, Bamboo Lyocell, Cashmere, Cotton, Elastane, Hemp, Lambswool, Linen, Meri
 
 Trusted materials whitelist in `scripts/lib/curation.ts` — `ensureMaterialExists()` blocks any name not in the whitelist from entering the DB.
 
----
-
-## Deliberately Deferred (Post-MVP)
-
-- **User accounts & wishlists** — add when there's repeat traffic
-- **Price tracking & sale alerts** — requires scheduled scraping jobs
-- **Brand quality tiers** — Gold/Silver/Bronze scoring system
-- **Marketplace / checkout** — buying directly on-site
-- ~~**Scraping pipeline** — automated product ingestion from brand sites~~ — Shopify sync pipeline built, 17 brands fully processed
-- **Non-Shopify scraper** — sitemap + Playwright pipeline for remaining 8 brands
-- **Blog / content marketing** — "best natural fiber running shorts" type SEO content
-- **Email newsletter** — new products, sale alerts
-- **Mobile app** — only if web traffic warrants it

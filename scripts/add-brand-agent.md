@@ -40,17 +40,36 @@ npx tsx scripts/add-brand.ts --insert scripts/input/{{BRAND_SLUG}}.json
 
 4. If the logo wasn't auto-downloaded, manually save the brand's logo to `public/logos/{domain}.png` (128×128 PNG).
 
-5. **Run the catalog scraper** to discover and ingest all products:
-```bash
-# First, check what products are found
-npx tsx scripts/sync-catalog.ts --discover-only --brand {{BRAND_SLUG}}
+5. **Detect if the brand uses Shopify** — check if `https://{domain}/products.json` returns valid JSON. Most brands in FIBER are Shopify stores.
 
-# Then do a dry run to see materials + classifications
-npx tsx scripts/sync-catalog.ts --dry-run --brand {{BRAND_SLUG}}
+6. **Run the product sync**:
 
-# Finally, insert everything
-npx tsx scripts/sync-catalog.ts --brand {{BRAND_SLUG}}
-```
+   **For Shopify brands** (preferred — reads `body_html` from JSON API, much more reliable for material extraction than Playwright scraping):
+   ```bash
+   # First ensure the brand's shopify_domain is set in the DB (check the brands table).
+   # If not, update it — the shopify_domain is the *.myshopify.com hostname.
+
+   # Dry run to see materials + classifications
+   npx tsx scripts/sync-shopify.ts --dry-run --brand {{BRAND_SLUG}}
+
+   # Insert everything
+   npx tsx scripts/sync-shopify.ts --brand {{BRAND_SLUG}}
+
+   # LLM pass on any remaining "review" products
+   npx tsx scripts/sync-shopify.ts --llm --brand {{BRAND_SLUG}}
+   ```
+
+   **For non-Shopify brands** (fallback — uses sitemap discovery + Playwright):
+   ```bash
+   # First, check what products are found
+   npx tsx scripts/sync-catalog.ts --discover-only --brand {{BRAND_SLUG}}
+
+   # Then do a dry run to see materials + classifications
+   npx tsx scripts/sync-catalog.ts --dry-run --brand {{BRAND_SLUG}}
+
+   # Finally, insert everything
+   npx tsx scripts/sync-catalog.ts --brand {{BRAND_SLUG}}
+   ```
 
 6. **Return a summary** of what was researched and inserted — include product count, approval rate, and any issues.
 
