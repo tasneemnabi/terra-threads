@@ -65,7 +65,7 @@ export default async function ProductPage({ params }: Props) {
           </Link>
           <span>/</span>
           <Link
-            href={`/brands?category=${product.category}`}
+            href={`/shop?category=${product.category}`}
             className="py-2 capitalize hover:text-text transition-colors"
           >
             {product.category}
