@@ -4,12 +4,19 @@ interface FiberFactsLabelProps {
   materials: MaterialInfo[];
 }
 
-const SEGMENT_COLORS = [
+// Rich warm tones for natural fibers, muted neutral for synthetics
+const NATURAL_COLORS = [
   { bar: "bg-accent", dot: "bg-accent" },
   { bar: "bg-secondary", dot: "bg-secondary" },
   { bar: "bg-natural", dot: "bg-natural" },
   { bar: "bg-muted", dot: "bg-muted" },
 ];
+const SYNTHETIC_COLOR = { bar: "bg-surface-dark", dot: "bg-surface-dark" };
+
+function getSegmentColor(mat: MaterialInfo, naturalIndex: number) {
+  if (!mat.is_natural) return SYNTHETIC_COLOR;
+  return NATURAL_COLORS[naturalIndex % NATURAL_COLORS.length];
+}
 
 export function FiberFactsLabel({ materials }: FiberFactsLabelProps) {
   if (!materials || materials.length === 0) {
@@ -52,35 +59,55 @@ export function FiberFactsLabel({ materials }: FiberFactsLabelProps) {
       </div>
 
       {/* Composition bar */}
-      <div className="mt-4 flex h-2.5 gap-px overflow-hidden rounded-full bg-surface">
-        {sortedMaterials.map((mat, i) => (
-          <div
-            key={mat.material_id}
-            className={`h-full ${SEGMENT_COLORS[i % SEGMENT_COLORS.length].bar}`}
-            style={{ width: `${Math.max(mat.percentage, 3)}%` }}
-          />
-        ))}
-      </div>
+      {(() => {
+        let natIdx = 0;
+        return (
+          <div className="mt-4 flex h-2.5 gap-px overflow-hidden rounded-full bg-surface">
+            {sortedMaterials.map((mat) => {
+              const color = getSegmentColor(mat, natIdx);
+              if (mat.is_natural) natIdx++;
+              return (
+                <div
+                  key={mat.material_id}
+                  className={`h-full ${color.bar}`}
+                  style={{ width: `${Math.max(mat.percentage, 3)}%` }}
+                />
+              );
+            })}
+          </div>
+        );
+      })()}
 
       {/* Legend */}
-      <div className="mt-4 space-y-2.5">
-        {sortedMaterials.map((mat, i) => (
-          <div
-            key={mat.material_id}
-            className="flex items-center justify-between"
-          >
-            <div className="flex items-center gap-2.5">
-              <div
-                className={`h-2.5 w-2.5 rounded-full ${SEGMENT_COLORS[i % SEGMENT_COLORS.length].dot}`}
-              />
-              <span className="font-body text-sm text-text">{mat.name}</span>
-            </div>
-            <span className="font-body text-sm font-semibold tabular-nums text-text">
-              {mat.percentage}%
-            </span>
+      {(() => {
+        let natIdx = 0;
+        return (
+          <div className="mt-4 space-y-2.5">
+            {sortedMaterials.map((mat) => {
+              const color = getSegmentColor(mat, natIdx);
+              if (mat.is_natural) natIdx++;
+              return (
+                <div
+                  key={mat.material_id}
+                  className="flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div
+                      className={`h-2.5 w-2.5 rounded-full ${color.dot}`}
+                    />
+                    <span className="font-body text-sm text-text">
+                      {mat.name}
+                    </span>
+                  </div>
+                  <span className="font-body text-sm font-semibold tabular-nums text-text">
+                    {mat.percentage}%
+                  </span>
+                </div>
+              );
+            })}
           </div>
-        ))}
-      </div>
+        );
+      })()}
     </div>
   );
 }
