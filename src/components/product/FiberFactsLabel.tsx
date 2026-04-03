@@ -12,7 +12,7 @@ const NATURAL_COLORS = [
   { bar: "bg-natural", dot: "bg-natural" },
   { bar: "bg-muted", dot: "bg-muted" },
 ];
-const SYNTHETIC_COLOR = { bar: "bg-surface-dark", dot: "bg-surface-dark" };
+const SYNTHETIC_COLOR = { bar: "bg-muted", dot: "bg-muted" };
 
 function getSegmentColor(mat: MaterialInfo, naturalIndex: number) {
   if (!mat.is_natural) return SYNTHETIC_COLOR;
