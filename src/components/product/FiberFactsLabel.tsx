@@ -4,10 +4,17 @@ interface FiberFactsLabelProps {
   materials: MaterialInfo[];
 }
 
+const SEGMENT_COLORS = [
+  { bar: "bg-accent", dot: "bg-accent" },
+  { bar: "bg-secondary", dot: "bg-secondary" },
+  { bar: "bg-natural", dot: "bg-natural" },
+  { bar: "bg-muted", dot: "bg-muted" },
+];
+
 export function FiberFactsLabel({ materials }: FiberFactsLabelProps) {
   if (!materials || materials.length === 0) {
     return (
-      <div className="rounded-xl border border-surface-dark/40 bg-white/60 px-5 py-4 text-center">
+      <div className="rounded-xl bg-white px-5 py-4 text-center shadow-sm ring-1 ring-surface-dark/30">
         <p className="font-body text-sm text-muted">
           Material composition not yet verified
         </p>
@@ -20,7 +27,7 @@ export function FiberFactsLabel({ materials }: FiberFactsLabelProps) {
   );
 
   return (
-    <div className="rounded-xl border border-surface-dark/40 bg-white/60 p-5">
+    <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-surface-dark/30">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="font-display text-base font-semibold tracking-[-0.01em] text-text">
@@ -45,11 +52,11 @@ export function FiberFactsLabel({ materials }: FiberFactsLabelProps) {
       </div>
 
       {/* Composition bar */}
-      <div className="mt-4 flex h-2 gap-px overflow-hidden rounded-full bg-surface">
-        {sortedMaterials.map((mat) => (
+      <div className="mt-4 flex h-2.5 gap-px overflow-hidden rounded-full bg-surface">
+        {sortedMaterials.map((mat, i) => (
           <div
             key={mat.material_id}
-            className={`h-full ${mat.is_natural ? "bg-natural" : "bg-muted-light"}`}
+            className={`h-full ${SEGMENT_COLORS[i % SEGMENT_COLORS.length].bar}`}
             style={{ width: `${Math.max(mat.percentage, 3)}%` }}
           />
         ))}
@@ -57,14 +64,14 @@ export function FiberFactsLabel({ materials }: FiberFactsLabelProps) {
 
       {/* Legend */}
       <div className="mt-4 space-y-2.5">
-        {sortedMaterials.map((mat) => (
+        {sortedMaterials.map((mat, i) => (
           <div
             key={mat.material_id}
             className="flex items-center justify-between"
           >
             <div className="flex items-center gap-2.5">
               <div
-                className={`h-2.5 w-2.5 rounded-full ${mat.is_natural ? "bg-natural" : "bg-muted-light"}`}
+                className={`h-2.5 w-2.5 rounded-full ${SEGMENT_COLORS[i % SEGMENT_COLORS.length].dot}`}
               />
               <span className="font-body text-sm text-text">{mat.name}</span>
             </div>
