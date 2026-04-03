@@ -10,20 +10,14 @@ interface EditorialPicksProps {
 
 function ProductCard({
   product,
-  large = false,
   priority = false,
 }: {
   product: ProductWithBrand;
-  large?: boolean;
   priority?: boolean;
 }) {
   return (
     <Link href={`/product/${product.slug}`} className="group block">
-      <div
-        className={`relative overflow-hidden rounded-lg bg-surface ${
-          large ? "aspect-[3/4]" : "aspect-[4/5]"
-        }`}
-      >
+      <div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-surface">
         {product.image_url && (
           <Image
             src={product.image_url}
@@ -31,29 +25,21 @@ function ProductCard({
             fill
             priority={priority}
             className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
-            sizes={
-              large
-                ? "(max-width: 1024px) 100vw, 50vw"
-                : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            }
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           />
         )}
       </div>
       <div className="pt-3">
-        <p className="font-body text-[12px] uppercase tracking-[0.08em] text-secondary">
+        <p className="font-body text-[11px] font-normal uppercase tracking-[0.5px] text-secondary">
           {product.brand_name}
         </p>
-        <h3
-          className={`mt-1 line-clamp-2 font-body font-medium leading-snug text-text transition-colors duration-200 group-hover:text-accent ${
-            large ? "text-[16px]" : "text-[15px] min-h-[2.75em]"
-          }`}
-        >
+        <h3 className="mt-0.5 line-clamp-2 font-body text-[14px] font-medium leading-snug text-text transition-colors duration-200 group-hover:text-accent min-h-[2.5em]">
           {product.name}
         </h3>
-        <div className="mt-1.5">
+        <div className="mt-1">
           <FiberFactsMini materials={product.materials} />
         </div>
-        <p className="mt-2 font-body text-[15px] font-semibold text-text">
+        <p className="mt-1.5 font-body text-[15px] font-semibold text-text">
           {formatPrice(product.price, product.currency)}
         </p>
       </div>
@@ -64,37 +50,26 @@ function ProductCard({
 export function EditorialPicks({ products }: EditorialPicksProps) {
   if (products.length === 0) return null;
 
-  const featured = products[0];
-  const rest = products.slice(1, 5);
-
   return (
-    <section className="px-5 sm:px-8 lg:px-20 pt-8 sm:pt-12 pb-20 sm:pb-28">
+    <section className="px-5 sm:px-8 lg:px-20 py-16 sm:py-20">
       <div className="mx-auto max-w-[1280px]">
-        <div className="flex items-end justify-between mb-10">
+        <div className="flex items-end justify-between mb-8">
           <h2 className="font-display text-[24px] sm:text-[28px] font-semibold leading-tight tracking-[-0.01em] text-text text-balance">
             New arrivals
           </h2>
           <Link
-            href="/shop"
+            href="/shop?sort=newest"
             className="inline-flex items-center gap-1.5 font-body text-[14px] sm:text-[15px] font-medium text-accent hover:text-accent/80 transition-colors"
           >
             See all &rarr;
           </Link>
         </div>
 
-        {/* Featured + side grid */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* Large featured product */}
-          <ProductCard product={featured} large priority />
-
-          {/* 2x2 grid of smaller products */}
-          <div className="grid grid-cols-2 gap-4 sm:gap-6">
-            {rest.map((product, i) => (
-              <ProductCard key={product.id} product={product} priority={i < 2} />
-            ))}
-          </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          {products.map((product, i) => (
+            <ProductCard key={product.id} product={product} priority={i < 4} />
+          ))}
         </div>
-
       </div>
     </section>
   );

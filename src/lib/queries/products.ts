@@ -95,6 +95,34 @@ export async function getHomepageProducts(limit = 6): Promise<ProductWithBrand[]
   return data as ProductWithBrand[];
 }
 
+export async function getCategoryImages(
+  categories: string[]
+): Promise<{ category: string; image_url: string }[]> {
+  const supabase = await createClient();
+
+  const settled = await Promise.all(
+    categories.map(async (category) => {
+      const { data } = await supabase
+        .from("products_with_materials")
+        .select("image_url")
+        .eq("category", category)
+        .not("image_url", "is", null)
+        .ilike("image_url", "%shopify%")
+        .gt("price", 0)
+        .limit(1)
+        .single();
+
+      if (data?.image_url) {
+        return { category, image_url: data.image_url as string };
+      }
+      return null;
+    })
+  );
+
+  // Preserve input order, filter out categories with no image
+  return settled.filter((r): r is { category: string; image_url: string } => r !== null);
+}
+
 export async function getRelatedProducts(
   productId: string,
   category: string,
