@@ -4,7 +4,7 @@ import Image from "next/image";
 import type { Metadata } from "next";
 import { getBrandBySlug } from "@/lib/queries/brands";
 import { getProductsByBrand } from "@/lib/queries/products";
-import { ProductGrid } from "@/components/product/ProductGrid";
+import { PaginatedProductGrid } from "@/components/product/PaginatedProductGrid";
 import { brandLogoUrl, affiliateUrl, brandDomain, formatCategory } from "@/lib/utils";
 
 interface Props {
@@ -158,7 +158,7 @@ export default async function BrandPage({ params }: Props) {
 
           <div className="mt-8">
             {products.length > 0 ? (
-              <ProductGrid products={products} />
+              <PaginatedProductGrid products={products} />
             ) : (
               <div className="rounded-[14px] border border-surface-dark bg-background p-10 text-center">
                 <p className="font-body text-[17px] leading-[26px] text-secondary">
