@@ -147,14 +147,17 @@ export default async function BrandPage({ params }: Props) {
       {/* Products Section */}
       <section className="px-5 sm:px-8 lg:px-20 pb-16">
         <div className="mx-auto max-w-[1280px]">
-          <p className="font-body text-[13px] font-medium uppercase leading-[16px] tracking-[0.12em] text-accent">
+          <p className="font-body text-[13px] font-medium uppercase leading-[16px] tracking-[0.08em] text-accent">
             Natural Fiber Products
           </p>
           <h2 className="mt-3 font-display text-[28px] font-medium leading-[34px] tracking-[-0.02em] text-text">
-            {products.length > 0
-              ? `${products.length} product${products.length === 1 ? "" : "s"}`
-              : "Products"}
+            Their Collection
           </h2>
+          {products.length > 0 && (
+            <p className="mt-1 font-body text-[14px] leading-[20px] text-muted">
+              {products.length} piece{products.length === 1 ? "" : "s"} in natural fibers
+            </p>
+          )}
 
           <div className="mt-8">
             {products.length > 0 ? (
