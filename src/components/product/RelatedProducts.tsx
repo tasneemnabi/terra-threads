@@ -10,7 +10,7 @@ export function RelatedProducts({ products }: RelatedProductsProps) {
 
   return (
     <section className="mt-16">
-      <h2 className="text-xl font-bold text-text">You Might Also Like</h2>
+      <h2 className="font-display text-[28px] font-semibold tracking-[-0.01em] text-text">You Might Also Like</h2>
       <div className="mt-6">
         <ProductGrid products={products} />
       </div>
