@@ -60,13 +60,13 @@ export default async function ProductPage({ params }: Props) {
       <div className="mx-auto max-w-[1280px] px-5 sm:px-8 lg:px-20 py-8">
         {/* Breadcrumb */}
         <nav className="mb-8 flex items-center gap-1 font-body text-sm text-muted">
-          <Link href="/" className="hover:text-text transition-colors">
+          <Link href="/" className="py-2 hover:text-text transition-colors">
             Home
           </Link>
           <span>/</span>
           <Link
             href={`/brands?category=${product.category}`}
-            className="capitalize hover:text-text transition-colors"
+            className="py-2 capitalize hover:text-text transition-colors"
           >
             {product.category}
           </Link>
@@ -125,7 +125,7 @@ export default async function ProductPage({ params }: Props) {
 
             {/* Description */}
             {product.description && (
-              <p className="font-body text-[15px] leading-[24px] text-secondary">
+              <p className="font-body text-base leading-relaxed text-secondary">
                 {product.description}
               </p>
             )}
