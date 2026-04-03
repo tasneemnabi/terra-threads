@@ -5,14 +5,14 @@ interface FiberFactsLabelProps {
   materials: MaterialInfo[];
 }
 
-// Rich warm tones for natural fibers, muted neutral for synthetics
+// Earthy tones for naturals, rose for synthetics (draws attention to the exception)
 const NATURAL_COLORS = [
-  { bar: "bg-accent", dot: "bg-accent" },
   { bar: "bg-secondary", dot: "bg-secondary" },
   { bar: "bg-natural", dot: "bg-natural" },
   { bar: "bg-muted", dot: "bg-muted" },
+  { bar: "bg-text/70", dot: "bg-text/70" },
 ];
-const SYNTHETIC_COLOR = { bar: "bg-muted", dot: "bg-muted" };
+const SYNTHETIC_COLOR = { bar: "bg-accent", dot: "bg-accent" };
 
 function getSegmentColor(mat: MaterialInfo, naturalIndex: number) {
   if (!mat.is_natural) return SYNTHETIC_COLOR;
