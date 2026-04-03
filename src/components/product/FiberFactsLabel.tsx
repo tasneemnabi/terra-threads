@@ -7,8 +7,8 @@ interface FiberFactsLabelProps {
 
 // Earthy tones for naturals, rose for synthetics (draws attention to the exception)
 const NATURAL_COLORS = [
-  { bar: "bg-secondary", dot: "bg-secondary" },
   { bar: "bg-natural", dot: "bg-natural" },
+  { bar: "bg-secondary", dot: "bg-secondary" },
   { bar: "bg-muted", dot: "bg-muted" },
   { bar: "bg-text/70", dot: "bg-text/70" },
 ];
