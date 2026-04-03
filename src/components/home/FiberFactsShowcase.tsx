@@ -19,12 +19,12 @@ export function FiberFactsShowcase({ product }: FiberFactsShowcaseProps) {
           {/* Copy */}
           <div className="flex-1 lg:pt-2">
             <h2 className="font-display text-[24px] sm:text-[28px] font-semibold leading-tight tracking-[-0.01em] text-text text-balance">
-              Every fiber, listed.
+              Know exactly what you&apos;re wearing.
             </h2>
             <p className="mt-4 max-w-[480px] font-body text-[16px] leading-[26px] text-secondary">
-              Every product on FIBER shows its exact material breakdown.
-              No &ldquo;sustainable blend&rdquo; hand-waving — just the
-              percentages, so you know exactly what you&apos;re wearing.
+              No &ldquo;sustainable blend&rdquo; hand-waving. Every product
+              shows its full material breakdown — fiber by fiber, percent
+              by percent.
             </p>
 
             <div className="mt-8 flex gap-8">
