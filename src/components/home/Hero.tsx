@@ -24,9 +24,9 @@ export function Hero() {
             </Link>
             <Link
               href="/brands"
-              className="inline-flex items-center justify-center rounded-lg border border-text/30 px-8 py-3.5 font-body text-[15px] font-semibold text-text transition-colors hover:bg-text/5"
+              className="inline-flex items-center justify-center px-2 py-3.5 font-body text-[15px] font-medium text-secondary transition-colors hover:text-accent"
             >
-              Browse Brands
+              Browse Brands &rarr;
             </Link>
           </div>
         </div>
