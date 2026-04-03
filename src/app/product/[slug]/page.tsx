@@ -108,7 +108,7 @@ export default async function ProductPage({ params }: Props) {
             </h1>
 
             {/* Price */}
-            <p className="text-2xl font-bold text-text">
+            <p className="font-body text-2xl font-bold text-text">
               {formatPrice(product.price, product.currency)}
             </p>
 
@@ -123,16 +123,16 @@ export default async function ProductPage({ params }: Props) {
               />
             )}
 
+            <p className="font-body text-xs text-muted-light">
+              We may earn a commission when you shop through our links.
+            </p>
+
             {/* Description */}
             {product.description && (
               <p className="font-body text-base leading-relaxed text-secondary">
                 {product.description}
               </p>
             )}
-
-            <p className="font-body text-xs text-muted-light">
-              We may earn a commission when you shop through our links.
-            </p>
           </div>
         </div>
 
