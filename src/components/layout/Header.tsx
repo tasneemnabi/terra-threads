@@ -28,7 +28,7 @@ export function Header() {
               key={link.href}
               href={link.href}
               className={`font-body text-[15px] leading-[18px] transition-colors py-[13px] ${
-                pathname.startsWith(link.href)
+                pathname.startsWith(link.href) || (link.href === "/brands" && pathname.startsWith("/brand/"))
                   ? "font-medium text-text"
                   : "text-muted hover:text-text"
               }`}
