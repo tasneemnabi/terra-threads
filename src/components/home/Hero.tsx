@@ -8,7 +8,7 @@ export function Hero() {
         {/* Text */}
         <div className="flex-1">
           <h1 className="max-w-[620px] font-display text-[40px] leading-[1.08] sm:text-[56px] lg:text-[72px] font-bold tracking-[-0.03em] text-text text-balance">
-            Clothing without
+            Clothing without{" "}
             <br />
             <span className="text-accent">the plastic.</span>
           </h1>

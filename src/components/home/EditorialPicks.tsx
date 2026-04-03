@@ -45,7 +45,7 @@ function ProductCard({
         </p>
         <h3
           className={`mt-1 line-clamp-2 font-body font-medium leading-snug text-text transition-colors duration-200 group-hover:text-accent ${
-            large ? "text-[16px]" : "text-[14px] min-h-[2.75em]"
+            large ? "text-[16px]" : "text-[15px] min-h-[2.75em]"
           }`}
         >
           {product.name}
