@@ -16,7 +16,7 @@ export function AffiliateButton({ url, brandName }: AffiliateButtonProps) {
         href={affiliateUrl(url, "product-page")}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-text px-6 py-3.5 text-base font-medium text-background transition-colors hover:bg-text/90 focus:outline-none focus:ring-2 focus:ring-text/50"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-text px-6 py-3.5 text-base font-medium text-background transition-all hover:bg-secondary hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-text/50"
       >
         Shop at {brandName}
         <svg
