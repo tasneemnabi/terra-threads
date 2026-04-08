@@ -39,6 +39,27 @@ export async function getFilteredProducts(
   };
 }
 
+export async function searchProducts(
+  query: string,
+  limit = 48
+): Promise<ProductWithBrand[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("products_with_materials")
+    .select("*")
+    .or(`name.ilike.%${query}%,brand_name.ilike.%${query}%`)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error("Error searching products:", error);
+    return [];
+  }
+
+  return data as ProductWithBrand[];
+}
+
 export async function getProductBySlug(slug: string): Promise<ProductWithBrand | null> {
   const supabase = await createClient();
 
@@ -84,7 +105,6 @@ export async function getHomepageProducts(limit = 6): Promise<ProductWithBrand[]
     .from("products_with_materials")
     .select("*")
     .not("image_url", "is", null)
-    .neq("brand_slug", "fair-indigo")
     .gt("price", 0)
     .order("created_at", { ascending: false })
     .limit(limit * 8);

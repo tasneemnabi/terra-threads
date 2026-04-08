@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 const shopLinks = [
-  { href: "/brands?category=activewear", label: "Activewear" },
+  { href: "/shop?category=activewear", label: "Activewear" },
   { href: "/brands", label: "All Brands" },
   { href: "/shop?sort=newest", label: "New Arrivals" },
 ];

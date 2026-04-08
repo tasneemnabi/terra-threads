@@ -7,7 +7,7 @@ import { ShopContent } from "@/components/shop/ShopContent";
 import type { FilterState } from "@/types/database";
 
 export const metadata: Metadata = {
-  title: "Shop Natural Fiber Clothing | FIBER",
+  title: "Shop Natural Fiber Clothing",
   description:
     "Browse thousands of products made from natural fibers. Filter by material, brand, price, and more. No polyester, no nylon, no plastic.",
 };
@@ -32,13 +32,35 @@ export default async function ShopPage({
     page: 1,
   };
 
-  const [{ products, totalCount }, brands, categories, materials, productTypes] = await Promise.all([
+  const [{ products: rawProducts, totalCount }, brands, categories, materials, productTypes] = await Promise.all([
     getFilteredProducts(initialFilters),
     getAllBrands(),
     getDistinctCategories(),
     getAllMaterials(),
     initialFilters.category ? getProductTypesForCategory(initialFilters.category) : Promise.resolve([]),
   ]);
+
+  // Interleave brands on default sort so no single brand dominates the top
+  const sort = initialFilters.sort || "newest";
+  let products = rawProducts;
+  if (sort === "newest" && rawProducts.length > 1) {
+    const byBrand = new Map<string, typeof rawProducts>();
+    for (const p of rawProducts) {
+      if (!byBrand.has(p.brand_slug)) byBrand.set(p.brand_slug, []);
+      byBrand.get(p.brand_slug)!.push(p);
+    }
+    const buckets = [...byBrand.values()].sort((a, b) => b.length - a.length);
+    products = [];
+    let idx = 0;
+    while (products.length < rawProducts.length) {
+      let added = false;
+      for (const bucket of buckets) {
+        if (idx < bucket.length) { products.push(bucket[idx]); added = true; }
+      }
+      if (!added) break;
+      idx++;
+    }
+  }
 
   return (
     <>

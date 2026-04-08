@@ -4,7 +4,7 @@ import { useMemo, useCallback, useState, useEffect, useRef, useTransition } from
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import type { FilterState, ProductWithBrand } from "@/types/database";
 import { ProductCard } from "@/components/product/ProductCard";
-import { fetchProducts, fetchProductTypes, fetchAvailableBrands } from "@/app/shop/actions";
+import { fetchProducts, fetchProductTypes, fetchAvailableBrands, fetchSearchResults } from "@/app/shop/actions";
 import { formatCategory } from "@/lib/utils";
 
 type TierFilter = "all" | "natural" | "nearly";
@@ -14,6 +14,18 @@ const SORT_LABELS: Record<SortOption, string> = {
   newest: "Newest",
   "price-asc": "Price: Low to High",
   "price-desc": "Price: High to Low",
+};
+
+const TIER_LABELS: Record<TierFilter, string> = {
+  all: "All",
+  natural: "100% Natural",
+  nearly: "Nearly Natural",
+};
+
+const TIER_DESCRIPTIONS: Record<TierFilter, string> = {
+  all: "Show all products",
+  natural: "Only products made entirely from natural fibers — cotton, wool, linen, hemp, silk",
+  nearly: "Products with up to 10% elastane or spandex, rest natural fibers",
 };
 
 const FIBER_GROUPS: { heading: string; families: { label: string; members: string[] }[] }[] = [
@@ -148,6 +160,7 @@ function ActiveFilterChip({
   return (
     <button
       onClick={onRemove}
+      aria-label={`Remove ${label} filter`}
       className="flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1.5 font-body text-[12px] font-medium text-accent transition-colors hover:bg-accent/20"
     >
       {label}
@@ -155,6 +168,69 @@ function ActiveFilterChip({
         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
       </svg>
     </button>
+  );
+}
+
+function PriceRangeInputs({
+  minPrice,
+  maxPrice,
+  onApply,
+}: {
+  minPrice: number | undefined;
+  maxPrice: number | undefined;
+  onApply: (min: string | null, max: string | null) => void;
+}) {
+  const [localMin, setLocalMin] = useState(minPrice?.toString() ?? "");
+  const [localMax, setLocalMax] = useState(maxPrice?.toString() ?? "");
+
+  // Sync from URL when external changes happen (e.g. "Clear all filters")
+  useEffect(() => { setLocalMin(minPrice?.toString() ?? ""); }, [minPrice]);
+  useEffect(() => { setLocalMax(maxPrice?.toString() ?? ""); }, [maxPrice]);
+
+  const apply = () => {
+    onApply(localMin || null, localMax || null);
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <label className="w-full">
+        <span className="sr-only">Minimum price</span>
+        <input
+          type="number"
+          placeholder="$0"
+          value={localMin}
+          onChange={(e) => setLocalMin(e.target.value)}
+          onBlur={apply}
+          onKeyDown={(e) => e.key === "Enter" && apply()}
+          className="w-full rounded-md border border-muted-light bg-background px-3 py-2 font-body text-[13px] text-text outline-none focus:border-muted focus-visible:ring-2 focus-visible:ring-accent/50"
+        />
+      </label>
+      <span className="font-body text-[13px] text-muted">–</span>
+      <label className="w-full">
+        <span className="sr-only">Maximum price</span>
+        <input
+          type="number"
+          placeholder="$500"
+          value={localMax}
+          onChange={(e) => setLocalMax(e.target.value)}
+          onBlur={apply}
+          onKeyDown={(e) => e.key === "Enter" && apply()}
+          className="w-full rounded-md border border-muted-light bg-background px-3 py-2 font-body text-[13px] text-text outline-none focus:border-muted focus-visible:ring-2 focus-visible:ring-accent/50"
+        />
+      </label>
+    </div>
+  );
+}
+
+function ProductSkeleton() {
+  return (
+    <div className="animate-pulse">
+      <div className="aspect-[4/5] rounded-lg bg-surface" />
+      <div className="mt-3 h-3 w-20 rounded bg-surface" />
+      <div className="mt-2 h-4 w-full rounded bg-surface" />
+      <div className="mt-2 h-4 w-2/3 rounded bg-surface" />
+      <div className="mt-2 h-4 w-16 rounded bg-surface" />
+    </div>
   );
 }
 
@@ -188,6 +264,15 @@ export function ShopContent({
   const [productTypes, setProductTypes] = useState(initialProductTypes);
   const [availableBrandSlugs, setAvailableBrandSlugs] = useState<string[] | null>(null);
 
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [searchResults, setSearchResults] = useState<ProductWithBrand[] | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+
+  // Back to top
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
   useEffect(() => {
     if (filterOpen) {
       document.body.style.overflow = "hidden";
@@ -210,6 +295,37 @@ export function ShopContent({
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [filterOpen, sortOpen]);
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Execute search
+  useEffect(() => {
+    if (!debouncedSearch.trim()) {
+      setSearchResults(null);
+      setIsSearching(false);
+      return;
+    }
+    let cancelled = false;
+    setIsSearching(true);
+    fetchSearchResults(debouncedSearch.trim()).then((results) => {
+      if (!cancelled) {
+        setSearchResults(results);
+        setIsSearching(false);
+      }
+    });
+    return () => { cancelled = true; };
+  }, [debouncedSearch]);
+
+  // Back to top scroll listener
+  useEffect(() => {
+    const onScroll = () => setShowBackToTop(window.scrollY > 600);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // Read filter state from URL
   const tier = (searchParams.get("tier") as TierFilter) || "all";
@@ -420,9 +536,33 @@ export function ShopContent({
   for (const pt of selectedProductTypes) {
     activeChips.push({ label: PRODUCT_TYPE_LABELS[pt] || formatCategory(pt), onRemove: () => toggleProductType(pt) });
   }
-  for (const fam of allFiberFamilies) {
-    if (fam.members.some((m) => selectedFibers.includes(m))) {
-      activeChips.push({ label: fam.label, onRemove: () => toggleFiberFamily(fam) });
+  // Consolidate fiber chips when all natural families are selected (e.g. via tier pill)
+  const naturalFamilies = fiberGroups.find((g) => g.heading === "Natural")?.families ?? [];
+  const allNaturalSelected =
+    naturalFamilies.length > 0 &&
+    naturalFamilies.every((fam) => fam.members.some((m) => selectedFibers.includes(m)));
+
+  if (allNaturalSelected) {
+    activeChips.push({
+      label: "All Natural Fibers",
+      onRemove: () => {
+        const naturalMembers = naturalFamilies.flatMap((f) => f.members);
+        const next = selectedFibers.filter((f) => !naturalMembers.includes(f));
+        setParams({ fiber: next.length ? next.join(",") : null, tier: null });
+      },
+    });
+    // Only show chips for non-natural families that are also selected
+    for (const fam of allFiberFamilies) {
+      const isNatural = naturalFamilies.some((nf) => nf.label === fam.label);
+      if (!isNatural && fam.members.some((m) => selectedFibers.includes(m))) {
+        activeChips.push({ label: fam.label, onRemove: () => toggleFiberFamily(fam) });
+      }
+    }
+  } else {
+    for (const fam of allFiberFamilies) {
+      if (fam.members.some((m) => selectedFibers.includes(m))) {
+        activeChips.push({ label: fam.label, onRemove: () => toggleFiberFamily(fam) });
+      }
     }
   }
   for (const brandSlug of selectedBrands) {
@@ -439,6 +579,26 @@ export function ShopContent({
     });
   }
 
+  // Display logic: search overrides normal view
+  const isSearchActive = searchResults !== null;
+  const displayProducts = isSearchActive ? searchResults : products;
+
+  // All natural fiber members (for tier sync)
+  const allNaturalMembers = useMemo(
+    () => fiberGroups.find((g) => g.heading === "Natural")?.families.flatMap((f) => f.members) ?? [],
+    [fiberGroups]
+  );
+
+  // When "100% Natural" tier pill is clicked, auto-select all natural fiber checkboxes
+  const prevTierRef = useRef(tier);
+  useEffect(() => {
+    if (tier === "natural" && prevTierRef.current !== "natural" && allNaturalMembers.length > 0) {
+      const merged = [...new Set([...selectedFibers, ...allNaturalMembers])];
+      setParams({ fiber: merged.join(",") });
+    }
+    prevTierRef.current = tier;
+  }, [tier, allNaturalMembers, selectedFibers, setParams]);
+
   const sidebarContent = (
     <>
       {/* Active filter chips */}
@@ -449,6 +609,25 @@ export function ShopContent({
           ))}
         </div>
       )}
+
+      {/* Fiber Type — first and always open */}
+      <AccordionFilter title="Fiber Type" defaultOpen>
+        {fiberGroups.map((group, i) => (
+          <div key={group.heading} className={i > 0 ? "mt-3" : ""}>
+            <p className="mb-1.5 px-1 font-body text-[11px] font-semibold uppercase tracking-[0.08em] text-secondary">
+              {group.heading}
+            </p>
+            {group.families.map((fam) => (
+              <FilterCheckbox
+                key={fam.label}
+                label={fam.label}
+                checked={fam.members.some((m) => selectedFibers.includes(m))}
+                onChange={() => toggleFiberFamily(fam)}
+              />
+            ))}
+          </div>
+        ))}
+      </AccordionFilter>
 
       {/* Gender */}
       {audiences.length > 0 && (
@@ -475,7 +654,6 @@ export function ShopContent({
               checked={selectedCategory === cat}
               onChange={() => setCategory(selectedCategory === cat ? null : cat)}
             />
-            {/* Type sub-filter nested under selected category */}
             {selectedCategory === cat && productTypes.length > 0 && (
               <div className="ml-6 mt-0.5 mb-1 flex flex-col gap-0.5">
                 {productTypes.map((pt) => (
@@ -488,25 +666,6 @@ export function ShopContent({
                 ))}
               </div>
             )}
-          </div>
-        ))}
-      </AccordionFilter>
-
-      {/* Fiber Type */}
-      <AccordionFilter title="Fiber Type" defaultOpen={selectedFibers.length > 0}>
-        {fiberGroups.map((group, i) => (
-          <div key={group.heading} className={i > 0 ? "mt-3" : ""}>
-            <p className="mb-1.5 px-1 font-body text-[11px] font-semibold uppercase tracking-[0.08em] text-secondary">
-              {group.heading}
-            </p>
-            {group.families.map((fam) => (
-              <FilterCheckbox
-                key={fam.label}
-                label={fam.label}
-                checked={fam.members.some((m) => selectedFibers.includes(m))}
-                onChange={() => toggleFiberFamily(fam)}
-              />
-            ))}
           </div>
         ))}
       </AccordionFilter>
@@ -532,125 +691,102 @@ export function ShopContent({
         </AccordionFilter>
       )}
 
-      {/* Price */}
+      {/* Price — applies on blur or Enter to avoid rapid re-fetching */}
       <AccordionFilter title="Price" defaultOpen={minPrice !== undefined || maxPrice !== undefined}>
-        <div className="flex items-center gap-2">
-          <label className="w-full">
-            <span className="sr-only">Minimum price</span>
-            <input
-              type="number"
-              placeholder="$0"
-              value={minPrice ?? ""}
-              onChange={(e) =>
-                setParams({ minPrice: e.target.value || null })
-              }
-              className="w-full rounded-md border border-muted-light bg-background px-3 py-2 font-body text-[13px] text-text outline-none focus:border-muted focus-visible:ring-2 focus-visible:ring-accent/50"
-            />
-          </label>
-          <span className="font-body text-[13px] text-muted">–</span>
-          <label className="w-full">
-            <span className="sr-only">Maximum price</span>
-            <input
-              type="number"
-              placeholder="$500"
-              value={maxPrice ?? ""}
-              onChange={(e) =>
-                setParams({ maxPrice: e.target.value || null })
-              }
-              className="w-full rounded-md border border-muted-light bg-background px-3 py-2 font-body text-[13px] text-text outline-none focus:border-muted focus-visible:ring-2 focus-visible:ring-accent/50"
-            />
-          </label>
-        </div>
+        <PriceRangeInputs
+          minPrice={minPrice}
+          maxPrice={maxPrice}
+          onApply={(min, max) => setParams({ minPrice: min, maxPrice: max })}
+        />
       </AccordionFilter>
     </>
   );
 
   return (
     <>
-      {/* Top bar: mobile filter button + sort dropdown */}
-      <section className="px-5 sm:px-8 lg:px-20 pt-5">
-        <div className="mx-auto flex max-w-[1280px] items-center justify-between">
-          {/* Mobile filter toggle */}
-          <button
-            onClick={() => setFilterOpen(true)}
-            className="flex items-center gap-1.5 font-body text-[14px] font-medium text-text transition-colors hover:text-secondary lg:hidden"
-          >
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1.5}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75"
-              />
-            </svg>
-            Filters
-            {activeChips.length > 0 && (
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[11px] font-semibold text-background">
-                {activeChips.length}
-              </span>
-            )}
-          </button>
+      {/* Accessible page heading */}
+      <h1 className="sr-only">Shop Natural Fiber Clothing</h1>
 
-          {/* Product count (desktop, takes place of filter button) */}
-          <p className="hidden font-body text-[13px] text-muted lg:block">
-            {isPending ? "Loading..." : `${totalCount.toLocaleString()} product${totalCount !== 1 ? "s" : ""}`}
-          </p>
-
-          {/* Sort dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setSortOpen(!sortOpen)}
-              aria-haspopup="listbox"
-              aria-expanded={sortOpen}
-              className="flex items-center gap-1.5 font-body text-[14px] text-text transition-colors hover:text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:rounded-md"
-            >
-              Sort by{" "}
-              <span className="font-medium">{SORT_LABELS[sort]}</span>
+      {/* Sticky top bar */}
+      <section className={`sticky top-0 z-20 bg-background px-5 sm:px-8 lg:px-20 pt-5 pb-4 transition-shadow duration-200 ${showBackToTop ? "shadow-[0_1px_8px_rgba(0,0,0,0.06)]" : ""}`}>
+        <div className="mx-auto max-w-[1280px]">
+          {/* Search + Tier row */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+            {/* Search */}
+            <div className="relative flex-1 max-w-[400px]">
               <svg
-                className={`h-3.5 w-3.5 transition-transform duration-200 ${sortOpen ? "rotate-180" : ""}`}
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
-                strokeWidth={2}
+                strokeWidth={1.5}
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
               </svg>
-            </button>
+              <input
+                type="search"
+                placeholder="Search products or brands..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-lg border border-muted-light bg-background py-2 pl-9 pr-3 font-body text-[14px] text-text placeholder:text-muted-light outline-none transition-colors focus:border-muted focus-visible:ring-2 focus-visible:ring-accent/50"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => { setSearchQuery(""); setSearchResults(null); }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
 
-            {sortOpen && (
-              <>
-                <div className="fixed inset-0 z-30" onClick={() => setSortOpen(false)} />
-                <div role="listbox" aria-label="Sort options" className="absolute right-0 top-full z-40 mt-2 w-[200px] rounded-lg border border-muted-light bg-white py-1 shadow-lg">
-                  {(Object.entries(SORT_LABELS) as [SortOption, string][]).map(
-                    ([value, label]) => (
-                      <button
-                        key={value}
-                        role="option"
-                        aria-selected={sort === value}
-                        onClick={() => setSort(value)}
-                        className={`flex w-full items-center justify-between px-4 py-2.5 text-left font-body text-[13px] transition-colors ${
-                          sort === value
-                            ? "font-medium text-text"
-                            : "text-secondary hover:bg-surface/60 hover:text-text"
-                        }`}
-                      >
-                        {label}
-                        {sort === value && (
-                          <svg className="h-3.5 w-3.5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                          </svg>
-                        )}
-                      </button>
-                    )
-                  )}
-                </div>
-              </>
-            )}
+            {/* Tier pills */}
+            <div className="flex items-center gap-1.5">
+              {(Object.entries(TIER_LABELS) as [TierFilter, string][]).map(([value, label]) => (
+                <button
+                  key={value}
+                  onClick={() => setParams({ tier: value === "all" ? null : value })}
+                  title={TIER_DESCRIPTIONS[value]}
+                  className={`rounded-full px-3 py-1.5 font-body text-[12px] font-medium transition-colors ${
+                    tier === value
+                      ? "bg-text text-background"
+                      : "bg-surface text-secondary hover:bg-surface-dark hover:text-text"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Mobile filter toggle */}
+          <div className="mt-3 lg:hidden">
+            <button
+              onClick={() => setFilterOpen(true)}
+              className="flex items-center gap-1.5 font-body text-[14px] font-medium text-text transition-colors hover:text-secondary"
+            >
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75"
+                />
+              </svg>
+              Filters
+              {activeChips.length > 0 && (
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[11px] font-semibold text-background">
+                  {activeChips.length}
+                </span>
+              )}
+            </button>
           </div>
         </div>
       </section>
@@ -665,44 +801,146 @@ export function ShopContent({
 
           {/* Content column */}
           <div className="min-w-0 flex-1">
-            {/* Mobile product count */}
-            <p className="pb-6 pt-4 font-body text-[13px] text-muted lg:hidden">
-              {isPending ? "Loading..." : `${totalCount.toLocaleString()} product${totalCount !== 1 ? "s" : ""}`}
-            </p>
+            {/* Count + sort row */}
+            <div className="flex items-center justify-between pb-4 pt-4">
+              <p className="font-body text-[14px] text-secondary">
+                {isPending || isSearching ? (
+                  "Loading..."
+                ) : isSearchActive ? (
+                  <>
+                    {searchResults.length} result{searchResults.length !== 1 ? "s" : ""} for &ldquo;{debouncedSearch}&rdquo;
+                  </>
+                ) : (
+                  <>
+                    Showing {products.length.toLocaleString()} of{" "}
+                    {totalCount.toLocaleString()} product{totalCount !== 1 ? "s" : ""}
+                  </>
+                )}
+              </p>
+              <div className="relative">
+                <button
+                  onClick={() => setSortOpen(!sortOpen)}
+                  aria-haspopup="listbox"
+                  aria-expanded={sortOpen}
+                  className="flex items-center gap-1.5 font-body text-[14px] text-secondary transition-colors hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:rounded-md"
+                >
+                  Sort by{" "}
+                  <span className="font-medium">{SORT_LABELS[sort]}</span>
+                  <svg
+                    className={`h-3.5 w-3.5 transition-transform duration-200 ${sortOpen ? "rotate-180" : ""}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </button>
+
+                {sortOpen && (
+                  <>
+                    <div className="fixed inset-0 z-30" onClick={() => setSortOpen(false)} />
+                    <div role="listbox" aria-label="Sort options" className="absolute right-0 top-full z-40 mt-2 w-[200px] rounded-lg border border-muted-light bg-background py-1 shadow-lg">
+                      {(Object.entries(SORT_LABELS) as [SortOption, string][]).map(
+                        ([value, label]) => (
+                          <button
+                            key={value}
+                            role="option"
+                            aria-selected={sort === value}
+                            onClick={() => setSort(value)}
+                            className={`flex w-full items-center justify-between px-4 py-2.5 text-left font-body text-[13px] transition-colors ${
+                              sort === value
+                                ? "font-medium text-text"
+                                : "text-secondary hover:bg-surface/60 hover:text-text"
+                            }`}
+                          >
+                            {label}
+                            {sort === value && (
+                              <svg className="h-3.5 w-3.5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                              </svg>
+                            )}
+                          </button>
+                        )
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
 
             <div
               className={`transition-opacity duration-300 ease-out ${
                 isPending ? "opacity-50" : "opacity-100"
               }`}
             >
-              <div className="grid grid-cols-2 gap-x-5 gap-y-8 pt-4 sm:grid-cols-3 lg:grid-cols-4">
-                {products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-
-              {!isPending && hasMore && (
-                <div ref={sentinelRef} className="mt-12 flex justify-center py-4">
-                  {isLoadingMore && (
-                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-surface-dark border-t-transparent" />
-                  )}
+              {/* Loading skeletons */}
+              {(isPending || isSearching) && displayProducts.length === 0 ? (
+                <div className="grid grid-cols-2 gap-x-5 gap-y-8 pt-4 sm:grid-cols-3 lg:grid-cols-4">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <ProductSkeleton key={i} />
+                  ))}
                 </div>
-              )}
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 gap-x-5 gap-y-8 pt-4 sm:grid-cols-3 lg:grid-cols-4">
+                    {displayProducts.map((product) => (
+                      <ProductCard key={product.id} product={product} />
+                    ))}
+                  </div>
 
-              {!isPending && products.length === 0 && (
-                <div className="flex flex-col items-center gap-4 py-16">
-                  <p className="font-body text-[16px] text-secondary">
-                    No products match the selected filters.
-                  </p>
-                  {hasActiveFilters && (
-                    <button
-                      onClick={clearAllFilters}
-                      className="rounded-full border border-surface-dark px-5 py-2.5 font-body text-[14px] font-medium text-text transition-colors hover:bg-surface"
-                    >
-                      Clear all filters
-                    </button>
+                  {/* Load more / infinite scroll */}
+                  {!isPending && !isSearchActive && hasMore && (
+                    <div ref={sentinelRef} className="mt-12 flex flex-col items-center gap-4 py-4">
+                      {isLoadingMore ? (
+                        <div className="grid w-full grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
+                          {Array.from({ length: 4 }).map((_, i) => (
+                            <ProductSkeleton key={i} />
+                          ))}
+                        </div>
+                      ) : (
+                        <button
+                          onClick={loadMore}
+                          className="rounded-full border border-surface-dark px-6 py-2.5 font-body text-[14px] font-medium text-text transition-colors hover:bg-surface"
+                        >
+                          Load more
+                        </button>
+                      )}
+                    </div>
                   )}
-                </div>
+
+                  {!isPending && !isSearching && displayProducts.length === 0 && (
+                    <div className="flex flex-col items-center gap-4 py-16">
+                      <svg className="h-10 w-10 text-muted-light" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                      </svg>
+                      <p className="font-body text-[16px] text-secondary">
+                        {isSearchActive
+                          ? `No results for "${debouncedSearch}"`
+                          : "No products match these filters"}
+                      </p>
+                      <p className="font-body text-[13px] text-muted">
+                        {isSearchActive
+                          ? "Try a different term or browse by category instead."
+                          : "Try removing a filter or broadening your search."}
+                      </p>
+                      {(hasActiveFilters || isSearchActive) && (
+                        <button
+                          onClick={() => {
+                            if (isSearchActive) {
+                              setSearchQuery("");
+                              setSearchResults(null);
+                            }
+                            clearAllFilters();
+                          }}
+                          className="rounded-full border border-surface-dark px-5 py-2.5 font-body text-[14px] font-medium text-text transition-colors hover:bg-surface"
+                        >
+                          {isSearchActive ? "Clear search" : "Clear all filters"}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -745,6 +983,19 @@ export function ShopContent({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Back to top button */}
+      {showBackToTop && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          aria-label="Back to top"
+          className="fixed bottom-8 right-8 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-text text-background shadow-lg transition-all hover:opacity-90"
+        >
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+          </svg>
+        </button>
       )}
     </>
   );

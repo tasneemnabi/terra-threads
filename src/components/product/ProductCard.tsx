@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { FiberFactsMini } from "@/components/product/FiberFactsMini";
@@ -10,17 +13,21 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, hideBrand }: ProductCardProps) {
+  const [imgError, setImgError] = useState(false);
+  const hasImage = product.image_url && product.image_url.startsWith("http") && !imgError;
+
   return (
     <Link
       href={`/product/${product.slug}`}
       className="group block"
     >
       <div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-surface ring-1 ring-black/[0.04]">
-        {product.image_url && product.image_url.startsWith("http") ? (
+        {hasImage ? (
           <Image
-            src={product.image_url}
+            src={product.image_url!}
             alt={product.name}
             fill
+            onError={() => setImgError(true)}
             className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
