@@ -8,46 +8,66 @@ interface FiberFactsShowcaseProps {
 
 export function FiberFactsShowcase({ product }: FiberFactsShowcaseProps) {
   return (
-    <section className="px-5 sm:px-8 lg:px-20 py-20 sm:py-28 bg-surface">
-      <div className="mx-auto max-w-[1280px]">
-        <div className="flex flex-col gap-12 lg:flex-row lg:items-start lg:gap-20">
-          {/* Label */}
-          <div className="w-full max-w-[280px] mx-auto lg:mx-0 lg:flex-shrink-0">
-            <FiberFactsLabel materials={product.materials} />
-          </div>
+    <section className="relative bg-accent py-24 sm:py-32 lg:py-40 overflow-hidden">
+      {/* Subtle texture background */}
+      <div className="absolute inset-0 opacity-[0.04]">
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(90deg, #FAF7F2 0px, #FAF7F2 1px, transparent 1px, transparent 60px), repeating-linear-gradient(0deg, #FAF7F2 0px, #FAF7F2 1px, transparent 1px, transparent 60px)",
+          }}
+        />
+      </div>
 
-          {/* Copy */}
-          <div className="flex-1 lg:pt-2">
-            <h2 className="font-display text-[24px] sm:text-[28px] font-semibold leading-tight tracking-[-0.01em] text-text text-balance">
-              Know exactly what you&apos;re wearing.
-            </h2>
-            <p className="mt-4 max-w-[480px] font-body text-[16px] leading-[26px] text-secondary">
-              No &ldquo;sustainable blend&rdquo; hand-waving. Every product
-              shows its full material breakdown — fiber by fiber, percent
-              by percent.
-            </p>
+      <div className="relative px-5 sm:px-8 lg:px-20">
+        <div className="mx-auto max-w-[1280px]">
+          <div className="flex flex-col items-center text-center lg:flex-row lg:items-center lg:text-left lg:gap-24">
+            {/* Copy — larger, more prominent */}
+            <div className="flex-1 order-2 lg:order-1 mt-12 lg:mt-0">
+              <p className="font-body text-[13px] font-medium uppercase tracking-[0.08em] text-background/40">
+                Fiber Facts
+              </p>
+              <h2 className="mt-4 font-display text-[32px] sm:text-[40px] lg:text-[48px] font-bold leading-[1.05] tracking-[-0.025em] text-background">
+                Every thread,
+                <br />
+                accounted for.
+              </h2>
+              <p className="mt-5 max-w-[440px] mx-auto lg:mx-0 font-body text-[17px] leading-[28px] text-background/60">
+                No &ldquo;sustainable blend&rdquo; hand-waving. Full material
+                breakdowns on every product — fiber by fiber, percent by
+                percent.
+              </p>
 
-            <div className="mt-8 flex gap-8">
-              <div className="flex items-center gap-2.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-natural" />
-                <span className="font-body text-[14px] text-text">
-                  100% Natural
-                </span>
+              <div className="mt-8 flex justify-center lg:justify-start gap-6">
+                <div className="flex items-center gap-2.5">
+                  <span className="h-2.5 w-2.5 rounded-full bg-natural" />
+                  <span className="font-body text-[14px] text-background/70">
+                    100% Natural
+                  </span>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <span className="h-2.5 w-2.5 rounded-full bg-surface-dark" />
+                  <span className="font-body text-[14px] text-background/70">
+                    Nearly Natural
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-2.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-surface-dark" />
-                <span className="font-body text-[14px] text-text">
-                  Nearly Natural
-                </span>
-              </div>
+
+              <Link
+                href={`/product/${product.slug}`}
+                className="mt-8 inline-flex items-center justify-center rounded-full bg-background px-7 py-3 font-body text-[14px] font-semibold text-text transition-opacity hover:opacity-90"
+              >
+                See it in action &rarr;
+              </Link>
             </div>
 
-            <Link
-              href={`/product/${product.slug}`}
-              className="mt-8 inline-block font-body text-[14px] font-medium text-accent hover:text-accent/80 transition-colors"
-            >
-              See it on a product &rarr;
-            </Link>
+            {/* Label — dramatic scale */}
+            <div className="order-1 lg:order-2 w-full max-w-[300px] sm:max-w-[320px] lg:flex-shrink-0 transform lg:rotate-[-2deg]">
+              <div className="bg-background rounded-xl p-6 shadow-2xl">
+                <FiberFactsLabel materials={product.materials} />
+              </div>
+            </div>
           </div>
         </div>
       </div>

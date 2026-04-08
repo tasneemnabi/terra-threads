@@ -1,11 +1,35 @@
 import Link from "next/link";
 import Image from "next/image";
+import { HeroProductCollage } from "./HeroProductImage";
+import type { ProductWithBrand } from "@/types/database";
 
-export function Hero() {
+interface HeroProps {
+  products?: ProductWithBrand[];
+}
+
+export function Hero({ products = [] }: HeroProps) {
+  // Diversify hero images by brand — pick one per brand, then pass all as fallbacks
+  const withImages = products.filter((p) => p.image_url);
+  const seenBrands = new Set<string>();
+  const diversified: typeof withImages = [];
+  const rest: typeof withImages = [];
+  for (const p of withImages) {
+    if (!seenBrands.has(p.brand_slug)) {
+      seenBrands.add(p.brand_slug);
+      diversified.push(p);
+    } else {
+      rest.push(p);
+    }
+  }
+  const heroProducts = [...diversified, ...rest].map((p) => ({
+    url: p.image_url!,
+    name: p.name,
+  }));
+
   return (
-    <section className="relative min-h-[75vh] sm:min-h-[80vh] flex items-end overflow-hidden bg-text">
-      {/* Texture overlay — subtle abstract art */}
-      <div className="absolute inset-0 flex items-center justify-end opacity-30">
+    <section className="relative min-h-[75vh] sm:min-h-[80vh] flex items-end overflow-hidden bg-accent">
+      {/* Texture overlay — subtle background */}
+      <div className="absolute inset-0 flex items-center justify-end opacity-15 mix-blend-soft-light">
         <Image
           src="/hero-texture.png"
           alt=""
@@ -17,7 +41,12 @@ export function Hero() {
       </div>
 
       {/* Warm gradient from left for text readability */}
-      <div className="absolute inset-0 bg-gradient-to-r from-text via-text/80 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-r from-accent via-accent/85 to-accent/40" />
+
+      {/* Product images — right side collage (fades in when loaded) */}
+      {heroProducts.length > 0 && (
+        <HeroProductCollage products={heroProducts} />
+      )}
 
       {/* Content */}
       <div className="relative z-10 w-full px-5 sm:px-8 lg:px-20 pb-14 sm:pb-20 lg:pb-24">
@@ -28,7 +57,7 @@ export function Hero() {
             the plastic.
           </h1>
           <p className="mt-5 sm:mt-6 max-w-[440px] font-body text-[16px] sm:text-[18px] leading-[26px] text-white/65">
-            Merino, cotton, linen, silk — clothes that breathe, last, and
+            Merino, cotton, linen, silk. Clothes that breathe, last, and
             never shed microplastics.
           </p>
           <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-start gap-4">

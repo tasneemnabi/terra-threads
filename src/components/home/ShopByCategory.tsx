@@ -15,48 +15,48 @@ export function ShopByCategory({ categories }: ShopByCategoryProps) {
   if (categories.length === 0) return null;
 
   return (
-    <section className="px-5 sm:px-8 lg:px-20 py-16 sm:py-20">
-      <div className="mx-auto max-w-[1280px]">
-        <div className="flex items-end justify-between mb-8">
-          <div>
-            <p className="font-body text-[13px] font-medium uppercase leading-[16px] tracking-[0.08em] text-secondary">
-              Shop by category
-            </p>
-            <h2 className="mt-2 font-display text-[24px] sm:text-[28px] font-semibold leading-tight tracking-[-0.01em] text-text text-balance">
-              Find what you&apos;re looking for
-            </h2>
-          </div>
+    <section className="py-16 sm:py-20">
+      {/* Header — constrained */}
+      <div className="px-5 sm:px-8 lg:px-20">
+        <div className="mx-auto max-w-[1280px] flex items-end justify-between mb-6">
+          <h2 className="font-display text-[22px] sm:text-[26px] font-semibold leading-tight tracking-[-0.01em] text-text">
+            Start somewhere good.
+          </h2>
           <Link
             href="/shop"
-            className="hidden sm:inline-flex items-center gap-1.5 font-body text-[15px] font-medium text-accent hover:text-accent/80 transition-colors"
+            className="hidden sm:inline-flex items-center gap-1.5 font-body text-[14px] font-medium text-accent hover:text-accent/80 transition-colors"
           >
             View all &rarr;
           </Link>
         </div>
+      </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-          {categories.map((item) => (
-            <Link
-              key={item.category}
-              href={`/shop?category=${encodeURIComponent(item.category)}`}
-              className="group relative aspect-[3/4] overflow-hidden rounded-lg"
-            >
-              <Image
-                src={item.image_url}
-                alt={formatCategory(item.category)}
-                fill
-                className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.05]"
-                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-              <div className="absolute inset-x-0 bottom-0 p-4">
-                <p className="font-display text-[16px] sm:text-[18px] font-semibold text-white leading-tight">
-                  {formatCategory(item.category)}
-                </p>
-              </div>
-            </Link>
-          ))}
-        </div>
+      {/* Horizontal scroll — bleeds to edges */}
+      <div className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-hide pl-5 sm:pl-8 lg:pl-[max(2rem,calc((100vw-1280px)/2+1.25rem))]">
+        {categories.map((item, i) => (
+          <Link
+            key={item.category}
+            href={`/shop?category=${encodeURIComponent(item.category)}`}
+            className="group relative flex-shrink-0 w-[200px] sm:w-[220px] aspect-[3/4] overflow-hidden rounded-lg"
+          >
+            <Image
+              src={item.image_url}
+              alt={formatCategory(item.category)}
+              fill
+              className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.05]"
+              sizes="220px"
+              priority={i < 3}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 p-4">
+              <p className="font-display text-[16px] sm:text-[17px] font-semibold text-white leading-tight">
+                {formatCategory(item.category)}
+              </p>
+            </div>
+          </Link>
+        ))}
+        {/* Trailing spacer for right padding */}
+        <div className="flex-shrink-0 w-5 sm:w-8 lg:w-20" aria-hidden="true" />
       </div>
     </section>
   );

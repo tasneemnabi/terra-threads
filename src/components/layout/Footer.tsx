@@ -3,7 +3,7 @@ import Link from "next/link";
 const shopLinks = [
   { href: "/brands?category=activewear", label: "Activewear" },
   { href: "/brands", label: "All Brands" },
-  { href: "/brands", label: "New Arrivals" },
+  { href: "/shop?sort=newest", label: "New Arrivals" },
 ];
 
 const learnLinks = [
@@ -13,9 +13,7 @@ const learnLinks = [
 ];
 
 const connectLinks = [
-  { label: "Newsletter" },
-  { label: "Instagram" },
-  { label: "Contact" },
+  { href: "mailto:hello@wearfiber.com", label: "Contact" },
 ];
 
 export function Footer() {
@@ -76,9 +74,12 @@ export function Footer() {
             <ul className="mt-4 flex flex-col gap-1">
               {connectLinks.map((link) => (
                 <li key={link.label}>
-                  <span className="inline-flex items-center min-h-[44px] font-body text-[15px] leading-[18px] text-muted">
+                  <a
+                    href={link.href}
+                    className="inline-flex items-center min-h-[44px] font-body text-[15px] leading-[18px] text-muted transition-colors hover:text-text"
+                  >
                     {link.label}
-                  </span>
+                  </a>
                 </li>
               ))}
             </ul>

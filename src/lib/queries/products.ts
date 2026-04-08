@@ -79,20 +79,34 @@ export async function getFeaturedProducts(): Promise<ProductWithBrand[]> {
 export async function getHomepageProducts(limit = 6): Promise<ProductWithBrand[]> {
   const supabase = await createClient();
 
+  // Fetch extra products so we can diversify by brand
   const { data, error } = await supabase
     .from("products_with_materials")
     .select("*")
     .not("image_url", "is", null)
+    .neq("brand_slug", "fair-indigo")
     .gt("price", 0)
     .order("created_at", { ascending: false })
-    .limit(limit);
+    .limit(limit * 8);
 
   if (error) {
     console.error("Error fetching homepage products:", error);
     throw new Error("Failed to load homepage products.");
   }
 
-  return data as ProductWithBrand[];
+  // Pick at most 2 products per brand to create variety
+  const result: ProductWithBrand[] = [];
+  const brandCount = new Map<string, number>();
+  for (const product of data as ProductWithBrand[]) {
+    const count = brandCount.get(product.brand_slug) ?? 0;
+    if (count < 2) {
+      result.push(product);
+      brandCount.set(product.brand_slug, count + 1);
+      if (result.length >= limit) break;
+    }
+  }
+
+  return result;
 }
 
 export async function getCategoryImages(

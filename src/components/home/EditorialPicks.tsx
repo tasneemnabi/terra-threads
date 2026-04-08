@@ -50,12 +50,14 @@ function ProductCard({
 export function EditorialPicks({ products }: EditorialPicksProps) {
   if (products.length === 0) return null;
 
+  const [featured, ...rest] = products;
+
   return (
-    <section className="px-5 sm:px-8 lg:px-20 py-16 sm:py-20">
+    <section className="px-5 sm:px-8 lg:px-20 py-20 sm:py-28">
       <div className="mx-auto max-w-[1280px]">
-        <div className="flex items-end justify-between mb-8">
-          <h2 className="font-display text-[24px] sm:text-[28px] font-semibold leading-tight tracking-[-0.01em] text-text text-balance">
-            New arrivals
+        <div className="flex items-end justify-between mb-10">
+          <h2 className="font-display text-[24px] sm:text-[28px] font-semibold leading-tight tracking-[-0.01em] text-text">
+            Just landed.
           </h2>
           <Link
             href="/shop?sort=newest"
@@ -65,10 +67,46 @@ export function EditorialPicks({ products }: EditorialPicksProps) {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {products.map((product, i) => (
-            <ProductCard key={product.id} product={product} priority={i < 4} />
-          ))}
+        {/* Featured + grid — asymmetric layout on desktop */}
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+          {/* Featured large card */}
+          <div className="lg:w-[45%] lg:flex-shrink-0">
+            <Link href={`/product/${featured.slug}`} className="group block">
+              <div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-surface">
+                {featured.image_url && (
+                  <Image
+                    src={featured.image_url}
+                    alt={featured.name}
+                    fill
+                    priority
+                    className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+                    sizes="(max-width: 1024px) 100vw, 45vw"
+                  />
+                )}
+              </div>
+              <div className="pt-4">
+                <p className="font-body text-[12px] font-normal uppercase tracking-[0.5px] text-secondary">
+                  {featured.brand_name}
+                </p>
+                <h3 className="mt-1 line-clamp-2 font-display text-[18px] sm:text-[20px] font-semibold leading-snug text-text transition-colors duration-200 group-hover:text-accent">
+                  {featured.name}
+                </h3>
+                <div className="mt-1.5">
+                  <FiberFactsMini materials={featured.materials} />
+                </div>
+                <p className="mt-2 font-body text-[17px] font-semibold text-text">
+                  {formatPrice(featured.price, featured.currency)}
+                </p>
+              </div>
+            </Link>
+          </div>
+
+          {/* Remaining products — compact grid (cap at 6 for even rows) */}
+          <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5 content-start">
+            {rest.slice(0, 6).map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
         </div>
       </div>
     </section>
