@@ -8,7 +8,7 @@ export function FinalCTA() {
           Your wardrobe, rewoven.
         </h2>
         <p className="mt-4 max-w-[480px] font-body text-[16px] leading-[26px] text-background/70">
-          Every piece here is vetted for natural fibers. No polyester, no compromise — just clothes that feel as good as they look.
+          Every piece here is vetted for natural fibers. No polyester, no compromise. Just clothes that feel as good as they look.
         </p>
         <div className="mt-8 flex flex-col sm:flex-row items-start gap-4">
           <Link

@@ -6,12 +6,6 @@ const shopLinks = [
   { href: "/shop?sort=newest", label: "New Arrivals" },
 ];
 
-const learnLinks = [
-  { href: "/about", label: "About Us" },
-  { href: "/about#why-natural", label: "Why Plastic-Free" },
-  { href: "/about#curation", label: "How We Curate" },
-];
-
 const connectLinks = [
   { href: "mailto:hello@wearfiber.com", label: "Contact" },
 ];
@@ -49,25 +43,7 @@ export function Footer() {
             </ul>
           </div>
 
-          <div>
-            <h4 className="font-body text-[13px] font-medium uppercase leading-[16px] tracking-[0.08em] text-text">
-              Learn
-            </h4>
-            <ul className="mt-4 flex flex-col gap-1">
-              {learnLinks.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="inline-flex items-center min-h-[44px] font-body text-[15px] leading-[18px] text-muted transition-colors hover:text-text"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
+<div>
             <h4 className="font-body text-[13px] font-medium uppercase leading-[16px] tracking-[0.08em] text-text">
               Connect
             </h4>

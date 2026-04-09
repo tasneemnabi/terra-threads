@@ -8,7 +8,7 @@ const fibers = [
     description:
       "Temperature-regulating, odor-resistant, moisture-wicking. The gold standard for natural activewear.",
     param: "Merino Wool",
-    image: "/fibers/merino.jpg",
+    image: "/fibers/merino-v2.png",
   },
   {
     name: "Organic Cotton",
@@ -16,7 +16,7 @@ const fibers = [
     description:
       "Soft, breathable, chemical-free. Ideal for yoga, low-impact training, and everyday wear.",
     param: "Organic Cotton",
-    image: "/fibers/cotton.jpg",
+    image: "/fibers/cotton.png",
   },
   {
     name: "Linen",
@@ -24,7 +24,7 @@ const fibers = [
     description:
       "Exceptionally breathable and lightweight. Gets softer with every wash.",
     param: "Linen",
-    image: "/fibers/linen.jpg",
+    image: "/fibers/linen.png",
   },
   {
     name: "Silk",
@@ -32,7 +32,7 @@ const fibers = [
     description:
       "Ultralight with natural thermoregulation. A luxury base layer for heat and cold alike.",
     param: "Silk",
-    image: "/fibers/silk.jpg",
+    image: "/fibers/silk.png",
   },
 ];
 
@@ -53,7 +53,6 @@ export function BrowseByFiber() {
             href={`/shop?fiber=${encodeURIComponent(hero.param)}`}
             className="group lg:w-[45%] lg:flex-shrink-0 relative rounded-xl overflow-hidden flex flex-col justify-end transition-all duration-300 hover:shadow-lg"
           >
-            {/* Full-bleed fiber image */}
             <div className="absolute inset-0">
               <Image
                 src={hero.image}
@@ -62,16 +61,16 @@ export function BrowseByFiber() {
                 className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                 sizes="(max-width: 1024px) 100vw, 45vw"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
             </div>
             <div className="relative px-8 py-10 sm:px-10 sm:py-14">
-              <p className="font-body text-[11px] font-semibold uppercase tracking-[0.12em] text-white/50 mb-3">
+              <p className="font-body text-[11px] font-semibold uppercase tracking-[0.12em] text-white/60 mb-3">
                 Most popular
               </p>
               <h3 className="font-display text-[28px] sm:text-[32px] font-bold leading-[1.05] tracking-[-0.02em] text-white">
                 {hero.name}
               </h3>
-              <p className="mt-3 max-w-[340px] font-body text-[15px] leading-[24px] text-white/70">
+              <p className="mt-3 max-w-[340px] font-body text-[15px] leading-[24px] text-white/80">
                 {hero.description}
               </p>
               <p className="mt-6 inline-flex items-center gap-1 font-body text-[14px] font-semibold text-white group-hover:gap-2 transition-all duration-200">

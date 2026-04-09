@@ -53,7 +53,7 @@ export function EditorialPicks({ products }: EditorialPicksProps) {
   const [featured, ...rest] = products;
 
   return (
-    <section className="px-5 sm:px-8 lg:px-20 py-20 sm:py-28">
+    <section className="px-5 sm:px-8 lg:px-20 pt-10 sm:pt-12 pb-20 sm:pb-28">
       <div className="mx-auto max-w-[1280px]">
         <div className="flex items-end justify-between mb-10">
           <h2 className="font-display text-[24px] sm:text-[28px] font-semibold leading-tight tracking-[-0.01em] text-text">
