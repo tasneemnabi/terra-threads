@@ -392,14 +392,18 @@ async function llmPass(
   console.log("LLM PASS — Re-extracting materials for review products");
   console.log("══════════════════════════════════════════════════════\n");
 
+  // Dropped brands — skip these entirely in LLM pass
+  const DROPPED_BRAND_SLUGS = ["everlane", "quince", "prana", "icebreaker"];
+
   // Get review products that have affiliate_url but no shopify_product_id
-  // (i.e. catalog-scraped products)
+  // (i.e. catalog-scraped products). Exclude dropped brands.
   let query = supabase
     .from("products")
     .select("id, name, price, image_url, affiliate_url, sync_status, brands!inner(slug)")
     .eq("sync_status", "review")
     .is("shopify_product_id", null)
-    .not("affiliate_url", "is", null);
+    .not("affiliate_url", "is", null)
+    .not("brands.slug", "in", `(${DROPPED_BRAND_SLUGS.join(",")})`);
 
   if (brandSlug) {
     query = query.eq("brands.slug", brandSlug);
@@ -419,12 +423,50 @@ async function llmPass(
 
   console.log(`Found ${products.length} review products to scrape + re-extract\n`);
 
+  // Pre-filter: reject junk URLs (collection pages, bundles) before scraping
+  const JUNK_URL_PATTERNS = [
+    /nested-collection/i,     // Fair Indigo collection/category pages
+    /\/bdl-/i,                // Pact bundle URLs (no individual price)
+  ];
+
+  const validProducts = [];
+  let preRejected = 0;
+  for (const product of products) {
+    const isJunk = JUNK_URL_PATTERNS.some((p) => p.test(product.affiliate_url));
+    if (isJunk) {
+      await supabase
+        .from("products")
+        .update({ sync_status: "rejected" })
+        .eq("id", product.id);
+      preRejected++;
+      console.log(`  REJECTED (junk URL): ${product.name}`);
+    } else {
+      validProducts.push(product);
+    }
+  }
+  if (preRejected > 0) {
+    console.log(`  Pre-filtered ${preRejected} junk URLs\n`);
+  }
+
   await launchBrowser();
   let updated = 0;
   let rejected = 0;
 
   try {
-    for (const product of products) {
+    for (const product of validProducts) {
+      // Re-run product classifier on existing name (catches items missed on initial sync)
+      const brandSlugVal = (product as any).brands?.slug ?? "";
+      const rejection = shouldRejectProduct(product.name, brandSlugVal);
+      if (rejection.rejected) {
+        await supabase
+          .from("products")
+          .update({ sync_status: "rejected" })
+          .eq("id", product.id);
+        rejected++;
+        console.log(`  REJECTED (${rejection.reason}): ${product.name}`);
+        continue;
+      }
+
       const scraped = await scrapeProductData(product.affiliate_url);
       if (!scraped.success || !scraped.text) continue;
 
