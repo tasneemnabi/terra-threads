@@ -19,7 +19,7 @@ export function ShopByCategory({ categories }: ShopByCategoryProps) {
       {/* Header — constrained */}
       <div className="px-5 sm:px-8 lg:px-20">
         <div className="mx-auto max-w-[1280px] flex items-end justify-between mb-6">
-          <h2 className="font-display text-[22px] sm:text-[26px] font-semibold leading-tight tracking-[-0.01em] text-text">
+          <h2 className="font-display text-[24px] sm:text-[28px] font-semibold leading-tight tracking-[-0.01em] text-text">
             Start somewhere good.
           </h2>
           <Link
@@ -52,7 +52,7 @@ export function ShopByCategory({ categories }: ShopByCategoryProps) {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
               <div className="absolute inset-x-0 bottom-0 p-4">
-                <p className="font-display text-[14px] sm:text-[16px] font-semibold text-white leading-tight transition-transform duration-300 ease-out group-hover:-translate-y-0.5">
+                <p className="font-display text-[14px] sm:text-[16px] font-semibold text-white leading-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)] transition-transform duration-300 ease-out group-hover:-translate-y-0.5">
                   {formatCategory(item.category)}
                 </p>
               </div>

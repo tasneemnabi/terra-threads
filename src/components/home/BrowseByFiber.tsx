@@ -42,7 +42,7 @@ export function BrowseByFiber() {
   return (
     <section className="px-5 sm:px-8 lg:px-20 py-20 sm:py-28">
       <div className="mx-auto max-w-[1280px]">
-        <h2 className="font-display text-[22px] sm:text-[26px] font-semibold leading-tight tracking-[-0.01em] text-text">
+        <h2 className="font-display text-[24px] sm:text-[28px] font-semibold leading-tight tracking-[-0.01em] text-text">
           The fabric makes the difference.
         </h2>
 
