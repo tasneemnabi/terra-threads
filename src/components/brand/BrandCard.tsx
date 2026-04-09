@@ -8,6 +8,19 @@ interface BrandCardProps {
   priority?: boolean;
 }
 
+const NATURAL_FIBERS = new Set([
+  "organic cotton", "cotton", "pima cotton", "organic pima cotton", "egyptian cotton",
+  "merino wool", "wool", "organic merino wool", "lambswool",
+  "cashmere", "silk", "hemp", "linen", "alpaca", "mohair", "yak",
+]);
+
+function fiberPillClasses(fiber: string): string {
+  const isNatural = NATURAL_FIBERS.has(fiber.toLowerCase());
+  return isNatural
+    ? "rounded-full bg-natural/[0.10] px-3 py-1 font-body text-[13px] font-medium leading-[16px] text-natural-dark"
+    : "rounded-full bg-accent/[0.12] px-3 py-1 font-body text-[13px] font-medium leading-[16px] text-accent";
+}
+
 export function BrandCard({ brand, priority = false }: BrandCardProps) {
   const logoUrl = brandLogoUrl(brand.website_url);
 
@@ -19,7 +32,7 @@ export function BrandCard({ brand, priority = false }: BrandCardProps) {
   return (
     <Link
       href={`/brand/${brand.slug}`}
-      className="group relative flex flex-col gap-5 rounded-[14px] border border-[#DDD5CB] bg-white p-7 shadow-[0_2px_8px_rgba(140,120,100,0.07)] transition-all duration-200 hover:-translate-y-0.5 hover:border-muted hover:shadow-lg"
+      className="group relative flex flex-col gap-5 rounded-[14px] border border-[#DDD5CB] bg-white p-7 shadow-[0_2px_8px_rgba(140,120,100,0.07)] transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/30 hover:shadow-lg"
     >
       {/* Top row: Logo + Name */}
       <div className="flex items-center gap-3">
@@ -41,10 +54,7 @@ export function BrandCard({ brand, priority = false }: BrandCardProps) {
       {/* Fiber type pills */}
       <div className="flex flex-wrap gap-2">
         {brand.fiber_types.map((fiber) => (
-          <span
-            key={fiber}
-            className="rounded-full border border-muted-light px-3 py-1 font-body text-[13px] leading-[16px] text-secondary"
-          >
+          <span key={fiber} className={fiberPillClasses(fiber)}>
             {fiber}
           </span>
         ))}
@@ -56,7 +66,7 @@ export function BrandCard({ brand, priority = false }: BrandCardProps) {
           {metaParts.join(" \u00B7 ")}
         </p>
         <svg
-          className="h-4 w-4 shrink-0 text-muted opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+          className="h-4 w-4 shrink-0 text-accent opacity-0 transition-opacity duration-200 group-hover:opacity-100"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"

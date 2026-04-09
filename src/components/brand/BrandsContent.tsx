@@ -157,7 +157,7 @@ export function BrandsContent({ brands }: BrandsContentProps) {
             {selectedFiber && (
               <button
                 onClick={() => setSelectedFiber(null)}
-                className="flex items-center gap-1.5 rounded-full bg-text px-4 py-2 font-body text-[13px] font-medium text-background transition-colors hover:bg-secondary"
+                className="flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 font-body text-[13px] font-medium text-white transition-colors hover:bg-accent/85"
               >
                 {selectedFiber}
                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -168,7 +168,7 @@ export function BrandsContent({ brands }: BrandsContentProps) {
             {selectedCategory && (
               <button
                 onClick={() => setSelectedCategory(null)}
-                className="flex items-center gap-1.5 rounded-full bg-text px-4 py-2 font-body text-[13px] font-medium text-background transition-colors hover:bg-secondary"
+                className="flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 font-body text-[13px] font-medium text-white transition-colors hover:bg-accent/85"
               >
                 {formatCategory(selectedCategory)}
                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -179,7 +179,7 @@ export function BrandsContent({ brands }: BrandsContentProps) {
             {selectedAudience && (
               <button
                 onClick={() => setSelectedAudience(null)}
-                className="flex items-center gap-1.5 rounded-full bg-text px-4 py-2 font-body text-[13px] font-medium text-background transition-colors hover:bg-secondary"
+                className="flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 font-body text-[13px] font-medium text-white transition-colors hover:bg-accent/85"
               >
                 {selectedAudience}
                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -328,7 +328,7 @@ export function BrandsContent({ brands }: BrandsContentProps) {
               )}
               <button
                 onClick={() => setFilterOpen(false)}
-                className="flex-1 rounded-[8px] bg-text px-5 py-3 font-body text-[14px] font-semibold text-background transition-opacity hover:opacity-90"
+                className="flex-1 rounded-[8px] bg-accent px-5 py-3 font-body text-[14px] font-semibold text-white transition-opacity hover:opacity-90"
               >
                 View {filtered.length} Brand{filtered.length !== 1 ? "s" : ""}
               </button>
