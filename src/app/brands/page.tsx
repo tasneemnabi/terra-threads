@@ -4,7 +4,7 @@ import { getBrandsWithDetails } from "@/lib/queries/brands";
 import { BrandsContent } from "@/components/brand/BrandsContent";
 
 export const metadata: Metadata = {
-  title: "Brands | FIBER",
+  title: "Brands",
   description:
     "Not every product from these brands is plastic-free, but every product on FIBER is. Real fibers, vetted brands.",
 };
