@@ -56,15 +56,18 @@ export function FiberFactsShowcase({ product }: FiberFactsShowcaseProps) {
 
               <Link
                 href={`/product/${product.slug}`}
-                className="mt-8 inline-flex items-center justify-center rounded-full bg-background px-7 py-3 font-body text-[14px] font-semibold text-text transition-opacity hover:opacity-90"
+                className="group/arrow mt-8 inline-flex items-center justify-center rounded-full bg-background px-7 py-3 font-body text-[14px] font-semibold text-text transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/10 active:translate-y-0 active:shadow-md"
               >
-                See it in action &rarr;
+                See it in action{" "}
+                <span className="inline-block ml-1 transition-transform duration-200 group-hover/arrow:translate-x-0.5">
+                  &rarr;
+                </span>
               </Link>
             </div>
 
             {/* Label — dramatic scale */}
-            <div className="order-1 lg:order-2 w-full max-w-[300px] sm:max-w-[320px] lg:flex-shrink-0 transform lg:rotate-[-2deg]">
-              <div className="bg-background rounded-xl p-6 shadow-2xl">
+            <div className="order-1 lg:order-2 w-full max-w-[380px] sm:max-w-[420px] lg:flex-shrink-0 transform lg:rotate-[-2deg] transition-transform duration-500 ease-out hover:rotate-0 hover:scale-[1.02]">
+              <div className="bg-background rounded-xl p-8 shadow-2xl">
                 <FiberFactsLabel materials={product.materials} />
               </div>
             </div>

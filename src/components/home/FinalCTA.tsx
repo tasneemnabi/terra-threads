@@ -13,15 +13,18 @@ export function FinalCTA() {
         <div className="mt-8 flex flex-col sm:flex-row items-start gap-4">
           <Link
             href="/shop"
-            className="inline-flex items-center justify-center rounded-full bg-background px-8 py-3.5 font-body text-[15px] font-semibold text-text transition-opacity hover:opacity-90"
+            className="inline-flex items-center justify-center rounded-full bg-background px-8 py-3.5 font-body text-[15px] font-semibold text-text transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/10 active:translate-y-0 active:shadow-md"
           >
             Start Shopping
           </Link>
           <Link
             href="/brands"
-            className="inline-flex items-center justify-center px-2 py-3.5 font-body text-[15px] font-medium text-background/70 transition-colors hover:text-background"
+            className="group/arrow inline-flex items-center justify-center px-2 py-3.5 font-body text-[15px] font-medium text-background/70 transition-colors hover:text-background"
           >
-            See All Brands &rarr;
+            See All Brands{" "}
+            <span className="inline-block ml-1 transition-transform duration-200 group-hover/arrow:translate-x-1">
+              &rarr;
+            </span>
           </Link>
         </div>
       </div>

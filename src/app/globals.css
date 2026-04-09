@@ -17,10 +17,42 @@
   --font-body: var(--font-dm-sans);
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 body {
   background: var(--color-background);
   color: var(--color-text);
   font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Entrance animation — staggerable with --delay */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility animate-fade-up {
+  animation: fade-up 0.7s cubic-bezier(0.25, 1, 0.5, 1) both;
+  animation-delay: var(--delay, 0ms);
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    opacity: 1;
+  }
 }
 
 /* Hide scrollbar for horizontal scroll areas */

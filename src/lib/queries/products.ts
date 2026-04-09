@@ -111,7 +111,7 @@ export async function getHomepageProducts(limit = 6): Promise<ProductWithBrand[]
     .not("product_type", "in", '("underwear","bras","socks")')
     .not("category", "eq", "underwear")
     .order("created_at", { ascending: false })
-    .limit(limit * 8);
+    .limit(limit * 50);
 
   if (error) {
     console.error("Error fetching homepage products:", error);

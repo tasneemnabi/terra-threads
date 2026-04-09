@@ -16,7 +16,7 @@ function ProductCard({
   priority?: boolean;
 }) {
   return (
-    <Link href={`/product/${product.slug}`} className="group block">
+    <Link href={`/product/${product.slug}`} className="group block transition-transform duration-300 ease-out hover:-translate-y-1">
       <div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-surface">
         {product.image_url && (
           <Image
@@ -61,9 +61,12 @@ export function EditorialPicks({ products }: EditorialPicksProps) {
           </h2>
           <Link
             href="/shop?sort=newest"
-            className="inline-flex items-center gap-1.5 font-body text-[14px] sm:text-[15px] font-medium text-accent hover:text-accent/80 transition-colors"
+            className="group/arrow inline-flex items-center gap-1.5 font-body text-[14px] sm:text-[15px] font-medium text-accent hover:text-accent/80 transition-colors"
           >
-            See all &rarr;
+            See all{" "}
+            <span className="inline-block transition-transform duration-200 group-hover/arrow:translate-x-0.5">
+              &rarr;
+            </span>
           </Link>
         </div>
 
@@ -71,7 +74,7 @@ export function EditorialPicks({ products }: EditorialPicksProps) {
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
           {/* Featured large card */}
           <div className="lg:w-[45%] lg:flex-shrink-0">
-            <Link href={`/product/${featured.slug}`} className="group block">
+            <Link href={`/product/${featured.slug}`} className="group block transition-transform duration-300 ease-out hover:-translate-y-1">
               <div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-surface">
                 {featured.image_url && (
                   <Image

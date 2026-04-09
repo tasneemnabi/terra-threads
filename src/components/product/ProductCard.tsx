@@ -19,7 +19,7 @@ export function ProductCard({ product, hideBrand }: ProductCardProps) {
   return (
     <Link
       href={`/product/${product.slug}`}
-      className="group block"
+      className="group block transition-transform duration-300 ease-out hover:-translate-y-1"
     >
       <div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-surface ring-1 ring-black/[0.04]">
         {hasImage ? (

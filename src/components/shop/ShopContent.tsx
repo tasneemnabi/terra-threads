@@ -589,12 +589,16 @@ export function ShopContent({
     [fiberGroups]
   );
 
-  // When "100% Natural" tier pill is clicked, auto-select all natural fiber checkboxes
+  // When "100% Natural" tier pill is clicked, auto-select all natural fiber checkboxes;
+  // when leaving "natural" tier, clear the auto-selected fibers
   const prevTierRef = useRef(tier);
   useEffect(() => {
     if (tier === "natural" && prevTierRef.current !== "natural" && allNaturalMembers.length > 0) {
       const merged = [...new Set([...selectedFibers, ...allNaturalMembers])];
       setParams({ fiber: merged.join(",") });
+    } else if (tier !== "natural" && prevTierRef.current === "natural") {
+      const remaining = selectedFibers.filter((f) => !allNaturalMembers.includes(f));
+      setParams({ fiber: remaining.length ? remaining.join(",") : null });
     }
     prevTierRef.current = tier;
   }, [tier, allNaturalMembers, selectedFibers, setParams]);

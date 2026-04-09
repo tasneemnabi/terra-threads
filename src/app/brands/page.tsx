@@ -6,7 +6,7 @@ import { BrandsContent } from "@/components/brand/BrandsContent";
 export const metadata: Metadata = {
   title: "Brands | FIBER",
   description:
-    "Discover clothing brands committed to natural fibers. Every brand on FIBER has been vetted — no polyester, no nylon, no plastic.",
+    "Not every product from these brands is plastic-free, but every product on FIBER is. Real fibers, vetted brands.",
 };
 
 export default async function BrandsPage() {
@@ -45,12 +45,12 @@ export default async function BrandsPage() {
             Our Curation
           </p>
           <h1 className="font-display text-[40px] font-medium leading-[46px] tracking-[-0.03em] text-text text-balance sm:text-[56px] sm:leading-[64px]">
-            Brands that never use plastic.
+            Real fibers, vetted brands.
           </h1>
           <p className="max-w-[480px] font-body text-[17px] leading-[26px] text-secondary">
-            Every brand on Fiber has been vetted for their commitment to natural
-            fibers. Some are fully natural — others offer select plastic-free
-            products.
+            Not every product from these brands is plastic-free, but every
+            product on Fiber is. We do the filtering so you can shop with
+            confidence.
           </p>
         </div>
       </section>

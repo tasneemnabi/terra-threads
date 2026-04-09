@@ -24,39 +24,41 @@ export function ShopByCategory({ categories }: ShopByCategoryProps) {
           </h2>
           <Link
             href="/shop"
-            className="hidden sm:inline-flex items-center gap-1.5 font-body text-[14px] font-medium text-accent hover:text-accent/80 transition-colors"
+            className="group/arrow hidden sm:inline-flex items-center gap-1.5 font-body text-[14px] font-medium text-accent hover:text-accent/80 transition-colors"
           >
-            View all &rarr;
+            View all{" "}
+            <span className="inline-block transition-transform duration-200 group-hover/arrow:translate-x-0.5">
+              &rarr;
+            </span>
           </Link>
         </div>
       </div>
 
-      {/* Horizontal scroll — bleeds to edges */}
-      <div className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-hide pl-5 sm:pl-8 lg:pl-[max(2rem,calc((100vw-1280px)/2+1.25rem))]">
-        {categories.map((item, i) => (
-          <Link
-            key={item.category}
-            href={`/shop?category=${encodeURIComponent(item.category)}`}
-            className="group relative flex-shrink-0 w-[200px] sm:w-[220px] aspect-[3/4] overflow-hidden rounded-lg"
-          >
-            <Image
-              src={item.image_url}
-              alt={formatCategory(item.category)}
-              fill
-              className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.05]"
-              sizes="220px"
-              priority={i < 3}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-transparent" />
-            <div className="absolute inset-x-0 bottom-0 p-4">
-              <p className="font-display text-[16px] sm:text-[17px] font-semibold text-white leading-tight">
-                {formatCategory(item.category)}
-              </p>
-            </div>
-          </Link>
-        ))}
-        {/* Trailing spacer for right padding */}
-        <div className="flex-shrink-0 w-5 sm:w-8 lg:w-20" aria-hidden="true" />
+      <div className="px-5 sm:px-8 lg:px-20">
+        <div className="mx-auto max-w-[1280px] grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4">
+          {categories.map((item, i) => (
+            <Link
+              key={item.category}
+              href={`/shop?category=${encodeURIComponent(item.category)}`}
+              className="group relative aspect-[3/4] overflow-hidden rounded-lg"
+            >
+              <Image
+                src={item.image_url}
+                alt={formatCategory(item.category)}
+                fill
+                className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.05]"
+                sizes="(min-width: 1024px) 200px, (min-width: 768px) 180px, 33vw"
+                priority={i < 3}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+              <div className="absolute inset-x-0 bottom-0 p-4">
+                <p className="font-display text-[14px] sm:text-[16px] font-semibold text-white leading-tight transition-transform duration-300 ease-out group-hover:-translate-y-0.5">
+                  {formatCategory(item.category)}
+                </p>
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
     </section>
   );
