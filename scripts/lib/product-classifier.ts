@@ -163,6 +163,7 @@ export const CLOTHING_ONLY_BRANDS = new Set([
   "indigo-luna",
   "nads",
   "gil-rodriguez",
+  "industry-of-all-nations",
 ]);
 
 export function isNonClothing(title: string): boolean {

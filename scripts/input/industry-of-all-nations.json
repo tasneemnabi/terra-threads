@@ -1,0 +1,8 @@
+{
+  "name": "Industry of All Nations",
+  "website_url": "https://industryofallnations.com",
+  "description": "Artisan-made clothing using undyed organic cotton, alpaca, and natural dyes, produced in small batches across South America, India, and Southeast Asia.",
+  "audience": ["Women", "Men", "Kids"],
+  "fiber_types": ["Organic Cotton", "Alpaca", "Linen"],
+  "categories": ["Basics", "Tops", "Knitwear", "Underwear", "Loungewear"]
+}
