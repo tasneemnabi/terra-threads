@@ -191,3 +191,27 @@ export function isExtractionBanned(extraction: { hasBanned: boolean; materials: 
   }
   return syntheticPct > MAX_SYNTHETIC_PERCENT;
 }
+
+/**
+ * Determine sync status based on extraction quality.
+ * "approved" (live on site), "review" (needs work), or "rejected" (banned).
+ * Auto-approve when: confidence >= 0.80, all materials are trusted canonical
+ * names, percentages sum to 100, no banned materials, price and image present.
+ */
+export function determineSyncStatus(
+  extraction: { hasBanned: boolean; materials: Record<string, number>; confidence: number },
+  price: number | null,
+  imageUrl: string | null
+): string {
+  if (extraction.hasBanned) return "rejected";
+
+  const materialNames = Object.keys(extraction.materials);
+  const allTrusted = materialNames.every((m) => TRUSTED_MATERIALS.has(m));
+  const total = Object.values(extraction.materials).reduce((a, b) => a + b, 0);
+
+  if (allTrusted && total === 100 && extraction.confidence >= 0.80) {
+    if (!price || price <= 0 || !imageUrl) return "review";
+    return "approved";
+  }
+  return "review";
+}

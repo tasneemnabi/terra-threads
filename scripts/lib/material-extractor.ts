@@ -8,6 +8,7 @@
 
 import { GoogleGenAI } from "@google/genai";
 import type { ShopifyProduct } from "./shopify-fetcher.js";
+import { BANNED_MATERIALS } from "./curation.js";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -20,7 +21,7 @@ export interface ExtractedMaterials {
 
 // ─── Banned check ───────────────────────────────────────────────────
 
-const BANNED_PATTERNS = /polyester|nylon|acrylic|polypropylene/i;
+const BANNED_PATTERNS = new RegExp(BANNED_MATERIALS.join("|"), "i");
 
 // ─── HTML stripping ─────────────────────────────────────────────────
 

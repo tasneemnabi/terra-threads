@@ -26,7 +26,7 @@ import {
 import {
   slugify,
   isExtractionBanned,
-  TRUSTED_MATERIALS,
+  determineSyncStatus,
 } from "./lib/curation.js";
 import { loadEnv, getSupabaseAdmin } from "./lib/env.js";
 import { ensureMaterialExists, syncProductMaterials } from "./lib/db-helpers.js";
@@ -34,11 +34,12 @@ import {
   classifyProductType,
   classifyAudience,
   shouldRejectProduct,
+  guessCategory,
 } from "./lib/product-classifier.js";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
-interface BrandRow {
+export interface CatalogBrandRow {
   id: string;
   name: string;
   slug: string;
@@ -58,6 +59,7 @@ interface SyncStats {
   skippedNonClothing: number;
   skippedBanned: number;
   skippedDuplicate: number;
+  availabilityUpdated: number;
   flaggedReview: number;
   missingPrice: number;
   missingImage: number;
@@ -66,47 +68,11 @@ interface SyncStats {
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
-function determineSyncStatus(
-  extraction: ExtractedMaterials,
-  price: number | null,
-  imageUrl: string | null
-): string {
-  if (extraction.hasBanned) return "rejected";
-
-  const materialNames = Object.keys(extraction.materials);
-  const allTrusted = materialNames.every((m) => TRUSTED_MATERIALS.has(m));
-  const total = Object.values(extraction.materials).reduce((a, b) => a + b, 0);
-
-  if (allTrusted && total === 100 && extraction.confidence >= 0.80) {
-    // Data completeness check — can't go live without price and image
-    if (!price || price <= 0 || !imageUrl) return "review";
-    return "approved";
-  }
-  return "review";
-}
-
-function guessCategory(name: string): string {
-  const text = name.toLowerCase();
-
-  if (/legging|sports?\s*bra|athletic|activewear|yoga|workout|running/i.test(text)) return "activewear";
-  if (/dress/i.test(text)) return "dresses";
-  if (/sock/i.test(text)) return "socks";
-  if (/underwear|brief|boxer|panty|panties|bra(?!celet)|lingerie|bralette/i.test(text)) return "underwear";
-  if (/swim|bikini|one.?piece/i.test(text)) return "swimwear";
-  if (/knit|sweater|cardigan|pullover/i.test(text)) return "knitwear";
-  if (/denim|jean/i.test(text)) return "denim";
-  if (/lounge|pajama|pj|sleep|robe/i.test(text)) return "loungewear";
-  if (/t-?shirt|tee|top|tank|blouse|shirt|henley|polo/i.test(text)) return "tops";
-  if (/pant|trouser|short|skirt/i.test(text)) return "bottoms";
-  if (/jacket|coat|hoodie|sweatshirt/i.test(text)) return "outerwear";
-  return "basics";
-}
-
 // ─── Sync single brand ─────────────────────────────────────────────
 
-async function syncBrand(
+export async function syncCatalogBrand(
   supabase: SupabaseClient,
-  brand: BrandRow,
+  brand: CatalogBrandRow,
   options: { dryRun: boolean; discoverOnly: boolean },
   materialCache: Map<string, string>
 ): Promise<SyncStats> {
@@ -119,6 +85,7 @@ async function syncBrand(
     skippedNonClothing: 0,
     skippedBanned: 0,
     skippedDuplicate: 0,
+    availabilityUpdated: 0,
     flaggedReview: 0,
     missingPrice: 0,
     missingImage: 0,
@@ -152,25 +119,57 @@ async function syncBrand(
   // 2. Deduplicate against existing DB products
   const { data: existingProducts } = await supabase
     .from("products")
-    .select("affiliate_url, sync_status")
+    .select("id, affiliate_url, sync_status")
     .eq("brand_id", brand.id)
     .not("affiliate_url", "is", null);
 
-  const existingUrls = new Map<string, string>();
+  const existingUrls = new Map<string, { id: string; status: string }>();
   for (const p of existingProducts || []) {
-    if (p.affiliate_url) existingUrls.set(p.affiliate_url, p.sync_status);
+    if (p.affiliate_url) existingUrls.set(p.affiliate_url, { id: p.id, status: p.sync_status });
   }
 
-  const newUrls = discovery.urls.filter((url) => {
+  // Separate approved URLs (need availability update) from truly new URLs
+  const approvedUrls: Array<{ url: string; id: string }> = [];
+  const newUrls: string[] = [];
+  for (const url of discovery.urls) {
     const existing = existingUrls.get(url);
-    // Skip if already approved or rejected
-    if (existing === "approved" || existing === "rejected") return false;
-    return true;
-  });
+    if (!existing) {
+      newUrls.push(url);
+    } else if (existing.status === "approved") {
+      approvedUrls.push({ url, id: existing.id });
+    } else if (existing.status === "rejected") {
+      // Skip rejected entirely
+    } else {
+      // review/pending — re-process
+      newUrls.push(url);
+    }
+  }
 
-  stats.skippedDuplicate = discovery.urls.length - newUrls.length;
+  stats.skippedDuplicate = discovery.urls.length - newUrls.length - approvedUrls.length;
   if (stats.skippedDuplicate > 0) {
-    console.log(`  Skipping ${stats.skippedDuplicate} already-synced products`);
+    console.log(`  Skipping ${stats.skippedDuplicate} rejected products`);
+  }
+  if (approvedUrls.length > 0) {
+    console.log(`  ${approvedUrls.length} approved products (availability update)`);
+  }
+
+  // Availability fast-path for approved products
+  if (approvedUrls.length > 0 && !options.dryRun && !options.discoverOnly) {
+    await launchBrowser();
+    try {
+      for (const { url, id } of approvedUrls) {
+        const scraped = await scrapeProductData(url);
+        const isAvailable = scraped.success ? scraped.isAvailable : true;
+        await supabase
+          .from("products")
+          .update({ is_available: isAvailable, last_synced_at: new Date().toISOString() })
+          .eq("id", id);
+        stats.availabilityUpdated++;
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+    } finally {
+      await closeBrowser();
+    }
   }
 
   if (newUrls.length === 0) {
@@ -286,6 +285,7 @@ async function syncBrand(
               additional_images: scraped.additionalImages,
               product_type: productType,
               audience,
+              is_available: scraped.isAvailable,
               last_synced_at: new Date().toISOString(),
               sync_status: syncStatus,
               material_confidence: confidence,
@@ -309,6 +309,7 @@ async function syncBrand(
             affiliate_url: url,
             product_type: productType,
             audience,
+            is_available: scraped.isAvailable,
             last_synced_at: new Date().toISOString(),
             sync_status: syncStatus,
             material_confidence: confidence,
@@ -531,7 +532,7 @@ async function main() {
     process.exit(1);
   }
 
-  const brands = (data || []) as BrandRow[];
+  const brands = (data || []) as CatalogBrandRow[];
 
   if (brands.length === 0) {
     console.error("No catalog brands found to sync");
@@ -543,7 +544,7 @@ async function main() {
   const allStats: SyncStats[] = [];
 
   for (const brand of brands) {
-    const stats = await syncBrand(
+    const stats = await syncCatalogBrand(
       supabase,
       brand,
       { dryRun, discoverOnly },
@@ -564,6 +565,7 @@ async function main() {
     totalNonClothing = 0,
     totalBanned = 0,
     totalDuplicate = 0,
+    totalAvailabilityUpdated = 0,
     totalReview = 0,
     totalMissingPrice = 0,
     totalMissingImage = 0,
@@ -583,6 +585,7 @@ async function main() {
     totalNonClothing += s.skippedNonClothing;
     totalBanned += s.skippedBanned;
     totalDuplicate += s.skippedDuplicate;
+    totalAvailabilityUpdated += s.availabilityUpdated;
     totalReview += s.flaggedReview;
     totalMissingPrice += s.missingPrice;
     totalMissingImage += s.missingImage;
@@ -592,8 +595,9 @@ async function main() {
   const missingTotalPart = (totalMissingPrice > 0 || totalMissingImage > 0)
     ? `, ${totalMissingPrice} no-price, ${totalMissingImage} no-image`
     : "";
+  const availPart = totalAvailabilityUpdated > 0 ? `, ${totalAvailabilityUpdated} availability-updated` : "";
   console.log(
-    `\nTotal: ${totalDiscovered} discovered, ${totalScraped} scraped, ${totalInserted} synced, ${totalApproved} approved, ${totalBanned} banned, ${totalNonClothing} non-clothing, ${totalDuplicate} dupes, ${totalReview} review${missingTotalPart}, ${totalErrors} errors`
+    `\nTotal: ${totalDiscovered} discovered, ${totalScraped} scraped, ${totalInserted} synced, ${totalApproved} approved, ${totalBanned} banned, ${totalNonClothing} non-clothing, ${totalDuplicate} dupes, ${totalReview} review${availPart}${missingTotalPart}, ${totalErrors} errors`
   );
 
   if (totalReview > 0) {
@@ -605,4 +609,6 @@ async function main() {
   if (totalErrors > 0) process.exit(1);
 }
 
-main();
+// Only run main when executed directly (not imported)
+const isDirectRun = process.argv[1]?.endsWith("sync-catalog.ts") || process.argv[1]?.endsWith("sync-catalog.js");
+if (isDirectRun) main();

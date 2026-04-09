@@ -84,6 +84,7 @@ export async function getFeaturedProducts(): Promise<ProductWithBrand[]> {
     .from("products_with_materials")
     .select("*")
     .eq("is_featured", true)
+    .eq("is_available", true)
     .not("image_url", "is", null)
     .gt("price", 0)
     .order("created_at", { ascending: false })
@@ -104,6 +105,7 @@ export async function getHomepageProducts(limit = 6): Promise<ProductWithBrand[]
   const { data, error } = await supabase
     .from("products_with_materials")
     .select("*")
+    .eq("is_available", true)
     .not("image_url", "is", null)
     .gt("price", 0)
     .order("created_at", { ascending: false })
@@ -168,6 +170,7 @@ export async function getRelatedProducts(
     .from("products_with_materials")
     .select("*")
     .eq("category", category)
+    .eq("is_available", true)
     .neq("id", productId)
     .not("image_url", "is", null)
     .gt("price", 0)
@@ -248,6 +251,7 @@ export async function getProductsByBrand(brandId: string): Promise<ProductWithBr
     .eq("brand_id", brandId)
     .not("image_url", "is", null)
     .gt("price", 0)
+    .order("is_available", { ascending: false })
     .order("created_at", { ascending: false });
 
   if (error) {

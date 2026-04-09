@@ -47,7 +47,7 @@ export default async function ProductPage({ params }: Props) {
       "@type": "Offer",
       price: product.price,
       priceCurrency: product.currency,
-      availability: "https://schema.org/InStock",
+      availability: product.is_available ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
     },
   };
 
@@ -123,6 +123,7 @@ export default async function ProductPage({ params }: Props) {
               <AffiliateButton
                 url={product.affiliate_url}
                 brandName={product.brand_name}
+                soldOut={!product.is_available}
               />
             )}
 

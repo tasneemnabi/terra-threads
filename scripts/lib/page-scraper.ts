@@ -34,6 +34,7 @@ export interface ScrapedProduct {
   description: string | null;
   imageUrl: string | null;
   additionalImages: string[];
+  isAvailable: boolean;
   text: string;
   success: boolean;
   error?: string;
@@ -165,6 +166,7 @@ interface JsonLdProduct {
   currency: string | null;
   description: string | null;
   images: string[];
+  isAvailable: boolean | null;
 }
 
 /**
@@ -216,20 +218,38 @@ function findProductInJsonLd(obj: unknown): JsonLdProduct | null {
   const type = record["@type"];
   if (type !== "Product" && type !== "product") return null;
 
-  // Extract price from offers
+  // Extract price and availability from offers
   let price: number | null = null;
   let currency: string | null = null;
+  let isAvailable: boolean | null = null;
   const offers = record.offers;
   if (offers) {
-    const offer = Array.isArray(offers) ? offers[0] : offers;
-    if (offer && typeof offer === "object") {
-      const o = offer as Record<string, unknown>;
+    const offerList = Array.isArray(offers) ? offers : [offers];
+    const firstOffer = offerList[0];
+    if (firstOffer && typeof firstOffer === "object") {
+      const o = firstOffer as Record<string, unknown>;
       const rawPrice = o.price ?? o.lowPrice;
       if (rawPrice !== undefined && rawPrice !== null) {
         price = typeof rawPrice === "number" ? rawPrice : parseFloat(String(rawPrice));
         if (isNaN(price)) price = null;
       }
       if (typeof o.priceCurrency === "string") currency = o.priceCurrency;
+    }
+    // Check availability across all offers — available if ANY offer is in stock
+    for (const offer of offerList) {
+      if (offer && typeof offer === "object") {
+        const avail = (offer as Record<string, unknown>).availability;
+        if (typeof avail === "string") {
+          const lower = avail.toLowerCase();
+          if (lower.includes("instock") || lower.includes("preorder")) {
+            isAvailable = true;
+            break; // At least one variant in stock — that's enough
+          }
+          if (lower.includes("outofstock") || lower.includes("soldout")) {
+            isAvailable = false;
+          }
+        }
+      }
     }
   }
 
@@ -255,6 +275,7 @@ function findProductInJsonLd(obj: unknown): JsonLdProduct | null {
     currency,
     description: typeof record.description === "string" ? record.description : null,
     images,
+    isAvailable,
   };
 }
 
@@ -349,8 +370,30 @@ export async function scrapeProductData(
     } else {
       allImages = productImages;
     }
+    // Normalize image URLs: decode pre-encoded chars, resolve relative paths
+    allImages = allImages.map((u) => {
+      const decoded = decodeURIComponent(u);
+      if (decoded.startsWith("//")) return `https:${decoded}`;
+      if (!decoded.startsWith("http")) {
+        try { return new URL(decoded, url).href; } catch { return decoded; }
+      }
+      return decoded;
+    });
 
     const text = await extractProductText(page!);
+
+    // Availability: JSON-LD first, then DOM fallback
+    let isAvailable: boolean = jsonLd?.isAvailable ?? true; // default to available if unknown
+    if (jsonLd?.isAvailable === null) {
+      // JSON-LD didn't have availability info — check DOM
+      const soldOutText = await page!.$$eval(
+        'button, [class*="sold-out"], [class*="soldout"], [class*="out-of-stock"], [data-availability]',
+        (els) => els.map((el) => el.textContent?.trim().toLowerCase() || "")
+      ).catch(() => []);
+      if (soldOutText.some((t) => /sold\s*out|out\s*of\s*stock|unavailable/i.test(t))) {
+        isAvailable = false;
+      }
+    }
 
     // Log warnings for missing data
     if (!price) console.warn(`  WARN: No price extracted for ${url}`);
@@ -365,6 +408,7 @@ export async function scrapeProductData(
       description: description?.slice(0, 500) || null,
       imageUrl: allImages[0] || null,
       additionalImages: allImages.slice(1),
+      isAvailable,
       text,
       success: true,
     };
@@ -377,6 +421,7 @@ export async function scrapeProductData(
       description: null,
       imageUrl: null,
       additionalImages: [],
+      isAvailable: true,
       text: "",
       success: false,
       error: (err as Error).message,
@@ -386,33 +431,3 @@ export async function scrapeProductData(
   }
 }
 
-/**
- * Scrape multiple pages with concurrency control.
- */
-export async function scrapePages(
-  urls: string[],
-  options: { concurrency?: number; delayMs?: number; onProgress?: (done: number, total: number) => void } = {}
-): Promise<ScrapedPage[]> {
-  const { concurrency = 3, delayMs = 500, onProgress } = options;
-  const results: ScrapedPage[] = new Array(urls.length);
-  let done = 0;
-
-  async function worker(startIdx: number): Promise<void> {
-    for (let i = startIdx; i < urls.length; i += concurrency) {
-      results[i] = await scrapePage(urls[i]);
-      done++;
-      if (onProgress) onProgress(done, urls.length);
-      if (delayMs > 0 && i + concurrency < urls.length) {
-        await new Promise((r) => setTimeout(r, delayMs));
-      }
-    }
-  }
-
-  const workers: Promise<void>[] = [];
-  for (let w = 0; w < Math.min(concurrency, urls.length); w++) {
-    workers.push(worker(w));
-  }
-
-  await Promise.all(workers);
-  return results;
-}

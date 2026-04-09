@@ -15,7 +15,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { fetchAllProducts, type ShopifyProduct } from "./lib/shopify-fetcher.js";
 import { extractMaterialsRegex, extractMaterialsBatch, type ExtractedMaterials } from "./lib/material-extractor.js";
-import { slugify, isExtractionBanned, TRUSTED_MATERIALS } from "./lib/curation.js";
+import { slugify, isExtractionBanned, determineSyncStatus } from "./lib/curation.js";
 import { loadEnv, getSupabaseAdmin } from "./lib/env.js";
 import { ensureMaterialExists, syncProductMaterials } from "./lib/db-helpers.js";
 import { launchBrowser, closeBrowser, scrapePage } from "./lib/page-scraper.js";
@@ -23,7 +23,7 @@ import { extractMaterialsFromText } from "./lib/material-extractor.js";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
-interface BrandRow {
+export interface BrandRow {
   id: string;
   name: string;
   slug: string;
@@ -42,6 +42,7 @@ interface SyncStats {
   skippedBanned: number;
   skippedNonClothing: number;
   skippedSettled: number;
+  availabilityUpdated: number;
   scrapeHits: number;
   flaggedReview: number;
   removed: number;
@@ -51,31 +52,6 @@ interface SyncStats {
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────
-
-/**
- * Determine sync status based on extraction quality.
- * Two statuses: "approved" (live on site) or "review" (needs work).
- * Auto-approve when: confidence >= 0.80, all materials are trusted canonical
- * names, percentages sum to 100, no banned materials.
- */
-function determineSyncStatus(
-  extraction: ExtractedMaterials,
-  price: number | null,
-  imageUrl: string | null
-): string {
-  if (extraction.hasBanned) return "rejected";
-
-  const materialNames = Object.keys(extraction.materials);
-  const allTrusted = materialNames.every((m) => TRUSTED_MATERIALS.has(m));
-  const total = Object.values(extraction.materials).reduce((a, b) => a + b, 0);
-
-  if (allTrusted && total === 100 && extraction.confidence >= 0.80) {
-    // Data completeness check — can't go live without price and image
-    if (!price || price <= 0 || !imageUrl) return "review";
-    return "approved";
-  }
-  return "review";
-}
 
 function getFirstVariantPrice(product: ShopifyProduct): number | null {
   const variant = product.variants?.[0];
@@ -92,28 +68,11 @@ function getImages(product: ShopifyProduct): { primary: string | null; additiona
   };
 }
 
-import { classifyProductType, mapActivewearType, shouldRejectProduct, classifyAudience } from "./lib/product-classifier";
-
-function guessCategory(product: ShopifyProduct): string {
-  const text = `${product.title} ${product.product_type} ${(product.tags || []).join(" ")}`.toLowerCase();
-
-  if (/legging|sports?\s*bra|athletic|activewear|yoga|workout|running/i.test(text)) return "activewear";
-  if (/dress/i.test(text)) return "dresses";
-  if (/sock/i.test(text)) return "socks";
-  if (/underwear|brief|boxer|panty|panties|bra(?!celet)|lingerie|bralette/i.test(text)) return "underwear";
-  if (/swim|bikini|one.?piece/i.test(text)) return "swimwear";
-  if (/knit|sweater|cardigan|pullover/i.test(text)) return "knitwear";
-  if (/denim|jean/i.test(text)) return "denim";
-  if (/lounge|pajama|pj|sleep|robe/i.test(text)) return "loungewear";
-  if (/t-?shirt|tee|top|tank|blouse|shirt|henley|polo/i.test(text)) return "tops";
-  if (/pant|trouser|short|skirt/i.test(text)) return "bottoms";
-  if (/jacket|coat|hoodie|sweatshirt/i.test(text)) return "outerwear";
-  return "basics";
-}
+import { classifyProductType, mapActivewearType, shouldRejectProduct, classifyAudience, guessCategory } from "./lib/product-classifier";
 
 // ─── Pass 1: Sync from Shopify (regex only) ─────────────────────────
 
-async function syncBrand(
+export async function syncBrand(
   supabase: SupabaseClient,
   brand: BrandRow,
   options: { dryRun: boolean },
@@ -128,6 +87,7 @@ async function syncBrand(
     skippedBanned: 0,
     skippedNonClothing: 0,
     skippedSettled: 0,
+    availabilityUpdated: 0,
     scrapeHits: 0,
     flaggedReview: 0,
     removed: 0,
@@ -170,8 +130,39 @@ async function syncBrand(
     const rejectedCount = [...existingStatusMap.values()].filter((s) => s === "rejected").length;
     const approvedCount = [...existingStatusMap.values()].filter((s) => s === "approved").length;
     if (rejectedCount > 0 || approvedCount > 0) {
-      console.log(`  Skipping ${approvedCount} approved + ${rejectedCount} rejected (already settled)`);
+      console.log(`  ${approvedCount} approved (availability update) + ${rejectedCount} rejected (skipped)`);
     }
+  }
+
+  // Batch availability updates for approved products (collect, then flush)
+  const availableIds: number[] = [];
+  const unavailableIds: number[] = [];
+  for (const shopifyProduct of shopifyProducts) {
+    const existingStatus = existingStatusMap.get(shopifyProduct.id);
+    if (existingStatus === "approved") {
+      const isAvailable = shopifyProduct.variants.some((v) => v.available);
+      (isAvailable ? availableIds : unavailableIds).push(shopifyProduct.id);
+    }
+  }
+
+  if (!options.dryRun && (availableIds.length > 0 || unavailableIds.length > 0)) {
+    const now = new Date().toISOString();
+    if (availableIds.length > 0) {
+      await supabase
+        .from("products")
+        .update({ is_available: true, last_synced_at: now })
+        .eq("brand_id", brand.id)
+        .in("shopify_product_id", availableIds);
+    }
+    if (unavailableIds.length > 0) {
+      await supabase
+        .from("products")
+        .update({ is_available: false, last_synced_at: now })
+        .eq("brand_id", brand.id)
+        .in("shopify_product_id", unavailableIds);
+    }
+    stats.availabilityUpdated = availableIds.length + unavailableIds.length;
+    console.log(`  Availability batch: ${availableIds.length} available, ${unavailableIds.length} unavailable`);
   }
 
   // Regex-only extraction for all products
@@ -180,9 +171,15 @@ async function syncBrand(
   for (const shopifyProduct of shopifyProducts) {
     seenShopifyIds.add(shopifyProduct.id);
 
-    // Skip products that are already approved or rejected (settled)
+    // Skip rejected products entirely
     const existingStatus = existingStatusMap.get(shopifyProduct.id);
-    if (existingStatus === "rejected" || existingStatus === "approved") {
+    if (existingStatus === "rejected") {
+      stats.skippedSettled++;
+      continue;
+    }
+
+    // Approved products: already handled in batch above
+    if (existingStatus === "approved") {
       stats.skippedSettled++;
       continue;
     }
@@ -223,7 +220,7 @@ async function syncBrand(
     const syncStatus = hasMaterials ? determineSyncStatus(extraction!, price, images.primary) : "review";
     if (syncStatus === "review") stats.flaggedReview++;
     const confidence = hasMaterials ? extraction!.confidence : 0;
-    const category = guessCategory(shopifyProduct);
+    const category = guessCategory(`${shopifyProduct.title} ${shopifyProduct.product_type} ${(shopifyProduct.tags || []).join(" ")}`);
     const rawProductType = classifyProductType(shopifyProduct.title, shopifyProduct.product_type, shopifyProduct.tags);
     const productType = rawProductType && category === "activewear" ? mapActivewearType(rawProductType) : rawProductType;
     const audience = classifyAudience(shopifyProduct.title, shopifyProduct.tags, productType, brand.audience);
@@ -261,6 +258,7 @@ async function syncBrand(
         audience,
         shopify_product_id: shopifyProduct.id,
         shopify_variant_id: variant?.id || null,
+        is_available: shopifyProduct.variants.some((v) => v.available),
         last_synced_at: new Date().toISOString(),
         sync_status: syncStatus,
         material_confidence: confidence,
@@ -598,6 +596,7 @@ async function main() {
     totalApproved = 0,
     totalSkipped = 0,
     totalSettled = 0,
+    totalAvailabilityUpdated = 0,
     totalScrapeHits = 0,
     totalReview = 0,
     totalRemoved = 0,
@@ -618,6 +617,7 @@ async function main() {
     totalApproved += s.autoApproved;
     totalSkipped += s.skippedBanned;
     totalSettled += s.skippedSettled;
+    totalAvailabilityUpdated += s.availabilityUpdated;
     totalScrapeHits += s.scrapeHits;
     totalReview += s.flaggedReview;
     totalRemoved += s.removed;
@@ -630,7 +630,8 @@ async function main() {
   const missingTotalPart = (totalMissingPrice > 0 || totalMissingImage > 0)
     ? `, ${totalMissingPrice} no-price, ${totalMissingImage} no-image`
     : "";
-  console.log(`\nTotal: ${totalFetched} fetched, ${totalSettled} settled (skipped), ${totalInserted} synced, ${totalApproved} auto-approved, ${totalSkipped} banned, ${totalReview} review${scrapeTotalPart}${missingTotalPart}, ${totalRemoved} removed, ${totalErrors} errors`);
+  const availPart = totalAvailabilityUpdated > 0 ? `, ${totalAvailabilityUpdated} availability-updated` : "";
+  console.log(`\nTotal: ${totalFetched} fetched, ${totalSettled} settled (skipped), ${totalInserted} synced, ${totalApproved} auto-approved, ${totalSkipped} banned, ${totalReview} review${availPart}${scrapeTotalPart}${missingTotalPart}, ${totalRemoved} removed, ${totalErrors} errors`);
 
   if (totalReview > 0) {
     console.log(`\nRun 'npx tsx scripts/sync-shopify.ts --llm' to extract materials for review products`);
@@ -639,4 +640,6 @@ async function main() {
   if (totalErrors > 0) process.exit(1);
 }
 
-main();
+// Only run main when executed directly (not imported)
+const isDirectRun = process.argv[1]?.endsWith("sync-shopify.ts") || process.argv[1]?.endsWith("sync-shopify.js");
+if (isDirectRun) main();

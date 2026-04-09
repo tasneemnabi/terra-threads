@@ -5,9 +5,10 @@ import { affiliateUrl, brandDomain } from "@/lib/utils";
 interface AffiliateButtonProps {
   url: string;
   brandName: string;
+  soldOut?: boolean;
 }
 
-export function AffiliateButton({ url, brandName }: AffiliateButtonProps) {
+export function AffiliateButton({ url, brandName, soldOut }: AffiliateButtonProps) {
   const domain = brandDomain(url);
 
   return (
@@ -16,9 +17,13 @@ export function AffiliateButton({ url, brandName }: AffiliateButtonProps) {
         href={affiliateUrl(url, "product-page")}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-text px-6 py-3.5 text-base font-medium text-background transition-all hover:bg-secondary hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-text/50"
+        className={
+          soldOut
+            ? "inline-flex w-full items-center justify-center gap-2 rounded-lg border border-surface-dark bg-surface px-6 py-3.5 text-base font-medium text-muted transition-all hover:bg-surface-dark focus:outline-none focus:ring-2 focus:ring-text/50"
+            : "inline-flex w-full items-center justify-center gap-2 rounded-lg bg-text px-6 py-3.5 text-base font-medium text-background transition-all hover:bg-secondary hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-text/50"
+        }
       >
-        Shop at {brandName}
+        {soldOut ? `View at ${brandName}` : `Shop at ${brandName}`}
         <svg
           className="h-4 w-4"
           fill="none"
