@@ -184,6 +184,12 @@ export function shouldRejectProduct(
   shopifyProductType?: string,
   tags?: string[],
 ): { rejected: boolean; reason?: string } {
+  // Non-clothing items (shoes, yoga mats, etc.) are always rejected,
+  // regardless of brand mode — prevents "denim shoes" matching as pants
+  if (isNonClothing(title)) {
+    return { rejected: true, reason: "non-clothing" };
+  }
+
   const clothingType = classifyProductType(title, shopifyProductType, tags);
 
   // Whitelist mode for lifestyle brands
@@ -197,9 +203,6 @@ export function shouldRejectProduct(
   // Blacklist mode for other brands
   // If the product has a valid clothing type, trust it over keyword matches
   if (!clothingType) {
-    if (isNonClothing(title)) {
-      return { rejected: true, reason: "non-clothing" };
-    }
     if (isAccessory(title)) {
       return { rejected: true, reason: "accessory" };
     }

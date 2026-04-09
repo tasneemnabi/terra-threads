@@ -28,7 +28,7 @@ export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
 
-  if (!product) notFound();
+  if (!product || !product.image_url) notFound();
 
   const relatedProducts = await getRelatedProducts(product.id, product.category);
   const logoUrl = brandLogoUrl(product.brand_website_url);

@@ -108,6 +108,8 @@ export async function getHomepageProducts(limit = 6): Promise<ProductWithBrand[]
     .eq("is_available", true)
     .not("image_url", "is", null)
     .gt("price", 0)
+    .not("product_type", "in", '("underwear","bras","socks")')
+    .not("category", "eq", "underwear")
     .order("created_at", { ascending: false })
     .limit(limit * 8);
 
