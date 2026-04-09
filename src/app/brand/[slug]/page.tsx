@@ -116,6 +116,13 @@ export default async function BrandPage({ params }: Props) {
       {/* Products */}
       <section className="px-5 sm:px-8 lg:px-20 pb-20">
         <div className="mx-auto max-w-[1280px]">
+          {products.length > 0 && products.every((p) => !p.is_available) && (
+            <div className="mb-8 rounded-[14px] border border-accent/20 bg-accent/5 p-5 text-center">
+              <p className="font-body text-[15px] leading-[22px] text-secondary">
+                This brand releases in limited drops — check back soon for new arrivals.
+              </p>
+            </div>
+          )}
           {products.length > 0 ? (
             <BrandProducts products={products} />
           ) : (

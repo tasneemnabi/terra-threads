@@ -307,6 +307,29 @@ export function classifyAudience(
   return "Unisex";
 }
 
+// ─── Category Classification ─────────────────────────────────────────
+
+/**
+ * Guess a broad product category from text (title, product_type, tags combined).
+ * Used by both Shopify and catalog sync pipelines.
+ */
+export function guessCategory(text: string): string {
+  const lower = text.toLowerCase();
+
+  if (/legging|sports?\s*bra|athletic|activewear|yoga|workout|running/i.test(lower)) return "activewear";
+  if (/dress/i.test(lower)) return "dresses";
+  if (/sock/i.test(lower)) return "socks";
+  if (/underwear|brief|boxer|panty|panties|bra(?!celet)|lingerie|bralette/i.test(lower)) return "underwear";
+  if (/swim|bikini|one.?piece/i.test(lower)) return "swimwear";
+  if (/knit|sweater|cardigan|pullover/i.test(lower)) return "knitwear";
+  if (/denim|jean/i.test(lower)) return "denim";
+  if (/lounge|pajama|pj|sleep|robe/i.test(lower)) return "loungewear";
+  if (/t-?shirt|tee|top|tank|blouse|shirt|henley|polo/i.test(lower)) return "tops";
+  if (/pant|trouser|short|skirt/i.test(lower)) return "bottoms";
+  if (/jacket|coat|hoodie|sweatshirt/i.test(lower)) return "outerwear";
+  return "basics";
+}
+
 // ─── Product Type Classification ────────────────────────────────────
 
 export function classifyProductType(

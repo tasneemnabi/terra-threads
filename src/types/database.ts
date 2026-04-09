@@ -36,6 +36,7 @@ export interface Product {
   material_confidence: number | null;
   raw_body_html: string | null;
   audience: string | null;
+  is_available: boolean;
 }
 
 export interface Material {

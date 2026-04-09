@@ -31,32 +31,23 @@ const BRAND_PRODUCT_PATTERNS: Record<string, RegExp[]> = {
   "maggies-organics": [/^\/[a-z0-9][a-z0-9\-]*\/?$/],
   // Vivid Linen: products under /missy/product/<id>_<slug> or /plus/product/<id>_<slug>
   "vivid-linen": [/^\/(missy|plus|men)\/product\//],
-  // Quince: products at /women/<slug> or /men/<slug> — require hyphen to skip category pages
-  quince: [/^\/(women|men)\/[a-z0-9]+-[a-z0-9\-]+$/],
   // Pact: hierarchical /women/apparel/<subcategory>/<product-name> (spaces URL-encoded)
   pact: [/^\/(women|men)\/apparel\/.+\/.+$/],
-  // prAna (Salesforce Commerce Cloud): /p/<slug>/<numeric-id>.html
-  prana: [/^\/p\/[a-z0-9\-]+\/\d+\.html$/],
-  // Icebreaker: /en-us/products/<slug> (Shopify on na.icebreaker.com)
-  icebreaker: [/^\/en-us\/products\/[a-z0-9][a-z0-9\-]*$/],
 };
 
 /** Sitemap URL overrides — non-standard sitemap paths */
 const BRAND_SITEMAP_URLS: Record<string, string[]> = {
   "maggies-organics": ["/xmlsitemap.php?type=products&page=1"],
-  prana: ["/sitemap_index.xml"],
 };
 
 /** Brands that skip sitemap — use crawl only (for scoping to specific collections) */
-const BRAND_CRAWL_ONLY = new Set(["everlane", "quince"]);
+const BRAND_CRAWL_ONLY = new Set<string>();
 
 /**
  * Hostname aliases for brands that redirect to a different domain.
  * Links on the target domain are accepted as same-origin during crawl.
  */
-const BRAND_HOSTNAME_ALIASES: Record<string, string[]> = {
-  icebreaker: ["na.icebreaker.com"],
-};
+const BRAND_HOSTNAME_ALIASES: Record<string, string[]> = {};
 
 /** URL exclusion patterns for sitemap (non-product pages that slip through) */
 const BRAND_SITEMAP_EXCLUDES: Record<string, RegExp[]> = {
@@ -94,29 +85,8 @@ const BRAND_COLLECTION_PATHS: Record<string, string[]> = {
     "/plus/tops-blouses", "/plus/tunics", "/plus/jackets", "/plus/pants",
     "/plus/shirts", "/plus/cardigans-sweaters", "/plus/dresses-skirts", "/plus/tanks-camis",
   ],
-  // Everlane: ACTIVEWEAR ONLY — scope to women's activewear collection
-  everlane: ["/collections/womens-activewear"],
-  // Quince: ACTIVEWEAR ONLY — scope to women's activewear collection
-  quince: ["/all-activewear/women"],
-  // Icebreaker: all women's categories (merino wool performance brand)
-  icebreaker: [
-    "/en-us/collections/womens-baselayers",
-    "/en-us/collections/womens-running",
-    "/en-us/collections/womens-pants-leggings",
-    "/en-us/collections/womens-tshirts",
-    "/en-us/collections/womens-jackets-vests",
-    "/en-us/collections/womens-dresses-skirts",
-    "/en-us/collections/womens-underwear",
-    "/en-us/collections/womens-socks",
-  ],
   // Pact: women's clothing categories
   pact: ["/women/apparel"],
-  // prAna: women's activewear & yoga
-  prana: [
-    "/women/activity-collections/activewear.html",
-    "/women/bottoms/yoga-pants.html",
-    "/women/tops/yoga-bra-tops.html",
-  ],
   // Fair Indigo: all women's organic clothing
   "fair-indigo": ["/collections/shop-all-fair-indigo"],
   // Rawganique: women's clothing (hemp/organic cotton/linen)
