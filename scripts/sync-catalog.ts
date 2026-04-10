@@ -36,6 +36,7 @@ import {
   shouldRejectProduct,
   guessCategory,
 } from "./lib/product-classifier.js";
+import { initStorageBucket, optimizeProductImages } from "./lib/image-optimizer.js";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -259,8 +260,16 @@ export async function syncCatalogBrand(
         continue;
       }
 
-      // 7. Insert into Supabase (check for existing by affiliate_url first)
+      // 7. Optimize images then insert into Supabase
       try {
+        // Optimize images: download, resize to WebP, upload to Supabase Storage
+        const optimizedImages = await optimizeProductImages(
+          supabase,
+          productSlug,
+          scraped.imageUrl,
+          scraped.additionalImages || []
+        );
+
         // Check if product already exists (e.g. from a previous partial run)
         const { data: existing } = await supabase
           .from("products")
@@ -281,8 +290,8 @@ export async function syncCatalogBrand(
               category,
               price: scraped.price ?? null,
               currency: scraped.currency || "USD",
-              image_url: scraped.imageUrl,
-              additional_images: scraped.additionalImages,
+              image_url: optimizedImages.imageUrl,
+              additional_images: optimizedImages.additionalImages,
               product_type: productType,
               audience,
               is_available: scraped.isAvailable,
@@ -304,8 +313,8 @@ export async function syncCatalogBrand(
             category,
             price: scraped.price || 0,
             currency: scraped.currency || "USD",
-            image_url: scraped.imageUrl,
-            additional_images: scraped.additionalImages,
+            image_url: optimizedImages.imageUrl,
+            additional_images: optimizedImages.additionalImages,
             affiliate_url: url,
             product_type: productType,
             audience,
@@ -582,6 +591,11 @@ async function main() {
   }
 
   console.log(`Syncing ${brands.length} catalog brand(s)...`);
+
+  // Ensure image storage bucket exists (no-op if already created)
+  if (!dryRun) {
+    await initStorageBucket(supabase);
+  }
 
   const allStats: SyncStats[] = [];
 

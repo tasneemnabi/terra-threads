@@ -20,6 +20,7 @@ import { loadEnv, getSupabaseAdmin } from "./lib/env.js";
 import { ensureMaterialExists, syncProductMaterials } from "./lib/db-helpers.js";
 import { launchBrowser, closeBrowser, scrapePage } from "./lib/page-scraper.js";
 import { extractMaterialsFromText } from "./lib/material-extractor.js";
+import { initStorageBucket, optimizeProductImages } from "./lib/image-optimizer.js";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -240,6 +241,14 @@ export async function syncBrand(
     }
 
     try {
+      // Optimize images: download, resize to WebP, upload to Supabase Storage
+      const optimizedImages = await optimizeProductImages(
+        supabase,
+        productSlug,
+        images.primary,
+        images.additional
+      );
+
       const productData = {
         brand_id: brand.id,
         name: shopifyProduct.title,
@@ -250,8 +259,8 @@ export async function syncBrand(
         category,
         price,
         currency: "USD",
-        image_url: images.primary,
-        additional_images: images.additional,
+        image_url: optimizedImages.imageUrl,
+        additional_images: optimizedImages.additionalImages,
         affiliate_url: `https://${brand.shopify_domain}/products/${shopifyProduct.handle}`,
         product_type: productType,
         shopify_product_type: shopifyProduct.product_type || null,
@@ -578,6 +587,11 @@ async function main() {
   }
 
   console.log(`Syncing ${brands.length} brand(s) (regex only)...`);
+
+  // Ensure image storage bucket exists (no-op if already created)
+  if (!dryRun) {
+    await initStorageBucket(supabase);
+  }
 
   const allStats: SyncStats[] = [];
 

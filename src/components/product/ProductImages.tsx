@@ -52,6 +52,7 @@ export function ProductImages({
             src={currentImage}
             alt={productName}
             fill
+            unoptimized
             className="object-cover"
             sizes="(max-width: 1024px) 100vw, 50vw"
             priority
@@ -103,6 +104,7 @@ export function ProductImages({
                   src={img}
                   alt={`${productName} ${index + 1}`}
                   fill
+                  unoptimized
                   className="object-cover"
                   sizes="80px"
                 />
