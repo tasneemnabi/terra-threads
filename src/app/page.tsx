@@ -5,7 +5,7 @@ import { EditorialPicks } from "@/components/home/EditorialPicks";
 import { FiberFactsShowcase } from "@/components/home/FiberFactsShowcase";
 import { BrowseByFiber } from "@/components/home/BrowseByFiber";
 import { FinalCTA } from "@/components/home/FinalCTA";
-import { getHomepageProducts, getCategoryImages } from "@/lib/queries/products";
+import { getHomepageProducts, getHeroProducts, getCategoryImages } from "@/lib/queries/products";
 
 
 const HOMEPAGE_CATEGORIES = [
@@ -18,14 +18,15 @@ const HOMEPAGE_CATEGORIES = [
 ];
 
 export default async function HomePage() {
-  const [products, categoryImages] = await Promise.all([
+  const [heroProducts, products, categoryImages] = await Promise.all([
+    getHeroProducts(8),
     getHomepageProducts(8),
     getCategoryImages(HOMEPAGE_CATEGORIES),
   ]);
 
   return (
     <>
-      <Hero products={products} />
+      <Hero products={heroProducts} />
       <ShopByCategory categories={categoryImages} />
       <EditorialPicks products={products} />
       {products[0] && <FiberFactsShowcase product={products[0]} />}

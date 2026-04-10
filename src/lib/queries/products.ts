@@ -98,6 +98,63 @@ export async function getFeaturedProducts(): Promise<ProductWithBrand[]> {
   return data as ProductWithBrand[];
 }
 
+function shuffle<T>(arr: T[]): T[] {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+export async function getHeroProducts(limit = 8): Promise<ProductWithBrand[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("products_with_materials")
+    .select("*")
+    .eq("is_available", true)
+    .eq("category", "activewear")
+    .eq("audience", "Women")
+    .not("image_url", "is", null)
+    .gt("price", 0);
+
+  if (error) {
+    console.error("Error fetching hero products:", error);
+    throw new Error("Failed to load hero products.");
+  }
+
+  const rows = data as ProductWithBrand[];
+  const preferredSlugs = ["layere", "happy-earth-apparel"];
+
+  // Group by preferred brand, shuffle within each, then interleave so both brands appear early
+  const byBrand = new Map<string, ProductWithBrand[]>();
+  for (const slug of preferredSlugs) {
+    byBrand.set(slug, shuffle(rows.filter((p) => p.brand_slug === slug)));
+  }
+
+  const interleaved: ProductWithBrand[] = [];
+  const brandOrder = shuffle(preferredSlugs);
+  let added = true;
+  while (added) {
+    added = false;
+    for (const slug of brandOrder) {
+      const pool = byBrand.get(slug);
+      if (pool && pool.length > 0) {
+        interleaved.push(pool.shift()!);
+        added = true;
+      }
+    }
+  }
+
+  // Fallback: if preferred brands have nothing, use any shuffled women's activewear
+  const result = interleaved.length > 0
+    ? interleaved
+    : shuffle(rows);
+
+  return result.slice(0, limit);
+}
+
 export async function getHomepageProducts(limit = 6): Promise<ProductWithBrand[]> {
   const supabase = await createClient();
 

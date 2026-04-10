@@ -2,7 +2,25 @@
 
 import { useState, useTransition, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { updateProductStatus, batchUpdateStatus, approveAllPendingForBrand } from "./actions";
+import {
+  updateProductStatus,
+  batchUpdateStatus,
+  approveAllPendingForBrand,
+  updateProductMaterials,
+} from "./actions";
+
+interface CanonicalMaterial {
+  id: string;
+  name: string;
+  is_natural: boolean;
+}
+
+interface ProductMaterial {
+  id: string;
+  name: string;
+  percentage: number;
+  is_natural: boolean;
+}
 
 interface ProductRow {
   id: string;
@@ -16,12 +34,13 @@ interface ProductRow {
   brand_id: string;
   brand_name: string;
   brand_slug: string;
-  materials: Array<{ name: string; percentage: number; is_natural: boolean }>;
+  materials: ProductMaterial[];
 }
 
 interface Props {
   products: ProductRow[];
   brands: Array<{ id: string; name: string; slug: string }>;
+  canonicalMaterials: CanonicalMaterial[];
   statusCounts: Record<string, number>;
   currentStatus: string;
   currentBrand: string;
@@ -33,6 +52,7 @@ interface Props {
 export function ReviewDashboard({
   products,
   brands,
+  canonicalMaterials,
   statusCounts,
   currentStatus,
   currentBrand,
@@ -44,6 +64,7 @@ export function ReviewDashboard({
   const [isPending, startTransition] = useTransition();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [focusIndex, setFocusIndex] = useState(0);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const totalPages = Math.ceil(totalCount / pageSize);
 
@@ -245,7 +266,14 @@ export function ReviewDashboard({
                     />
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
+                    <a
+                      href={product.affiliate_url ?? "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex items-center gap-3 group"
+                      title="Open product page"
+                    >
                       {product.image_url ? (
                         <img
                           src={product.image_url}
@@ -258,34 +286,61 @@ export function ReviewDashboard({
                         </div>
                       )}
                       <div>
-                        <div className="font-medium text-sm text-text leading-tight">
+                        <div className="font-medium text-sm text-text leading-tight group-hover:text-accent group-hover:underline">
                           {product.name}
                         </div>
                         <div className="text-xs text-muted mt-0.5">{product.category}</div>
                       </div>
-                    </div>
+                    </a>
                   </td>
                   <td className="px-4 py-3 text-sm text-muted">{product.brand_name}</td>
                   <td className="px-4 py-3">
-                    {product.materials.length > 0 ? (
-                      <div className="flex flex-wrap gap-1">
-                        {product.materials
-                          .sort((a, b) => b.percentage - a.percentage)
-                          .map((m) => (
-                            <span
-                              key={m.name}
-                              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs ${
-                                m.is_natural
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-amber-100 text-amber-800"
-                              }`}
-                            >
-                              {m.percentage}% {m.name}
-                            </span>
-                          ))}
-                      </div>
+                    {editingId === product.id ? (
+                      <MaterialsEditor
+                        productId={product.id}
+                        initial={product.materials}
+                        canonicalMaterials={canonicalMaterials}
+                        onClose={() => setEditingId(null)}
+                        onSave={(mats) =>
+                          startTransition(async () => {
+                            await updateProductMaterials(product.id, mats);
+                            setEditingId(null);
+                          })
+                        }
+                        isPending={isPending}
+                      />
                     ) : (
-                      <span className="text-xs text-muted italic">No materials</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingId(product.id);
+                        }}
+                        className="text-left w-full hover:bg-surface/60 rounded -mx-1 px-1 py-0.5 cursor-pointer"
+                        title="Click to edit materials"
+                      >
+                        {product.materials.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {product.materials
+                              .slice()
+                              .sort((a, b) => b.percentage - a.percentage)
+                              .map((m) => (
+                                <span
+                                  key={m.id}
+                                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs ${
+                                    m.is_natural
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-amber-100 text-amber-800"
+                                  }`}
+                                >
+                                  {m.percentage}% {m.name}
+                                </span>
+                              ))}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted italic">+ Add materials</span>
+                        )}
+                      </button>
                     )}
                   </td>
                   <td className="px-4 py-3">
@@ -376,5 +431,122 @@ function ConfidenceBadge({ value }: { value: number | null }) {
     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>
       {pct}%
     </span>
+  );
+}
+
+interface EditorRow {
+  materialId: string;
+  percentage: number;
+}
+
+function MaterialsEditor({
+  productId: _productId,
+  initial,
+  canonicalMaterials,
+  onClose,
+  onSave,
+  isPending,
+}: {
+  productId: string;
+  initial: ProductMaterial[];
+  canonicalMaterials: CanonicalMaterial[];
+  onClose: () => void;
+  onSave: (rows: EditorRow[]) => void;
+  isPending: boolean;
+}) {
+  const [rows, setRows] = useState<EditorRow[]>(() =>
+    initial.length > 0
+      ? initial.map((m) => ({ materialId: m.id, percentage: m.percentage }))
+      : [{ materialId: "", percentage: 100 }]
+  );
+
+  const total = rows.reduce((sum, r) => sum + (Number(r.percentage) || 0), 0);
+  const totalOk = total === 100;
+
+  const updateRow = (idx: number, patch: Partial<EditorRow>) => {
+    setRows((prev) => prev.map((r, i) => (i === idx ? { ...r, ...patch } : r)));
+  };
+  const addRow = () => setRows((prev) => [...prev, { materialId: "", percentage: 0 }]);
+  const removeRow = (idx: number) =>
+    setRows((prev) => prev.filter((_, i) => i !== idx));
+
+  return (
+    <div
+      className="space-y-2 bg-surface/50 rounded-lg p-2 border border-surface-dark"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {rows.map((row, idx) => (
+        <div key={idx} className="flex items-center gap-2">
+          <select
+            value={row.materialId}
+            onChange={(e) => updateRow(idx, { materialId: e.target.value })}
+            className="flex-1 min-w-0 bg-white border border-surface-dark rounded px-2 py-1 text-xs text-text"
+          >
+            <option value="">Select material…</option>
+            {canonicalMaterials.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name}
+                {m.is_natural ? "" : " (synthetic)"}
+              </option>
+            ))}
+          </select>
+          <input
+            type="number"
+            min={0}
+            max={100}
+            value={row.percentage}
+            onChange={(e) =>
+              updateRow(idx, { percentage: Number(e.target.value) || 0 })
+            }
+            className="w-14 bg-white border border-surface-dark rounded px-1.5 py-1 text-xs text-text text-right"
+          />
+          <span className="text-xs text-muted">%</span>
+          <button
+            type="button"
+            onClick={() => removeRow(idx)}
+            className="text-xs text-muted hover:text-red-600 px-1"
+            title="Remove"
+          >
+            ✕
+          </button>
+        </div>
+      ))}
+
+      <div className="flex items-center justify-between pt-1">
+        <button
+          type="button"
+          onClick={addRow}
+          className="text-xs text-accent hover:underline"
+        >
+          + Add material
+        </button>
+        <span
+          className={`text-xs font-mono ${totalOk ? "text-green-700" : "text-red-600"}`}
+        >
+          total {total}%
+        </span>
+      </div>
+
+      <div className="flex items-center gap-2 pt-1">
+        <button
+          type="button"
+          disabled={!totalOk || isPending || rows.some((r) => !r.materialId)}
+          onClick={() =>
+            onSave(rows.filter((r) => r.materialId && r.percentage > 0))
+          }
+          className="px-2.5 py-1 rounded-md text-xs font-medium bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+        >
+          Save
+        </button>
+        <button
+          type="button"
+          onClick={onClose}
+          disabled={isPending}
+          className="px-2.5 py-1 rounded-md text-xs font-medium bg-surface text-text hover:bg-surface-dark disabled:opacity-50"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
   );
 }

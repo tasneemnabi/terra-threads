@@ -53,13 +53,13 @@ export default async function ReviewPage({
   const { data: allMaterials } = productIds.length
     ? await supabase
         .from("product_materials")
-        .select("product_id, percentage, materials(name, is_natural)")
+        .select("product_id, percentage, materials(id, name, is_natural)")
         .in("product_id", productIds)
     : { data: [] };
 
   const materialsByProduct: Record<
     string,
-    Array<{ name: string; percentage: number; is_natural: boolean }>
+    Array<{ id: string; name: string; percentage: number; is_natural: boolean }>
   > = {};
   for (const pm of allMaterials || []) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -67,11 +67,18 @@ export default async function ReviewPage({
     if (!mat) continue;
     if (!materialsByProduct[pm.product_id]) materialsByProduct[pm.product_id] = [];
     materialsByProduct[pm.product_id].push({
+      id: mat.id,
       name: mat.name,
       percentage: pm.percentage,
       is_natural: mat.is_natural,
     });
   }
+
+  // Canonical material list for the inline editor dropdown
+  const { data: canonicalMaterials } = await supabase
+    .from("materials")
+    .select("id, name, is_natural")
+    .order("name");
 
   // Get counts per status
   const statusCounts: Record<string, number> = {};
@@ -113,6 +120,7 @@ export default async function ReviewPage({
         <ReviewDashboard
           products={formattedProducts}
           brands={(brands || []).map((b) => ({ id: b.id, name: b.name, slug: b.slug }))}
+          canonicalMaterials={canonicalMaterials || []}
           statusCounts={statusCounts}
           currentStatus={status}
           currentBrand={brandSlug}
