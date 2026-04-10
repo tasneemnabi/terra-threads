@@ -1,0 +1,8 @@
+{
+  "name": "Happy Earth",
+  "website_url": "https://www.happyearthapparel.com",
+  "description": "Fair Trade, B Corp certified sustainable apparel brand making casual basics, sweatshirts, and tees from GOTS-certified organic cotton, with 1% of revenue donated to environmental causes.",
+  "audience": ["Women", "Men"],
+  "fiber_types": ["Organic Cotton"],
+  "categories": ["Basics", "Tops", "Loungewear"]
+}
