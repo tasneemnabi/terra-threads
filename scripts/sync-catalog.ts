@@ -318,11 +318,49 @@ export async function syncCatalogBrand(
       const hasMaterials =
         extraction !== null && Object.keys(extraction.materials).length > 0;
 
-      // Check banned
+      // If banned, upsert a minimal rejected row so body_hash gets written.
+      // Next run will short-circuit via the rejected-status skip above.
       if (extraction && isExtractionBanned(extraction)) {
         stats.skippedBanned++;
         if (options.dryRun) {
           console.log(`  SKIP (banned): ${cleanName}`);
+          continue;
+        }
+        const existing = existingUrls.get(url);
+        if (existing) {
+          await supabase
+            .from("products")
+            .update({
+              sync_status: "rejected",
+              material_confidence: extraction.confidence,
+              body_hash: incomingHash,
+            })
+            .eq("id", existing.id);
+        } else {
+          const bannedSlug = `${brand.slug}-${slugify(cleanName)}`;
+          const bannedRow = {
+            brand_id: brand.id,
+            name: cleanName,
+            slug: bannedSlug,
+            category: guessCategory(cleanName),
+            affiliate_url: url,
+            sync_status: "rejected",
+            material_confidence: extraction.confidence,
+            body_hash: incomingHash,
+          };
+          const { error: bannedErr } = await supabase
+            .from("products")
+            .insert(bannedRow);
+          if (bannedErr?.code === "23505" && bannedErr.message.includes("slug")) {
+            await supabase
+              .from("products")
+              .insert({ ...bannedRow, slug: `${bannedSlug}-${Date.now()}` });
+          } else if (bannedErr) {
+            console.error(
+              `  ERROR upserting banned ${cleanName}: ${bannedErr.message}`
+            );
+            stats.errors++;
+          }
         }
         continue;
       }

@@ -262,11 +262,47 @@ export async function syncBrand(
 
     if (hasMaterials) regexHits++;
 
-    // If regex found banned materials, skip
+    // If regex found banned materials, upsert a minimal rejected row so the
+    // body_hash gets written. Next run short-circuits via the settled-status
+    // skip (which runs before the body_hash gate).
     if (extraction && isExtractionBanned(extraction)) {
       stats.skippedBanned++;
       if (options.dryRun) {
         console.log(`  SKIP (banned): ${shopifyProduct.title}`);
+        continue;
+      }
+      const bannedCategory = guessCategory(
+        `${shopifyProduct.title} ${shopifyProduct.product_type} ${(shopifyProduct.tags || []).join(" ")}`
+      );
+      const bannedSlug = `${brand.slug}-${slugify(shopifyProduct.title)}`;
+      const bannedRow = {
+        brand_id: brand.id,
+        name: shopifyProduct.title,
+        slug: bannedSlug,
+        category: bannedCategory,
+        shopify_product_id: shopifyProduct.id,
+        sync_status: "rejected",
+        material_confidence: extraction.confidence,
+        body_hash: incomingHash,
+      };
+      const { error: bannedErr } = await supabase
+        .from("products")
+        .upsert(bannedRow, {
+          onConflict: "brand_id,shopify_product_id",
+          ignoreDuplicates: false,
+        });
+      if (bannedErr?.code === "23505" && bannedErr.message.includes("slug")) {
+        await supabase
+          .from("products")
+          .upsert(
+            { ...bannedRow, slug: `${bannedSlug}-${shopifyProduct.id}` },
+            { onConflict: "brand_id,shopify_product_id", ignoreDuplicates: false }
+          );
+      } else if (bannedErr) {
+        console.error(
+          `  ERROR upserting banned ${shopifyProduct.title}: ${bannedErr.message}`
+        );
+        stats.errors++;
       }
       continue;
     }
