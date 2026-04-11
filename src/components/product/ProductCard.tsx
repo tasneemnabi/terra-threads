@@ -27,6 +27,7 @@ export function ProductCard({ product, hideBrand }: ProductCardProps) {
             src={product.image_url!}
             alt={product.name}
             fill
+            unoptimized
             onError={() => setImgError(true)}
             className={`object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]${!product.is_available ? " opacity-60" : ""}`}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"

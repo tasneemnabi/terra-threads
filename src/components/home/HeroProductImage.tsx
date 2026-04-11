@@ -36,6 +36,7 @@ function CollageImage({
       alt={alt}
       fill
       priority
+      unoptimized
       className={`object-cover transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
       sizes={sizes}
       onLoad={() => {

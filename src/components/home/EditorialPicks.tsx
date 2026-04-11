@@ -23,6 +23,7 @@ function ProductCard({
             src={product.image_url}
             alt={product.name}
             fill
+            unoptimized
             priority={priority}
             className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -81,6 +82,7 @@ export function EditorialPicks({ products }: EditorialPicksProps) {
                     src={featured.image_url}
                     alt={featured.name}
                     fill
+                    unoptimized
                     priority
                     className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
                     sizes="(max-width: 1024px) 100vw, 45vw"
