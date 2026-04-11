@@ -43,3 +43,39 @@ export async function approveAllPendingForBrand(brandId: string) {
   revalidatePath("/admin/review");
   return count || 0;
 }
+
+export async function updateProductMaterials(
+  productId: string,
+  materials: Array<{ materialId: string; percentage: number }>
+) {
+  const supabase = createAdminClient();
+
+  // Wipe existing rows, then re-insert
+  const { error: delError } = await supabase
+    .from("product_materials")
+    .delete()
+    .eq("product_id", productId);
+  if (delError) throw new Error(delError.message);
+
+  if (materials.length > 0) {
+    const rows = materials
+      .filter((m) => m.materialId && m.percentage > 0)
+      .map((m) => ({
+        product_id: productId,
+        material_id: m.materialId,
+        percentage: m.percentage,
+      }));
+    if (rows.length > 0) {
+      const { error } = await supabase.from("product_materials").insert(rows);
+      if (error) throw new Error(error.message);
+    }
+  }
+
+  // Bump confidence since a human curated it
+  await supabase
+    .from("products")
+    .update({ material_confidence: 1.0 })
+    .eq("id", productId);
+
+  revalidatePath("/admin/review");
+}

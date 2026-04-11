@@ -12,6 +12,7 @@
  *   npx tsx scripts/sync-shopify.ts --llm --brand layere (single brand)
  */
 
+import { createHash } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { fetchAllProducts, type ShopifyProduct } from "./lib/shopify-fetcher.js";
 import { extractMaterialsRegex, extractMaterialsBatch, type ExtractedMaterials } from "./lib/material-extractor.js";
@@ -21,6 +22,12 @@ import { ensureMaterialExists, syncProductMaterials } from "./lib/db-helpers.js"
 import { launchBrowser, closeBrowser, scrapePage } from "./lib/page-scraper.js";
 import { extractMaterialsFromText } from "./lib/material-extractor.js";
 import { initStorageBucket, optimizeProductImages } from "./lib/image-optimizer.js";
+import { getLocator } from "./brand-scrapers/registry.js";
+import type { LocatedComposition } from "./brand-scrapers/locators/types.js";
+
+function sha256(input: string): string {
+  return createHash("sha256").update(input).digest("hex");
+}
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -43,6 +50,7 @@ interface SyncStats {
   skippedBanned: number;
   skippedNonClothing: number;
   skippedSettled: number;
+  skippedUnchanged: number;
   availabilityUpdated: number;
   scrapeHits: number;
   flaggedReview: number;
@@ -50,6 +58,7 @@ interface SyncStats {
   missingPrice: number;
   missingImage: number;
   errors: number;
+  locatorSources: Record<string, number>;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────
@@ -76,7 +85,7 @@ import { classifyProductType, mapActivewearType, shouldRejectProduct, classifyAu
 export async function syncBrand(
   supabase: SupabaseClient,
   brand: BrandRow,
-  options: { dryRun: boolean },
+  options: { dryRun: boolean; forceRescan?: boolean },
   materialCache: Map<string, string>
 ): Promise<SyncStats> {
   const stats: SyncStats = {
@@ -88,6 +97,7 @@ export async function syncBrand(
     skippedBanned: 0,
     skippedNonClothing: 0,
     skippedSettled: 0,
+    skippedUnchanged: 0,
     availabilityUpdated: 0,
     scrapeHits: 0,
     flaggedReview: 0,
@@ -95,6 +105,7 @@ export async function syncBrand(
     missingPrice: 0,
     missingImage: 0,
     errors: 0,
+    locatorSources: {},
   };
 
   console.log(`\n${"═".repeat(60)}`);
@@ -119,14 +130,16 @@ export async function syncBrand(
 
   // Fetch existing product statuses so we don't re-process settled products
   const existingStatusMap = new Map<number, string>();
+  const existingHashMap = new Map<number, string | null>();
   {
     const { data: existing } = await supabase
       .from("products")
-      .select("shopify_product_id, sync_status")
+      .select("shopify_product_id, sync_status, body_hash")
       .eq("brand_id", brand.id)
       .not("shopify_product_id", "is", null);
     for (const row of existing || []) {
       existingStatusMap.set(row.shopify_product_id, row.sync_status);
+      existingHashMap.set(row.shopify_product_id, row.body_hash ?? null);
     }
     const rejectedCount = [...existingStatusMap.values()].filter((s) => s === "rejected").length;
     const approvedCount = [...existingStatusMap.values()].filter((s) => s === "approved").length;
@@ -185,6 +198,24 @@ export async function syncBrand(
       continue;
     }
 
+    // Body-hash skip gate: if the source HTML hasn't changed and the product
+    // is already settled (not pending), skip re-processing. Dry-runs and
+    // --force-rescan bypass the gate so operators can always force a full pass.
+    const incomingHash = sha256(shopifyProduct.body_html ?? "");
+    const existingHash = existingHashMap.get(shopifyProduct.id);
+    const existingStatusForSkip = existingStatusMap.get(shopifyProduct.id);
+    if (
+      !options.forceRescan &&
+      !options.dryRun &&
+      existingHash &&
+      existingHash === incomingHash &&
+      existingStatusForSkip &&
+      existingStatusForSkip !== "pending"
+    ) {
+      stats.skippedUnchanged++;
+      continue;
+    }
+
     // Skip non-clothing products
     const rejection = shouldRejectProduct(shopifyProduct.title, brand.slug, shopifyProduct.product_type, shopifyProduct.tags);
     if (rejection.rejected) {
@@ -195,16 +226,84 @@ export async function syncBrand(
       continue;
     }
 
-    const extraction = extractMaterialsRegex(shopifyProduct);
+    const locator = getLocator(brand.slug);
+    let located: LocatedComposition | null = null;
+    try {
+      located = await locator({
+        brandSlug: brand.slug,
+        shopifyProduct,
+        productUrl: `https://${brand.shopify_domain}/products/${shopifyProduct.handle}`,
+        fetchHtml: async () => {
+          const resp = await fetch(`https://${brand.shopify_domain}/products/${shopifyProduct.handle}`);
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          return resp.text();
+        },
+      });
+    } catch (err) {
+      console.error(`  locator error for ${shopifyProduct.title}: ${(err as Error).message}`);
+    }
+
+    // Track source distribution for telemetry
+    if (located) {
+      stats.locatorSources[located.source] = (stats.locatorSources[located.source] || 0) + 1;
+    }
+
+    // Convert LocatedComposition to ExtractedMaterials shape for downstream code
+    const extraction: ExtractedMaterials | null = located
+      ? {
+          materials: located.materials,
+          confidence: located.confidence,
+          hasBanned: Object.keys(located.materials).some((m) =>
+            /Nylon|Polyester|Acrylic|Polyamide|Polypropylene/i.test(m)
+          ),
+          method: "regex",
+        }
+      : null;
     const hasMaterials = extraction !== null && Object.keys(extraction.materials).length > 0;
 
     if (hasMaterials) regexHits++;
 
-    // If regex found banned materials, skip
+    // If regex found banned materials, upsert a minimal rejected row so the
+    // body_hash gets written. Next run short-circuits via the settled-status
+    // skip (which runs before the body_hash gate).
     if (extraction && isExtractionBanned(extraction)) {
       stats.skippedBanned++;
       if (options.dryRun) {
         console.log(`  SKIP (banned): ${shopifyProduct.title}`);
+        continue;
+      }
+      const bannedCategory = guessCategory(
+        `${shopifyProduct.title} ${shopifyProduct.product_type} ${(shopifyProduct.tags || []).join(" ")}`
+      );
+      const bannedSlug = `${brand.slug}-${slugify(shopifyProduct.title)}`;
+      const bannedRow = {
+        brand_id: brand.id,
+        name: shopifyProduct.title,
+        slug: bannedSlug,
+        category: bannedCategory,
+        shopify_product_id: shopifyProduct.id,
+        sync_status: "rejected",
+        material_confidence: extraction.confidence,
+        body_hash: incomingHash,
+      };
+      const { error: bannedErr } = await supabase
+        .from("products")
+        .upsert(bannedRow, {
+          onConflict: "brand_id,shopify_product_id",
+          ignoreDuplicates: false,
+        });
+      if (bannedErr?.code === "23505" && bannedErr.message.includes("slug")) {
+        await supabase
+          .from("products")
+          .upsert(
+            { ...bannedRow, slug: `${bannedSlug}-${shopifyProduct.id}` },
+            { onConflict: "brand_id,shopify_product_id", ignoreDuplicates: false }
+          );
+      } else if (bannedErr) {
+        console.error(
+          `  ERROR upserting banned ${shopifyProduct.title}: ${bannedErr.message}`
+        );
+        stats.errors++;
       }
       continue;
     }
@@ -272,6 +371,8 @@ export async function syncBrand(
         sync_status: syncStatus,
         material_confidence: confidence,
         raw_body_html: shopifyProduct.body_html,
+        body_hash: incomingHash,
+        source_updated_at: shopifyProduct.updated_at || null,
       };
 
       const { data: upserted, error: upsertError } = await supabase
@@ -421,22 +522,34 @@ export async function syncBrand(
 
 // ─── Pass 2: LLM extraction for products missing materials ──────────
 
-async function llmPass(
+export async function llmPass(
   supabase: SupabaseClient,
   brandSlug: string | null,
   materialCache: Map<string, string>,
-  limit: number = 500
+  options: { limit?: number; onlyLocatorMissed?: boolean } = {}
 ): Promise<void> {
+  const limit = options.limit ?? 500;
+  const onlyLocatorMissed = options.onlyLocatorMissed === true;
+
   console.log("\n══════════════════════════════════════════════════════");
-  console.log("LLM PASS — Extracting materials for products missing them");
+  console.log(
+    onlyLocatorMissed
+      ? "LLM PASS — Locator-missed only (review + confidence=0)"
+      : "LLM PASS — Extracting materials for products missing them"
+  );
   console.log("══════════════════════════════════════════════════════\n");
 
-  // Query products (pending or review) that have raw_body_html
+  // Query products that have raw_body_html
   let query = supabase
     .from("products")
     .select("id, name, price, image_url, raw_body_html, sync_status, brands!inner(slug)")
-    .in("sync_status", ["pending", "review"])
     .not("raw_body_html", "is", null);
+
+  if (onlyLocatorMissed) {
+    query = query.eq("sync_status", "review").eq("material_confidence", 0);
+  } else {
+    query = query.in("sync_status", ["pending", "review"]);
+  }
 
   if (brandSlug) {
     query = query.eq("brands.slug", brandSlug);
@@ -535,6 +648,7 @@ async function main() {
   const args = process.argv.slice(2);
   const dryRun = args.includes("--dry-run");
   const llmMode = args.includes("--llm");
+  const forceRescan = args.includes("--force-rescan");
   const brandFlag = args.indexOf("--brand");
   const brandSlug = brandFlag !== -1 ? args[brandFlag + 1] : null;
 
@@ -596,7 +710,7 @@ async function main() {
   const allStats: SyncStats[] = [];
 
   for (const brand of brands) {
-    const stats = await syncBrand(supabase, brand, { dryRun }, materialCache);
+    const stats = await syncBrand(supabase, brand, { dryRun, forceRescan }, materialCache);
     allStats.push(stats);
   }
 
@@ -610,6 +724,7 @@ async function main() {
     totalApproved = 0,
     totalSkipped = 0,
     totalSettled = 0,
+    totalSkippedUnchanged = 0,
     totalAvailabilityUpdated = 0,
     totalScrapeHits = 0,
     totalReview = 0,
@@ -617,20 +732,26 @@ async function main() {
     totalMissingPrice = 0,
     totalMissingImage = 0,
     totalErrors = 0;
+  const totalLocatorSources: Record<string, number> = {};
 
   for (const s of allStats) {
     const scrapePart = s.scrapeHits > 0 ? `, ${s.scrapeHits} scraped` : "";
     const missingPart = (s.missingPrice > 0 || s.missingImage > 0)
       ? `, ${s.missingPrice} no-price, ${s.missingImage} no-image`
       : "";
+    const sourcesEntries = Object.entries(s.locatorSources);
+    const sourcesPart = sourcesEntries.length > 0
+      ? ` [${sourcesEntries.map(([k, v]) => `${k}: ${v}`).join(", ")}]`
+      : "";
     console.log(
-      `  ${s.brand}: ${s.fetched} fetched, ${s.skippedSettled} settled, ${s.skippedNonClothing} non-clothing, ${s.inserted} synced, ${s.autoApproved} auto-approved, ${s.skippedBanned} banned, ${s.flaggedReview} review${scrapePart}${missingPart}, ${s.removed} removed`
+      `  ${s.brand}: ${s.fetched} fetched, ${s.skippedSettled} settled, ${s.skippedNonClothing} non-clothing, ${s.inserted} synced, ${s.autoApproved} auto-approved, ${s.skippedBanned} banned, ${s.flaggedReview} review, ${s.skippedUnchanged} unchanged${sourcesPart}${scrapePart}${missingPart}, ${s.removed} removed`
     );
     totalFetched += s.fetched;
     totalInserted += s.inserted;
     totalApproved += s.autoApproved;
     totalSkipped += s.skippedBanned;
     totalSettled += s.skippedSettled;
+    totalSkippedUnchanged += s.skippedUnchanged;
     totalAvailabilityUpdated += s.availabilityUpdated;
     totalScrapeHits += s.scrapeHits;
     totalReview += s.flaggedReview;
@@ -638,6 +759,9 @@ async function main() {
     totalMissingPrice += s.missingPrice;
     totalMissingImage += s.missingImage;
     totalErrors += s.errors;
+    for (const [k, v] of Object.entries(s.locatorSources)) {
+      totalLocatorSources[k] = (totalLocatorSources[k] || 0) + v;
+    }
   }
 
   const scrapeTotalPart = totalScrapeHits > 0 ? `, ${totalScrapeHits} scraped` : "";
@@ -645,7 +769,11 @@ async function main() {
     ? `, ${totalMissingPrice} no-price, ${totalMissingImage} no-image`
     : "";
   const availPart = totalAvailabilityUpdated > 0 ? `, ${totalAvailabilityUpdated} availability-updated` : "";
-  console.log(`\nTotal: ${totalFetched} fetched, ${totalSettled} settled (skipped), ${totalInserted} synced, ${totalApproved} auto-approved, ${totalSkipped} banned, ${totalReview} review${availPart}${scrapeTotalPart}${missingTotalPart}, ${totalRemoved} removed, ${totalErrors} errors`);
+  const totalSourcesEntries = Object.entries(totalLocatorSources);
+  const totalSourcesPart = totalSourcesEntries.length > 0
+    ? ` [${totalSourcesEntries.map(([k, v]) => `${k}: ${v}`).join(", ")}]`
+    : "";
+  console.log(`\nTotal: ${totalFetched} fetched, ${totalSettled} settled (skipped), ${totalSkippedUnchanged} unchanged (skipped), ${totalInserted} synced, ${totalApproved} auto-approved, ${totalSkipped} banned, ${totalReview} review${totalSourcesPart}${availPart}${scrapeTotalPart}${missingTotalPart}, ${totalRemoved} removed, ${totalErrors} errors`);
 
   if (totalReview > 0) {
     console.log(`\nRun 'npx tsx scripts/sync-shopify.ts --llm' to extract materials for review products`);

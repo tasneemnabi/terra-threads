@@ -36,6 +36,7 @@ export interface ScrapedProduct {
   additionalImages: string[];
   isAvailable: boolean;
   text: string;
+  html: string;  // raw rendered HTML from page.content() — used by locators
   success: boolean;
   error?: string;
 }
@@ -303,6 +304,10 @@ export async function scrapeProductData(
     await page.waitForTimeout(3000);
     await expandAccordions(page);
 
+    // Capture raw HTML after accordions have been expanded so
+    // dynamically revealed content is available for locator plugins.
+    const html = await page.content();
+
     // 1. Try JSON-LD first (most reliable source)
     const jsonLd = await extractJsonLd(page!);
 
@@ -410,6 +415,7 @@ export async function scrapeProductData(
       additionalImages: allImages.slice(1),
       isAvailable,
       text,
+      html,
       success: true,
     };
   } catch (err) {
@@ -423,6 +429,7 @@ export async function scrapeProductData(
       additionalImages: [],
       isAvailable: true,
       text: "",
+      html: "",
       success: false,
       error: (err as Error).message,
     };

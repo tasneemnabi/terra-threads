@@ -11,6 +11,7 @@ export interface Brand {
   created_at: string;
   shopify_domain: string | null;
   last_synced_at: string | null;
+  availability_cadence_days: number;
   sync_enabled: boolean;
 }
 
@@ -32,9 +33,11 @@ export interface Product {
   shopify_product_id: number | null;
   shopify_variant_id: number | null;
   last_synced_at: string | null;
+  source_updated_at: string | null;
   sync_status: "pending" | "review" | "approved" | "rejected" | null;
   material_confidence: number | null;
   raw_body_html: string | null;
+  body_hash: string | null;
   audience: string | null;
   is_available: boolean;
 }

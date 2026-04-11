@@ -1,0 +1,8 @@
+{
+  "name": "Happy Earth Apparel",
+  "website_url": "https://www.happyearthapparel.com",
+  "description": "Texas-based sustainable apparel brand making colorful organic cotton basics, dresses, and activewear, with a portion of every sale funding tree planting and ocean plastic cleanup.",
+  "audience": ["Women"],
+  "fiber_types": ["Organic Cotton"],
+  "categories": ["Basics", "Dresses", "Tops", "Activewear", "Loungewear"]
+}
