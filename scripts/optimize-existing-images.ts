@@ -27,7 +27,7 @@ import { loadEnv, getSupabaseAdmin } from "./lib/env.js";
 const BUCKET_NAME = "product-images";
 const MAX_DIMENSION = 1200;
 const WEBP_QUALITY = 80;
-const RATE_LIMIT_MS = 500;
+const CONCURRENCY = 10;
 
 // ─── CLI Flags ───────────────────────────────────────────────────────
 
@@ -41,10 +41,6 @@ const brandSlug = brandFlagIdx !== -1 ? args[brandFlagIdx + 1] : null;
 function isAlreadyOptimized(url: string | null): boolean {
   if (!url) return false;
   return url.includes("/storage/v1/object/public/product-images/");
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function downloadImage(url: string): Promise<Buffer> {
@@ -147,10 +143,10 @@ async function main() {
   // ─── 3. Process each product ──────────────────────────────────────
 
   const stats = { total: products.length, optimized: 0, skipped: 0, failed: 0 };
+  let completed = 0;
 
-  for (let i = 0; i < products.length; i++) {
-    const product = products[i];
-    const prefix = `[${i + 1}/${products.length}]`;
+  async function processProduct(product: any) {
+    const prefix = `[${++completed}/${products.length}]`;
 
     // Collect all image URLs: primary + additional
     const allUrls: { url: string; isPrimary: boolean; index: number }[] = [];
@@ -168,41 +164,31 @@ async function main() {
     if (allUrls.length === 0) {
       console.log(`${prefix} SKIP ${product.name} (no images)`);
       stats.skipped++;
-      continue;
+      return;
     }
 
     // Check if ALL images are already optimized
     const allOptimized = allUrls.every((img) => isAlreadyOptimized(img.url));
     if (allOptimized) {
-      console.log(`${prefix} SKIP ${product.name} (already optimized)`);
       stats.skipped++;
-      continue;
+      return;
     }
 
     // In dry run, just log what we'd do
     if (dryRun) {
       const unoptimized = allUrls.filter((img) => !isAlreadyOptimized(img.url));
-      console.log(`${prefix} WOULD OPTIMIZE ${product.name}`);
-      for (const img of unoptimized) {
-        const label = img.isPrimary ? "primary" : `additional[${img.index - 1}]`;
-        console.log(`       ${label}: ${img.url}`);
-      }
+      console.log(`${prefix} WOULD OPTIMIZE ${product.name} (${unoptimized.length} images)`);
       stats.optimized++;
-      continue;
+      return;
     }
 
     // Process images
-    console.log(`${prefix} Processing: ${product.name}`);
-
     let newPrimaryUrl: string | null = null;
     const newAdditionalUrls: string[] = [...additionalImages];
     let hadError = false;
 
     for (const img of allUrls) {
-      if (isAlreadyOptimized(img.url)) {
-        console.log(`       image ${img.index}: already optimized, skipping`);
-        continue;
-      }
+      if (isAlreadyOptimized(img.url)) continue;
 
       try {
         const raw = await downloadImage(img.url);
@@ -224,19 +210,13 @@ async function main() {
           .from(BUCKET_NAME)
           .getPublicUrl(storagePath);
 
-        const publicUrl = publicUrlData.publicUrl;
-
         if (img.isPrimary) {
-          console.log(`       primary: ${img.url}`);
-          console.log(`            -> ${publicUrl}`);
-          newPrimaryUrl = publicUrl;
+          newPrimaryUrl = publicUrlData.publicUrl;
         } else {
-          console.log(`       additional[${img.index - 1}]: ${img.url}`);
-          console.log(`            -> ${publicUrl}`);
-          newAdditionalUrls[img.index - 1] = publicUrl;
+          newAdditionalUrls[img.index - 1] = publicUrlData.publicUrl;
         }
       } catch (err: any) {
-        console.error(`       ERROR image ${img.index}: ${err.message}`);
+        console.error(`${prefix} ERROR ${product.name} image ${img.index}: ${err.message}`);
         hadError = true;
       }
     }
@@ -257,24 +237,21 @@ async function main() {
         .eq("id", product.id);
 
       if (updateError) {
-        console.error(`       DB UPDATE ERROR: ${updateError.message}`);
+        console.error(`${prefix} DB ERROR ${product.name}: ${updateError.message}`);
         stats.failed++;
       } else {
-        if (hadError) {
-          console.log(`       Updated (with some image errors)`);
-        } else {
-          console.log(`       Updated successfully`);
-        }
+        console.log(`${prefix} OK ${product.name}${hadError ? " (partial)" : ""}`);
         stats.optimized++;
       }
     } else if (hadError) {
       stats.failed++;
     }
+  }
 
-    // Rate-limit between products
-    if (i < products.length - 1) {
-      await sleep(RATE_LIMIT_MS);
-    }
+  // Process in batches of CONCURRENCY
+  for (let i = 0; i < products.length; i += CONCURRENCY) {
+    const batch = products.slice(i, i + CONCURRENCY);
+    await Promise.all(batch.map(processProduct));
   }
 
   // ─── 4. Summary ───────────────────────────────────────────────────
