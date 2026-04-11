@@ -9,9 +9,11 @@
 
 import type { Locator } from "./locators/types.js";
 import { defaultLocator } from "./locators/default.js";
+import { pact } from "./locators/pact.js";
 import { unboundMerino } from "./locators/unbound-merino.js";
 
 export const locators: Record<string, Locator> = {
+  "pact": pact,
   "unbound-merino": unboundMerino,
 };
 
