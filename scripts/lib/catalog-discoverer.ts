@@ -104,7 +104,10 @@ const SITEMAP_URLS = [
 ];
 
 /** Standard product URL pattern — matches /products/<slug> */
-const PRODUCT_URL_RE = /\/products\/[a-z0-9][a-z0-9\-]*/i;
+// Anchored to start so locale-prefixed paths like /en-au/products/... are excluded.
+// Shopify stores serve canonical products at /products/<slug>; locale variants are
+// duplicates that inflate discovery counts and waste Playwright time.
+const PRODUCT_URL_RE = /^\/products\/[a-z0-9][a-z0-9\-]*/i;
 
 function isProductUrl(urlOrPath: string, brandSlug?: string): boolean {
   // Extract pathname if full URL
