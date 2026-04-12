@@ -247,7 +247,7 @@ Server-side filtering by category, product_type, brand slugs, material names, pr
 - [x] ~~Affiliate tracking parameters on outbound links~~ — `affiliateUrl()` utility adds UTM params to BrandCard, FeaturedBrands, AffiliateButton
 - [ ] Per-page Open Graph images
 - [x] ~~JSON-LD structured data on brands page~~ — ItemList schema with all brands
-- [ ] Deploy to production on Vercel
+- [x] ~~Deploy to production on Vercel~~ — live
 - [x] ~~Non-Shopify brand scraper~~ — 6 of 8 scraped (Icebreaker, Pact, Quince, Fair Indigo, Rawganique, Gil Rodriguez). Everlane & prAna dropped (too much effort).
 - [x] ~~Brand detail pages — link brand cards to `/brand/[slug]` instead of external sites now that products exist~~ — featured brands on homepage now link internally
 - [x] ~~Category/filter UX~~ — replaced by `/shop` page with brand-grouped browsing, audience tabs, category + product type filtering
