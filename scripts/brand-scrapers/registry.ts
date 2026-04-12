@@ -13,6 +13,7 @@ import { gilRodriguez } from "./locators/gil-rodriguez.js";
 import { jungmaven } from "./locators/jungmaven.js";
 import { naadam } from "./locators/naadam.js";
 import { pact } from "./locators/pact.js";
+import { pyneAndSmith } from "./locators/pyne-and-smith.js";
 import { unboundMerino } from "./locators/unbound-merino.js";
 
 export const locators: Record<string, Locator> = {
@@ -20,6 +21,7 @@ export const locators: Record<string, Locator> = {
   "jungmaven": jungmaven,
   "naadam": naadam,
   "pact": pact,
+  "pyne-and-smith": pyneAndSmith,
   "unbound-merino": unboundMerino,
 };
 
