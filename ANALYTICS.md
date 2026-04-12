@@ -2,7 +2,33 @@
 
 ## Context
 
-FIBER is an affiliate-revenue site — users browse natural fiber clothing and click through to buy on brand sites. Currently the only analytics is `@vercel/analytics` which gives basic pageviews but zero insight into what drives affiliate clicks, how people filter/browse, or which homepage sections generate engagement. PostHog gives us custom events, funnels, session replay, and feature flags on a generous free tier (1M events/month).
+FIBER is an affiliate-revenue site. Users browse natural fiber clothing and click through to buy on brand sites. Today the only analytics is `@vercel/analytics`, which gives pageviews but does not explain which products, filters, homepage modules, or brand pages actually drive outbound affiliate intent.
+
+PostHog is a good fit here because the important signals are all client-side:
+- outbound affiliate clicks
+- product discovery clicks
+- filter and browse behavior
+- homepage and brand-directory engagement
+
+The plan below keeps the implementation simple, keeps revenue events first, and avoids building an event schema that becomes noisy or ambiguous after launch.
+
+---
+
+## Goals
+
+1. Measure revenue-critical outbound click intent reliably.
+2. Understand which pages, modules, and products drive those clicks.
+3. Capture browse/filter behavior with stable properties that are easy to analyze later.
+4. Keep local/dev environments safe when PostHog is not configured.
+5. Keep the schema small enough that dashboards stay trustworthy.
+
+## Non-Goals
+
+- No user identity work
+- No server-side event ingestion
+- No consent UI in this phase
+- No feature flag rollout in this phase
+- No attempt to model every UI interaction
 
 ---
 
@@ -10,216 +36,363 @@ FIBER is an affiliate-revenue site — users browse natural fiber clothing and c
 
 | File | Purpose |
 |---|---|
-| `src/lib/posthog/provider.tsx` | `"use client"` — PostHog init + `PostHogProvider` wrapper |
-| `src/lib/posthog/pageview.tsx` | `"use client"` — SPA pageview tracker using `usePathname` + `useSearchParams` |
-| `src/lib/posthog/events.ts` | Event name constants + typed capture helper functions |
-| `src/components/ui/TrackedLink.tsx` | `"use client"` — thin `next/link` wrapper that fires a PostHog event on click |
-| `src/components/brand/BrandAffiliateLink.tsx` | `"use client"` — extracted affiliate `<a>` for the brand detail page (server component can't have onClick) |
+| `src/lib/posthog/provider.tsx` | `"use client"` provider that initializes PostHog only when env vars are present |
+| `src/lib/posthog/pageview.tsx` | `"use client"` SPA pageview tracker using `usePathname` + `useSearchParams` |
+| `src/lib/posthog/events.ts` | Event name constants, typed payload builders, and thin tracking helpers |
+| `src/components/ui/TrackedLink.tsx` | `"use client"` `next/link` wrapper for explicit tracked internal navigation |
+| `src/components/brand/BrandAffiliateLink.tsx` | `"use client"` outbound affiliate link wrapper for brand page CTAs |
 
 ## Files to Modify
 
 | File | Change |
 |---|---|
-| `src/app/layout.tsx` | Wrap body contents in `<PHProvider>`, add `<PostHogPageview />` in `<Suspense>` |
-| `src/components/product/AffiliateButton.tsx` | Add product context props + `onClick` → `trackAffiliateClick()` |
-| `src/app/product/[slug]/page.tsx` | Pass extra props to `AffiliateButton` (slug, name, category, price, currency) |
-| `src/app/brand/[slug]/page.tsx` | Replace inline affiliate `<a>` tags with `<BrandAffiliateLink>` |
-| `src/components/product/ProductCard.tsx` | Add `source` prop + `onClick` → `trackProductCardClick()` |
-| `src/components/shop/ShopContent.tsx` | Add tracking calls in `setSort`, `setCategory`, `setAudience`, `toggleBrand`, `toggleFiberFamily`, `clearAllFilters`, `loadMore`, search effect |
-| `src/components/brand/BrandProducts.tsx` | Add tracking calls in filter toggles |
-| `src/components/brand/BrandsContent.tsx` | Add tracking calls in filter handlers |
-| `src/components/brand/BrandCard.tsx` | Add `onClick` → `trackBrandCardClick()` |
-| `src/components/home/Hero.tsx` | Replace `<Link>` with `<TrackedLink>` for the two CTAs |
-| `src/components/home/ShopByCategory.tsx` | Replace category `<Link>`s with `<TrackedLink>` |
-| `src/components/home/EditorialPicks.tsx` | Add tracking to product + "See all" links |
-| `src/components/home/BrowseByFiber.tsx` | Replace `<Link>`s with `<TrackedLink>` |
-| `src/components/home/FeaturedBrands.tsx` | Replace `<Link>`s with `<TrackedLink>` |
-| `src/components/home/FinalCTA.tsx` | Replace `<Link>`s with `<TrackedLink>` |
+| `src/app/layout.tsx` | Wrap app in `PHProvider`, add `<PostHogPageview />` in `<Suspense>` |
+| `src/components/product/AffiliateButton.tsx` | Add product and brand context props, fire `affiliate_click` |
+| `src/app/product/[slug]/page.tsx` | Pass tracking context into `AffiliateButton` |
+| `src/app/brand/[slug]/page.tsx` | Replace inline affiliate `<a>` tags with `BrandAffiliateLink` |
+| `src/components/product/ProductCard.tsx` | Add `source` prop, fire `product_card_click` |
+| `src/components/shop/ShopContent.tsx` | Track sort, filters, load more, and search results |
+| `src/components/brand/BrandProducts.tsx` | Track local brand-page filters and sort changes |
+| `src/components/brand/BrandsContent.tsx` | Track brands-directory filters |
+| `src/components/brand/BrandCard.tsx` | Fire `brand_card_click` |
+| `src/components/home/Hero.tsx` | Replace CTA links with `TrackedLink` |
+| `src/components/home/ShopByCategory.tsx` | Replace links with `TrackedLink` |
+| `src/components/home/EditorialPicks.tsx` | Track "See all" and product clicks |
+| `src/components/home/BrowseByFiber.tsx` | Replace links with `TrackedLink` |
+| `src/components/home/FeaturedBrands.tsx` | Replace links with `TrackedLink` |
+| `src/components/home/FinalCTA.tsx` | Replace links with `TrackedLink` |
 | `.env.example` | Add `NEXT_PUBLIC_POSTHOG_KEY` and `NEXT_PUBLIC_POSTHOG_HOST` |
+
+---
+
+## Event Design Principles
+
+### Keep custom events opinionated
+
+Custom events should be the source of truth for product, filter, and affiliate analysis. Avoid creating parallel dashboards from a mix of custom events and generic autocapture events.
+
+### Prefer stable keys over UI-specific one-offs
+
+For filters, track:
+- what changed
+- whether it was added or removed
+- what query value changed
+- what page it happened on
+
+Do not overload a single `filter_value` field to represent slugs, labels, and ranges.
+
+### Track intent, not every keystroke
+
+The shop search currently runs automatically on debounced input. That means it does not represent an explicit "submit search" intent. The event name and semantics should match that reality.
+
+### Safe by default
+
+If PostHog env vars are missing, analytics helpers should no-op cleanly.
 
 ---
 
 ## Event Schema
 
-### Tier 1 — Revenue-Critical
+### Tier 1: Revenue-Critical
 
-**`affiliate_click`** — fired on every outbound affiliate link click
+**`affiliate_click`**  
+Fired on every outbound affiliate click.
 
-| Property | Type | Example |
+| Property | Type | Notes |
 |---|---|---|
-| `brand_name` | string | `"Naadam"` |
-| `brand_slug` | string | `"naadam"` |
-| `product_slug` | string \| null | `"merino-crop-top"` (null on brand page) |
-| `product_name` | string \| null | `"Merino Crop Top"` |
-| `category` | string \| null | `"activewear"` |
-| `price` | number \| null | `98` |
-| `is_available` | boolean | `true` |
-| `domain` | string | `"naadam.co"` |
+| `brand_name` | string | |
+| `brand_slug` | string | |
+| `product_slug` | string \| null | `null` on brand page CTA |
+| `product_name` | string \| null | |
+| `category` | string \| null | |
+| `price` | number \| null | |
+| `currency` | string \| null | Add this because price without currency is incomplete |
+| `is_available` | boolean | |
+| `domain` | string | Parsed from target URL |
 | `source` | string | `"product-page"` / `"brand-detail"` / `"brand-detail-empty"` |
+| `destination_url` | string | Helpful for QA and affiliate-link debugging |
 
-Sources:
-- `AffiliateButton.tsx` (product page) — onClick on the `<a>` tag (line 16)
-- `BrandAffiliateLink.tsx` (new) — extracted from brand detail page (lines 91-112, 135-155)
+Implementation points:
+- `src/components/product/AffiliateButton.tsx`
+- `src/components/brand/BrandAffiliateLink.tsx`
 
-### Tier 2 — Product Discovery
+### Tier 2: Product Discovery
 
-**`product_card_click`** — fired when any ProductCard is clicked
+**`product_card_click`**  
+Fired when a product card navigation is clicked.
 
-| Property | Type | Example |
+| Property | Type |
+|---|---|
+| `product_slug` | string |
+| `product_name` | string |
+| `brand_name` | string |
+| `brand_slug` | string |
+| `category` | string \| null |
+| `price` | number \| null |
+| `currency` | string \| null |
+| `is_available` | boolean |
+| `source` | string |
+| `destination` | string |
+
+Allowed `source` values:
+- `shop`
+- `search`
+- `brand-page`
+- `related`
+- `editorial-picks`
+
+### Tier 3: Browse and Filter Behavior
+
+#### `filter_changed`
+
+Fired for each semantic filter change.
+
+| Property | Type | Notes |
 |---|---|---|
-| `product_slug` | string | `"merino-crop-top"` |
-| `product_name` | string | `"Merino Crop Top"` |
-| `brand_name` | string | `"Naadam"` |
-| `brand_slug` | string | `"naadam"` |
-| `category` | string | `"activewear"` |
-| `price` | number | `98` |
-| `source` | string | `"shop"` / `"brand-page"` / `"related"` / `"editorial-picks"` / `"search"` |
-
-Implementation: Add a `source` prop to `ProductCard`, thread from parent components.
-
-### Tier 3 — Filter & Browse Behavior
-
-**`filter_applied`** — fired on each individual filter change
-
-| Property | Type | Example |
-|---|---|---|
-| `filter_type` | string | `"category"` / `"brand"` / `"fiber"` / `"tier"` / `"audience"` / `"product_type"` / `"price"` |
-| `filter_value` | string | `"activewear"` / `"naadam"` / `"Cotton"` |
-| `action` | string | `"add"` / `"remove"` |
 | `page` | string | `"shop"` / `"brand-page"` / `"brands-directory"` |
+| `filter_key` | string | `"category"` / `"audience"` / `"brand"` / `"fiber_family"` / `"product_type"` / `"tier"` / `"price"` |
+| `action` | string | `"add"` / `"remove"` / `"replace"` |
+| `ui_value` | string \| null | Human-readable label such as `"Cotton"` or `"$50-$150"` |
+| `query_value` | string \| null | Actual query-param value or serialized range |
+| `result_count` | number \| null | Optional; include only if cheap and reliable |
+| `active_filter_count` | number | Count after the change |
 
-Insertion points in `ShopContent.tsx`:
-- `setCategory()` (line 455)
-- `setAudience()` (line 463)
-- `toggleBrand()` (line 499)
-- `toggleFiberFamily()` (line 491)
-- Product type toggle
-- Tier toggle
-- Price range in FilterSidebar
+Notes:
+- Use `fiber_family`, not raw material names, because the UI toggles grouped families in [ShopContent.tsx](/Users/zain/Coding/shopping/src/components/shop/ShopContent.tsx:491).
+- For price, use `action: "replace"` and set `query_value` to a normalized string like `"50:150"`.
+- For category changes that also clear product type, track only the primary user action unless you explicitly want a second event for the implicit reset.
 
-**`sort_changed`** — `{ sort_value, previous_sort }`
-- In `setSort()` (line 451)
+#### `sort_changed`
 
-**`search_executed`** — `{ query, result_count }`
-- In search effect (line 306), after results return
+| Property | Type |
+|---|---|
+| `page` | string |
+| `sort_value` | string |
+| `previous_sort` | string |
+| `result_count` | number \| null |
 
-**`load_more`** — `{ page_number, products_loaded, total_available }`
-- In `loadMore()` (line 398)
+#### `search_results_loaded`
 
-**`filters_cleared`** — `{ page }`
-- In `clearAllFilters()` (line 514)
+This replaces the earlier `search_executed` name. The current shop code fetches on debounced input in [ShopContent.tsx](/Users/zain/Coding/shopping/src/components/shop/ShopContent.tsx:306), so this event represents results loading, not explicit user submission.
 
-### Tier 4 — Homepage Engagement
+| Property | Type |
+|---|---|
+| `query` | string |
+| `query_length` | number |
+| `result_count` | number |
+| `page` | string |
 
-**`homepage_cta_click`** — single event for all homepage section clicks, broken down by `section`
+Rules:
+- Fire only after results resolve successfully.
+- Do not fire for empty queries.
+- Consider suppressing duplicate consecutive payloads for the same query/result count pair if volume becomes noisy.
 
-| Property | Type | Example |
-|---|---|---|
-| `section` | string | `"hero"` / `"shop-by-category"` / `"editorial-picks"` / `"browse-by-fiber"` / `"featured-brands"` / `"final-cta"` |
-| `cta_text` | string | `"Shop All Products"` |
-| `destination` | string | `"/shop"` / `"/shop?category=activewear"` |
-| `item_name` | string \| null | `"Merino Wool"` / `"Naadam"` (for fiber/brand clicks) |
+#### `load_more`
 
-Implementation: Use `TrackedLink` as drop-in replacement for `<Link>` in homepage server components. `TrackedLink` is a client component — server components can render client component children.
+| Property | Type |
+|---|---|
+| `page` | string |
+| `next_page` | number |
+| `products_loaded` | number |
+| `total_visible` | number |
+| `total_available` | number |
 
-### Tier 5 — Brand Engagement
+#### `filters_cleared`
 
-**`brand_card_click`** — `{ brand_name, brand_slug, is_fully_natural, source }`
-- In `BrandCard.tsx` onClick
+| Property | Type |
+|---|---|
+| `page` | string |
+| `cleared_filter_count` | number |
+
+### Tier 4: Homepage Engagement
+
+**`homepage_cta_click`**
+
+| Property | Type |
+|---|---|
+| `section` | string |
+| `cta_text` | string |
+| `destination` | string |
+| `item_name` | string \| null |
+
+Allowed `section` values:
+- `hero`
+- `shop-by-category`
+- `editorial-picks`
+- `browse-by-fiber`
+- `featured-brands`
+- `final-cta`
+
+### Tier 5: Brand Engagement
+
+**`brand_card_click`**
+
+| Property | Type |
+|---|---|
+| `brand_name` | string |
+| `brand_slug` | string |
+| `is_fully_natural` | boolean |
+| `source` | string |
+| `destination` | string |
 
 ---
 
-## Implementation Steps (in order)
+## Implementation Notes
 
-### Step 1: Install + env vars
+### 1. Provider and Init
+
+Install:
 - `npm install posthog-js`
-- Add `NEXT_PUBLIC_POSTHOG_KEY` and `NEXT_PUBLIC_POSTHOG_HOST` to `.env.example`
-- Set actual values in `.env.local` (and Vercel dashboard)
 
-### Step 2: Create core PostHog files
-- **`src/lib/posthog/provider.tsx`** — `"use client"`, calls `posthog.init()` with config:
-  - `person_profiles: 'anonymous'` (no auth in this app)
-  - `capture_pageview: false` (manual SPA tracking via PostHogPageview component)
-  - `capture_pageleave: true`
-  - `autocapture: true` (safety net for uncovered clicks)
-  - `session_recording: { maskAllInputs: true }`
-  - `respect_dnt: true`
-- **`src/lib/posthog/pageview.tsx`** — `"use client"`, captures `$pageview` on `pathname`/`searchParams` change via `useEffect`. Wrapped in `<Suspense>` because `useSearchParams()` requires it in App Router.
-- **`src/lib/posthog/events.ts`** — event name constants (`EVENTS.AFFILIATE_CLICK`, etc.) + typed capture functions to prevent typos and enforce consistent property shapes
+Add env vars:
+- `NEXT_PUBLIC_POSTHOG_KEY`
+- `NEXT_PUBLIC_POSTHOG_HOST`
 
-### Step 3: Wire into layout
-- Modify `src/app/layout.tsx`: wrap body contents in `<PHProvider>`, add `<Suspense><PostHogPageview /></Suspense>`
-- Keep existing `<Analytics />` from Vercel alongside
+Provider requirements:
+- Do not initialize PostHog when the key is missing.
+- Export a small `isPostHogEnabled()` utility or equivalent guard.
+- All tracking helpers should no-op if PostHog is unavailable.
 
-### Step 4: Instrument affiliate clicks (revenue tracking goes live)
-- Expand `AffiliateButton` props to include product context (slug, name, category, price, currency)
-- Add `onClick` handler calling `trackAffiliateClick()`
-- Update `src/app/product/[slug]/page.tsx` to pass the extra props (product object is already available)
-- Create `BrandAffiliateLink.tsx` (`"use client"`), use it in `src/app/brand/[slug]/page.tsx` to replace the two inline affiliate `<a>` tags (hero CTA at line 91 and empty-state link at line 135) — server components can't have onClick handlers
+Recommended init config:
+- `capture_pageview: false`
+- `capture_pageleave: true`
+- `person_profiles: "anonymous"`
+- `respect_dnt: true`
+- `session_recording: { maskAllInputs: true }`
 
-### Step 5: Instrument product card clicks
-- Add `source` prop to `ProductCard` interface
-- Add `onClick` calling `trackProductCardClick()`
-- Thread `source` from parent contexts:
-  - `ShopContent` → `"shop"` (and `"search"` when in search mode)
-  - `BrandProducts` → `"brand-page"`
-  - `RelatedProducts` → `"related"`
-  - `EditorialPicks` → `"editorial-picks"`
+Recommendation on autocapture:
+- Default to `autocapture: false` for launch.
+- If you want it temporarily for discovery/debugging, keep it on only with clear documentation that dashboards should use custom events, not `$autocapture`.
 
-### Step 6: Create TrackedLink, instrument homepage
-- Create `src/components/ui/TrackedLink.tsx` — wraps `next/link`, fires event on click
-- Replace `<Link>` with `<TrackedLink>` in all 6 homepage section components:
-  - `Hero.tsx` — 2 CTAs ("Shop All Products", "Browse Brands")
-  - `ShopByCategory.tsx` — 6 category cards + "View all" link
-  - `EditorialPicks.tsx` — "See all" link + product links
-  - `BrowseByFiber.tsx` — hero fiber card + 4 fiber list items + "All fibers" link
-  - `FeaturedBrands.tsx` — brand logos + "All brands" link
-  - `FinalCTA.tsx` — 2 CTAs ("Start Shopping", "See All Brands")
+### 2. Pageviews
 
-### Step 7: Instrument filter/browse tracking
-- Add tracking calls at each semantic filter function in `ShopContent.tsx`:
-  - `setSort()` → `sort_changed`
-  - `setCategory()` → `filter_applied` with `filter_type: "category"`
-  - `setAudience()` → `filter_applied` with `filter_type: "audience"`
-  - `toggleBrand()` → `filter_applied` with `filter_type: "brand"`
-  - `toggleFiberFamily()` → `filter_applied` with `filter_type: "fiber"`
-  - `clearAllFilters()` → `filters_cleared`
-  - `loadMore()` → `load_more`
-  - Search effect (after results return) → `search_executed`
-- Mirror the same pattern in `BrandProducts.tsx` and `BrandsContent.tsx` filter handlers
+Create `src/lib/posthog/pageview.tsx` and capture `$pageview` on `pathname` and `searchParams` changes.
 
-### Step 8: Instrument brand card clicks
-- Add `onClick` to `BrandCard.tsx` → `trackBrandCardClick()`
+Requirements:
+- Wrap it in `<Suspense>` in `src/app/layout.tsx`
+- Include the full path with query string
+- Ensure initial page load and client-side navigation both register
 
-### Step 9: Verify
-- Run dev server, open PostHog debug toolbar
-- Walk through each user flow and confirm events fire with correct properties
-- Check session replay is recording
-- Confirm SPA pageviews track correctly on client-side navigation
+### 3. Event Helpers
+
+Create `src/lib/posthog/events.ts` with:
+- event name constants
+- typed payload shapes
+- small helper functions like `trackAffiliateClick(payload)`
+
+Rules:
+- Keep payload builders centralized
+- Avoid inline string literals for event names across components
+- Normalize nullable fields consistently
+
+### 4. Revenue Tracking First
+
+Implement `affiliate_click` first.
+
+Reason:
+- It is the highest-value signal
+- It validates PostHog wiring before touching many UI surfaces
+
+### 5. Product Discovery Tracking
+
+Update `ProductCard` to accept a `source` prop and emit `product_card_click`.
+
+Current source threading targets:
+- `ShopContent` → `shop` or `search`
+- `BrandProducts` → `brand-page`
+- `RelatedProducts` → `related`
+- `EditorialPicks` → `editorial-picks`
+
+Note:
+- `src/components/home/EditorialPicks.tsx` currently has its own local `ProductCard` implementation, so this file needs separate instrumentation rather than relying only on the shared product card component.
+
+### 6. Homepage Tracking
+
+Create `TrackedLink` for internal navigations where explicit event metadata matters.
+
+Use it in:
+- `Hero.tsx`
+- `ShopByCategory.tsx`
+- `EditorialPicks.tsx`
+- `BrowseByFiber.tsx`
+- `FeaturedBrands.tsx`
+- `FinalCTA.tsx`
+
+### 7. Filter and Browse Tracking
+
+Instrument only semantic handlers, not low-level button elements.
+
+Shop page handlers currently live in:
+- [ShopContent.tsx](/Users/zain/Coding/shopping/src/components/shop/ShopContent.tsx:451)
+
+Brand page handlers currently live in:
+- [BrandProducts.tsx](/Users/zain/Coding/shopping/src/components/brand/BrandProducts.tsx:228)
+
+Brands directory handlers currently live in:
+- [BrandsContent.tsx](/Users/zain/Coding/shopping/src/components/brand/BrandsContent.tsx:82)
+
+Guidance:
+- `setSort()` → `sort_changed`
+- `setCategory()`, `setAudience()`, `toggleBrand()`, `toggleFiberFamily()`, `toggleProductType()`, tier change handlers, and price apply handlers → `filter_changed`
+- `clearAllFilters()` → `filters_cleared`
+- `loadMore()` → `load_more`
+- search result resolution → `search_results_loaded`
+
+### 8. Verification and QA
+
+Manual verification:
+1. Start local dev with PostHog configured.
+2. Open PostHog live events/debug view.
+3. Walk the core flows:
+   - homepage CTA click
+   - shop product card click
+   - shop search typing until results load
+   - shop filter add/remove
+   - shop load more
+   - product affiliate click
+   - brand page affiliate click
+   - brand card click
+4. Confirm payload shapes match the schema exactly.
+5. Confirm SPA pageviews fire on client-side navigation.
+6. Confirm no events fire when env vars are absent.
+
+Recommended code-level verification:
+- Add unit tests for payload builders in `events.ts`
+- Add one light render/click test for `TrackedLink` or another representative tracked component
+- Keep an event matrix in the doc or test fixtures so naming drift is visible in review
 
 ---
 
-## PostHog Configuration Notes
+## Privacy and Data Hygiene
 
-### Autocapture
-Keep **ON** as a safety net — captures generic button/link clicks without explicit instrumentation. But do NOT rely on it for affiliate clicks or filter events (need rich custom properties autocapture can't provide).
+- No PII is intentionally collected
+- Catalog metadata is acceptable event context
+- `respect_dnt: true`
+- `person_profiles: "anonymous"`
+- `maskAllInputs: true` for session recording
 
-### Session Replay
-- `maskAllInputs: true` — masks price range inputs and search box
-- No PII risk since there's no auth, no forms with personal data
-- 100% recording rate initially (low traffic) — reduce later if volume grows
-
-### Privacy
-- No PII collected — all event properties are public catalog data (product names, prices, brand names)
-- `respect_dnt: true` — honors browser Do Not Track setting
-- `person_profiles: 'anonymous'` — no user identification
-- Cookie consent banner not in scope but PostHog's `opt_out_capturing()` / `opt_in_capturing()` API is ready when we add one
+Open item:
+- If a cookie consent banner is added later, route all tracking through opt-in/opt-out controls rather than revisiting every component.
 
 ---
 
-## Not in Scope (future enhancements)
-- `posthog-node` for server-side events (not needed — all user signals are client-side)
-- Feature flags / A/B testing (infrastructure ready once SDK is in, tests created in PostHog dashboard)
-- Cookie consent banner UI
-- Group analytics (use event property breakdowns by brand/fiber instead)
-- Reverse proxy for PostHog (route through `/ingest` to avoid ad blockers — do this post-launch if needed)
+## Rollout Order
+
+1. Install PostHog and add env vars
+2. Add provider, pageview tracker, and guarded event helpers
+3. Ship `affiliate_click`
+4. Ship `product_card_click`
+5. Ship homepage CTA tracking
+6. Ship filter/sort/search/load-more tracking
+7. Ship `brand_card_click`
+8. Verify dashboards and event quality before adding anything else
+
+---
+
+## Out of Scope for This Phase
+
+- `posthog-node`
+- feature flags and experiments
+- consent banner UI
+- reverse proxying PostHog through first-party ingestion routes
+- broad autocapture-based behavioral analysis
