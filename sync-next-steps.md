@@ -3,7 +3,7 @@
 Context for a fresh session picking up Phase 6 locator work. See also
 `sync-reliability-plan.md` for the timeout / concurrency / telemetry layer.
 
-## Current state (2026-04-13 evening)
+## Current state (2026-04-13 late evening)
 
 ### Infrastructure
 - Migration 015 is applied: `products.body_hash`, `products.source_updated_at`, `brands.availability_cadence_days`.
@@ -25,8 +25,10 @@ Context for a fresh session picking up Phase 6 locator work. See also
 - `material-extractor.ts` normalizer strips ethical-sourcing prefixes (`fair trade`, `ethically sourced`, `responsibly sourced/grown`, `traceable`) before the alias lookup, plus pre-collapses hyphenated variants (`fair-trade`, `fairtrade`). Fixes the Kowtow "100% Fair Trade Organic Cotton" case where 52 clothing items had been wrongly classified as rejected.
 - Banned-product locator churn is fixed — banned branches in both sync scripts write `body_hash` + `sync_status: 'rejected'` so the next run short-circuits via the settled-status skip.
 - URL discovery regex anchored to reject locale-prefixed paths (`/en-au/products/…`, `/en-ca/products/…`, etc.) — cut Gil Rodriguez discovery 500 → 255 URLs, halving scrape time.
+- Product classifier now rejects by Shopify `product_type` in addition to title keywords — `NON_CLOTHING_PRODUCT_TYPES` regex matches `Sneaker`, `Sandal`, `Shoe`, `Boot`, `Slipper`, `Pump`, `Heel`, `Loafer`, etc. Motivating case: Kowtow's leather-footwear collabs (Artisanal Pump, Etna Leather, V-90 O.T. Leather, Campo Chromefree Leather, Volley O.T. Leather) named without any shoe keyword in the title but reliably tagged `Sneaker`/`Sandal`/`Shoe` in Shopify. Classifier reason: `non-clothing-type`.
+- Non-clothing skip in `sync-shopify.ts` now flips existing pending/review rows to `rejected` (previously the skip was pure `continue` with no DB write, leaving stale review entries whenever the classifier learned a new rejection category). New products without a DB row still just fall through.
 
-### Locators shipped (7)
+### Locators shipped (8)
 | Brand | Strategy | Review impact |
 |---|---|---|
 | `unbound-merino` | `<div class="product-fabric">` | baseline |
@@ -36,19 +38,20 @@ Context for a fresh session picking up Phase 6 locator work. See also
 | `jungmaven` | Accentuate `product_option` div after Blend-v*.svg icon, normalize bare-integer blend | 2 → 0 |
 | `pyne-and-smith` | `#details` tab-pane `Fabric:` sentence, strip "pre-shrunk"/"european flax" noise | 2 → 0 |
 | `magic-linen` | "Made from N% European flax" sentence (end-of-line captured so OEKO-TEX cert number is excluded); UA-stamped fetch to avoid reduced CDN templates | 5 → 0 |
+| `kowtow` | `details_and_care__fabric_highlighted-description` div — inner `<p>` captured via HTML class-attribute anchor (not a CSS selector); extractor normalizer handles the "plastic free / 100% Fair Trade Organic Cotton" prefix and alias on its own | 21 → 1 (combined with classifier fix: 5 locator hits + 15 classifier-fix rejections; Tissue Wrap remains as no-price) |
 
-### Residual review queue (49 products as of 2026-04-13 evening, post-Kowtow-resync)
+### Residual review queue (29 products as of 2026-04-13 late evening, post-Kowtow-locator + classifier fix)
 | Brand | Count | Notes |
 |---|---|---|
-| `kowtow` | 21 | **New — post-resync from scratch.** Products whose `body_html` has no fiber percentage at all (pure marketing prose like `Mural Jacket`). The default extractor can't find a composition because there's nothing numeric to match. A dedicated Kowtow locator that fetches the live product page and pulls from a composition tab / Shopify metafield would recover them. |
-| `beaumont-organic` | 15 | **High-value locator target — still needs to be written.** An earlier attempt was deleted because (a) it was never verified against a real sync run and (b) its `MADE_FROM_RE` / `COMPOSITION_CELL_RE` regexes used a nested-lazy-quantifier pattern (`[^<"']*?(?:<[^>]+>[^<"']*?)*?`) that is the classic catastrophic-backtracking shape — risky given we just got bitten by the same family of bug in `material-extractor.ts`. Rewrite using anchored, non-nested patterns (sentence-boundary matching, à la `locators/magic-linen.ts`). |
+| `beaumont-organic` | 15 | **Top locator target now that Kowtow is handled.** An earlier attempt was deleted because (a) it was never verified against a real sync run and (b) its `MADE_FROM_RE` / `COMPOSITION_CELL_RE` regexes used a nested-lazy-quantifier pattern (`[^<"']*?(?:<[^>]+>[^<"']*?)*?`) — the classic catastrophic-backtracking shape. Rewrite using anchored, non-nested patterns (sentence-boundary matching, à la `locators/magic-linen.ts` or `locators/kowtow.ts`). |
 | `magic-linen` | 5 | Sync completed cleanly but these 5 hit the body_hash gate as unchanged and skipped re-extraction. They'll resolve on next `--force-rescan` or after the 3-day review cadence window expires. |
 | `unbound-merino` | 3 | Edge cases not caught by existing locator |
 | `pact` | 2 | Bundles (e.g. "Airplane Arrivals Set") — SKU prefix doesn't map to per-item API |
 | `gil-rodriguez` | 2 | New additions |
+| `kowtow` | 1 | `Tissue Wrap` — locator extracts `100% Organic Cotton` cleanly, but the product has no price and hits the auto-approve gate. Will resolve if Kowtow sets a price, or can be force-approved manually. |
 | `fair-indigo` | 1 | Orphan, `sync_enabled: false` — not worth a locator |
 
-Locator-priority ordering by review-count impact: `kowtow (21)` > `beaumont-organic (15)` > `magic-linen (5)` > `unbound-merino (3)` > `pact (2)` ≈ `gil-rodriguez (2)` > `fair-indigo (1)`. Note that Kowtow and Beaumont are now comparable in size — Kowtow overtook Beaumont as the single biggest locator opportunity.
+Locator-priority ordering by review-count impact: `beaumont-organic (15)` > `magic-linen (5)` > `unbound-merino (3)` > `pact (2)` ≈ `gil-rodriguez (2)` > `kowtow (1)` ≈ `fair-indigo (1)`. Beaumont is now unambiguously the top locator opportunity.
 
 ### Brand sync status (as of 2026-04-13 evening)
 
@@ -67,7 +70,7 @@ Shopify (20):
 | `indigo-luna` | 211 | 0 | 42 | |
 | `industry-of-all-nations` | 108 | 0 | 32 | Availability-only pass (2026-04-13 evening) — 0 errors, 0 timeouts. |
 | `jungmaven` | 287 | 0 | 22 | |
-| `kowtow` | 294 | 21 | ~18 | **Re-ingested from scratch** after normalizer fix. 333 fetched, 315 synced, 302 extracted (90.7% vs 2.4% on previous attempt), 1 banned, 21 review, 0 errors, 0 timeouts. Normalizer fix recovered 19 clothing items previously wrongly rejected for the "Fair Trade Organic Cotton" alias miss. Locator sources: `fallback_scan: 278, body_html: 24` — no dedicated locator, so a Kowtow locator remains a good future target to recover the 21 review items. |
+| `kowtow` | 299 | 1 | 16 | **Locator + classifier fix shipped.** 333 fetched, 295 settled, 32 non-clothing (15 leather-footwear review items flipped to rejected via the new `non-clothing-type` path), 6 synced (new locator routed through `fabric_div`), 5 auto-approved, 1 review (Tissue Wrap — no price), 0 errors, 0 timeouts. Review queue dropped 21 → 1. |
 | `layere` | 52 | 0 | 5 | Availability-only pass |
 | `losano` | 92 | 0 | 1 | |
 | `magic-linen` | 315 | 5 | 744 | **Hang fix confirmed.** 1129 fetched, 65 new synced, 0 errors, 0 timeouts. 5 residual reviews are unchanged-body_hash skips that will resolve on next forced rescan or cadence expiry. |
@@ -114,9 +117,7 @@ Check current review counts before picking:
 npx tsx -e 'import { loadEnv, getSupabaseAdmin } from "./scripts/lib/env.js"; loadEnv(); const sb = getSupabaseAdmin(); const { data } = await sb.from("products").select("brands!inner(slug), sync_status").eq("sync_status", "review"); const counts: Record<string, number> = {}; for (const p of data || []) { const s = (p as any).brands.slug; counts[s] = (counts[s] || 0) + 1; } console.log(counts);'
 ```
 
-Next priority: **kowtow (21)** now outranks beaumont-organic (15). Kowtow's composition data is NOT in `body_html` at all — the product description is pure marketing prose. Strategy: fetch the live product page via `fetchHtml` (follow the `kowtowclothing.com → nz.kowtowclothing.com` 301), look for a dedicated composition tab, Shopify metafield, or `.product-specifications` block. The live page reliably contains strings like `100% Fair Trade Organic Cotton` (confirmed by manual curl during session — see commit `3b0823f`), so the locator just needs to find the right selector/section.
-
-Second priority: **beaumont-organic (15)** — still needs a new locator (prior attempt had unsafe regex, was deleted). Use the magic-linen locator as the template since Beaumont's composition data also lives in prose sentences.
+Next priority: **beaumont-organic (15)** — still needs a new locator (prior attempt had unsafe regex, was deleted). Use `locators/magic-linen.ts` or `locators/kowtow.ts` as templates — both match anchored, non-nested patterns (sentence-boundary or HTML class-attribute based). Beaumont's composition data lives in prose sentences.
 
 ### Investigation loop
 
@@ -202,6 +203,7 @@ export const locators: Record<string, Locator> = {
   - `locators/jungmaven.ts` — bare-integer normalization (no `%` signs in source)
   - `locators/pyne-and-smith.ts` — tab-pane isolation + marketing-adjective stripping
   - `locators/magic-linen.ts` — sentence-shaped regex with explicit end-of-line anchor to avoid dragging in adjacent noise (OEKO-TEX cert number)
+  - `locators/kowtow.ts` — HTML `class="..."` attribute anchor (not CSS selector) so it can't match a stylesheet rule earlier in the document; character-class-negation quantifiers end-to-end
 
 ### Verification
 
