@@ -95,6 +95,7 @@ export default async function ProductPage({ params }: Props) {
                   width={32}
                   height={32}
                   className="shrink-0 rounded-md"
+                  unoptimized
                 />
               )}
               <span className="font-body text-sm font-medium uppercase tracking-wide text-muted group-hover:text-text transition-colors">

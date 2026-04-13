@@ -74,6 +74,7 @@ export default async function BrandPage({ params }: Props) {
                 width={64}
                 height={64}
                 className="shrink-0 rounded-[10px]"
+                unoptimized
               />
             )}
             <h1 className="font-display text-[36px] sm:text-[56px] font-medium leading-[1.15] tracking-[-0.03em] text-text text-balance">

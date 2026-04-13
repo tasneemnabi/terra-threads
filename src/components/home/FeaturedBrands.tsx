@@ -37,6 +37,7 @@ export function FeaturedBrands({ brands }: FeaturedBrandsProps) {
                           fill
                           className="object-contain opacity-50 transition-opacity duration-200 group-hover:opacity-100"
                           sizes="120px"
+                          unoptimized
                         />
                       </div>
                     ) : (

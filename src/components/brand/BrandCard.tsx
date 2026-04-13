@@ -43,6 +43,7 @@ export function BrandCard({ brand, priority = false }: BrandCardProps) {
             width={48}
             height={48}
             className="shrink-0 rounded-[10px]"
+            unoptimized
             {...(priority && { priority: true })}
           />
         )}

@@ -37,6 +37,7 @@ export function Hero({ products = [] }: HeroProps) {
           height={1400}
           className="h-full w-auto max-w-none translate-x-[10%]"
           priority
+          unoptimized
         />
       </div>
 

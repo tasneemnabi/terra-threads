@@ -58,6 +58,7 @@ export function BrowseByFiber() {
                 src={hero.image}
                 alt={`${hero.name} texture`}
                 fill
+                unoptimized
                 className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                 sizes="(max-width: 1024px) 100vw, 45vw"
               />
@@ -93,6 +94,7 @@ export function BrowseByFiber() {
                     src={fiber.image}
                     alt={`${fiber.name} texture`}
                     fill
+                    unoptimized
                     className="object-cover"
                     sizes="64px"
                   />

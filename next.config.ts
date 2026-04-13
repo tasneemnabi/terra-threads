@@ -2,6 +2,13 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
+    // Self-hosted image optimization (PR #13): product images are pre-optimized
+    // with sharp during sync and stored in Supabase Storage. Brand logos are
+    // pre-sized 128x128 PNGs in /public. Nothing here needs Vercel's optimizer,
+    // which has a hard monthly quota. Setting this globally prevents future
+    // <Image> additions from accidentally hitting /_next/image and breaking
+    // the site once quota is exhausted.
+    unoptimized: true,
     remotePatterns: [
       { protocol: "https", hostname: "cdn.shopify.com" },
       { protocol: "https", hostname: "*.shopify.com" },
