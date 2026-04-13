@@ -47,7 +47,7 @@ Context for a fresh session picking up Phase 6 locator work. See also
 | `gil-rodriguez` | 2 | New additions |
 | `fair-indigo` | 1 | Orphan, `sync_enabled: false` — not worth a locator |
 
-Kowtow's residual review count (post-resync) is TBD and will land once the in-flight re-ingest finishes.
+Kowtow post-resync added 21 new review items — these are products whose `body_html` genuinely has no fiber percentage (pure marketing prose like `Mural Jacket`), so the default extractor can't find a composition. A dedicated Kowtow locator that fetches the live product page and looks for a composition tab/metafield would be the right way to recover them.
 
 ### Brand sync status (as of 2026-04-13 evening)
 
@@ -66,7 +66,7 @@ Shopify (20):
 | `indigo-luna` | 211 | 0 | 42 | |
 | `industry-of-all-nations` | 108 | 0 | 32 | Availability-only pass (2026-04-13 evening) — 0 errors, 0 timeouts. |
 | `jungmaven` | 287 | 0 | 22 | |
-| `kowtow` | TBD | TBD | TBD | **Re-ingested from scratch** after normalizer fix. Previously stuck on regex-hang + 52 clothing items wrongly rejected for ethical-prefix alias miss. Clean slate expected: 280+ approved, ~30 non-clothing rejections. |
+| `kowtow` | 294 | 21 | ~18 | **Re-ingested from scratch** after normalizer fix. 333 fetched, 315 synced, 302 extracted (90.7% vs 2.4% on previous attempt), 1 banned, 21 review, 0 errors, 0 timeouts. Normalizer fix recovered 19 clothing items previously wrongly rejected for the "Fair Trade Organic Cotton" alias miss. Locator sources: `fallback_scan: 278, body_html: 24` — no dedicated locator, so a Kowtow locator remains a good future target to recover the 21 review items. |
 | `layere` | 52 | 0 | 5 | Availability-only pass |
 | `losano` | 92 | 0 | 1 | |
 | `magic-linen` | 315 | 5 | 744 | **Hang fix confirmed.** 1129 fetched, 65 new synced, 0 errors, 0 timeouts. 5 residual reviews are unchanged-body_hash skips that will resolve on next forced rescan or cadence expiry. |
