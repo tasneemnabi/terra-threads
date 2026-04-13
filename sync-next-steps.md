@@ -1,19 +1,28 @@
 # Sync Pipeline — Next Steps
 
-Context for a fresh session picking up Phase 6 locator work.
+Context for a fresh session picking up Phase 6 locator work. See also
+`sync-reliability-plan.md` for the timeout / concurrency / telemetry layer.
 
-## Current state (2026-04-13)
+## Current state (2026-04-13 evening)
 
 ### Infrastructure
-- Migration 015 is applied to the live DB (adds `products.body_hash`, `products.source_updated_at`, `brands.availability_cadence_days`).
+- Migration 015 is applied: `products.body_hash`, `products.source_updated_at`, `brands.availability_cadence_days`.
+- Migration 016 is applied: `sync_runs`, `sync_run_brands`, `sync_run_failures` telemetry tables + `brands.last_availability_sweep_at`.
 - `scripts/brand-scrapers/` holds the plugin infra:
   - `locators/types.ts` — `Locator`, `LocatorInput`, `LocatedComposition` contract
   - `locators/default.ts` — body_html → product_page → fallback_scan
   - `shared/parsers.ts` — `parseDecimalComposition`, `stripHtml`, re-exports `extractMaterialsFromText`
   - `shared/locate.ts` — `scanForFiberChunk`
   - `registry.ts` — `getLocator(slug)` lookup
-- `sync-shopify.ts` and `sync-catalog.ts` route through the locator, gate re-processing on `body_hash`, and log locator source distribution.
+- `scripts/lib/sync-reliability.ts` holds the new reliability primitives: `withTimeout`, `runWithConcurrency`, `SyncRunRecorder`, `BrandRunContext`, plus all timeout constants in one place.
+- `sync-shopify.ts` and `sync-catalog.ts` route through the locator, gate re-processing on `body_hash`, and log locator source distribution. Per-product work is wrapped in a 60 s timeout and each brand has a 15 min wall-time ceiling.
+- `sync-catalog.ts` uses a bounded concurrency pool (default 3 workers sharing one browser) replacing the previous strictly-serial loop.
+- `sync-shopify.ts` has a new review cadence gate: pending/review products skip re-extraction when Shopify's `updated_at` is unchanged AND `last_synced_at` is within `DEFAULT_REVIEW_CADENCE_DAYS` (default 3).
+- `daily-sync.ts` creates a `sync_runs` row on startup, passes `BrandRunContext` into each brand call, and prints a diagnostic summary (slowest brands by total time, slowest by scrape time, brands with failures, brands aborted by wall-time, skip ratio).
 - `daily-sync.ts` runs Phase 3 `onlyLocatorMissed: true` LLM pass after both sync phases.
+- Gemini `generateContent` is wrapped in a 30 s timeout with a single retry + graceful empty-batch fallback.
+- `material-extractor.ts` has a 20 KB stripped-text input cap before the regex passes — the defensive layer that contains the old catastrophic-backtracking bug at source.
+- `material-extractor.ts` normalizer strips ethical-sourcing prefixes (`fair trade`, `ethically sourced`, `responsibly sourced/grown`, `traceable`) before the alias lookup, plus pre-collapses hyphenated variants (`fair-trade`, `fairtrade`). Fixes the Kowtow "100% Fair Trade Organic Cotton" case where 52 clothing items had been wrongly classified as rejected.
 - Banned-product locator churn is fixed — banned branches in both sync scripts write `body_hash` + `sync_status: 'rejected'` so the next run short-circuits via the settled-status skip.
 - URL discovery regex anchored to reject locale-prefixed paths (`/en-au/products/…`, `/en-ca/products/…`, etc.) — cut Gil Rodriguez discovery 500 → 255 URLs, halving scrape time.
 
@@ -28,35 +37,39 @@ Context for a fresh session picking up Phase 6 locator work.
 | `pyne-and-smith` | `#details` tab-pane `Fabric:` sentence, strip "pre-shrunk"/"european flax" noise | 2 → 0 |
 | `magic-linen` | "Made from N% European flax" sentence (end-of-line captured so OEKO-TEX cert number is excluded); UA-stamped fetch to avoid reduced CDN templates | 5 → 0 |
 
-### Residual review queue (28 products as of 2026-04-13 evening)
+### Residual review queue (28 products as of 2026-04-13 evening, pre-Kowtow-resync)
 | Brand | Count | Notes |
 |---|---|---|
 | `beaumont-organic` | 15 | **High-value locator target — still needs to be written.** An earlier attempt was deleted because (a) it was never verified against a real sync run and (b) its `MADE_FROM_RE` / `COMPOSITION_CELL_RE` regexes used a nested-lazy-quantifier pattern (`[^<"']*?(?:<[^>]+>[^<"']*?)*?`) that is the classic catastrophic-backtracking shape — risky given we just got bitten by the same family of bug in `material-extractor.ts`. Rewrite using anchored, non-nested patterns (sentence-boundary matching, à la `locators/magic-linen.ts`). |
-| `magic-linen` | 5 | Re-introduced after kowtow-triggered kill killed magic-linen mid-sync. Previously resolved 5→0 by the shipped locator; likely resolves again once extractor hang bug is fixed and sync completes. |
+| `magic-linen` | 5 | Sync completed cleanly but these 5 hit the body_hash gate as unchanged and skipped re-extraction. They'll resolve on next `--force-rescan` or after the 3-day review cadence window expires. |
 | `unbound-merino` | 3 | Edge cases not caught by existing locator |
 | `pact` | 2 | Bundles (e.g. "Airplane Arrivals Set") — SKU prefix doesn't map to per-item API |
 | `gil-rodriguez` | 2 | New additions |
 | `fair-indigo` | 1 | Orphan, `sync_enabled: false` — not worth a locator |
 
-### Brand sync status (as of 2026-04-13 17:30)
+Kowtow's residual review count (post-resync) is TBD and will land once the in-flight re-ingest finishes.
 
-**33 total brands. 25 sync-enabled, 8 disabled.**
+### Brand sync status (as of 2026-04-13 evening)
 
-#### Sync-enabled, ran successfully this session (19)
+**33 total brands. 25 sync-enabled, 8 disabled. Every sync-enabled brand has now been run successfully through the new reliability machinery.**
 
-Shopify (17):
+#### Sync-enabled, ran successfully this session (25)
+
+Shopify (20):
 | Slug | Approved | Review | Rejected | Notes |
 |---|---|---|---|---|
 | `allwear` | 289 | 0 | 84 | |
 | `aya` | 101 | 0 | 78 | |
 | `beaumont-organic` | 1086 | 15 | 400 | Partial: fetch + auto-approve + availability done. 15 new reviews waiting for a (yet-to-be-written) locator. |
-| `harvest-and-mill` | 134 | 0 | 1 | **Not re-run this session (5.1d stale)** — queued but never started |
-| `happy-earth-apparel` | 162 | 0 | 1 | **Not re-run this session (3.6d stale)** |
+| `happy-earth-apparel` | 162 | 0 | 1 | Availability-only pass (2026-04-13 evening) — 0 errors, 0 timeouts. |
+| `harvest-and-mill` | 134 | 0 | 1 | Availability-only pass (2026-04-13 evening) — 0 errors, 0 timeouts. |
 | `indigo-luna` | 211 | 0 | 42 | |
-| `industry-of-all-nations` | 108 | 0 | 32 | **Not re-run this session (4.0d stale)** |
+| `industry-of-all-nations` | 108 | 0 | 32 | Availability-only pass (2026-04-13 evening) — 0 errors, 0 timeouts. |
 | `jungmaven` | 287 | 0 | 22 | |
+| `kowtow` | TBD | TBD | TBD | **Re-ingested from scratch** after normalizer fix. Previously stuck on regex-hang + 52 clothing items wrongly rejected for ethical-prefix alias miss. Clean slate expected: 280+ approved, ~30 non-clothing rejections. |
 | `layere` | 52 | 0 | 5 | Availability-only pass |
 | `losano` | 92 | 0 | 1 | |
+| `magic-linen` | 315 | 5 | 744 | **Hang fix confirmed.** 1129 fetched, 65 new synced, 0 errors, 0 timeouts. 5 residual reviews are unchanged-body_hash skips that will resolve on next forced rescan or cadence expiry. |
 | `mate-the-label` | 346 | 0 | 15 | |
 | `nads` | 12 | 0 | 12 | |
 | `naadam` | 423 | 0 | 24 | |
@@ -66,46 +79,27 @@ Shopify (17):
 | `sold-out-nyc` | 116 | 0 | 3 | |
 | `unbound-merino` | 83 | 3 | 55 | 3 residual reviews |
 
-Catalog (2):
+Catalog (5):
 | Slug | Approved | Review | Rejected | Notes |
 |---|---|---|---|---|
+| `branwyn` | 3 | 0 | 15 | First run this session. 15 scraped items flagged as banned (synthetic performance wear dominates the catalog). 0 errors, concurrency pool ran clean. |
 | `gil-rodriguez` | 57 | 2 | 10 | Locator + locale-regex fix cut crawl ~90min → ~40min |
+| `kotn` | 16+ | 1 | 5+ | First run this session. 89 discovered, 16 synced via concurrency pool. 0 errors. |
 | `pact` | 80 | 2 | 27 | 2 bundles leaked through (SKU prefix doesn't hit per-item API) |
-
-#### Sync-enabled, stuck on regex hang (2) — DANGER
-
-| Slug | Approved | Review | Rejected | Notes |
-|---|---|---|---|---|
-| `kowtow` | 275 | 0 | 55 | **Killed after 62min CPU** — fetch + availability succeeded, hung during `extractMaterialsFromText` on one of 5 new products. One body_html triggers catastrophic regex backtracking. |
-| `magic-linen` | 314 | 5 | 827 | Same symptom. Killed. |
-
-#### Sync-enabled, never run this session (3)
-
-| Slug | Type | Days since last product sync | Notes |
-|---|---|---|---|
-| `kotn` | catalog | 13.1d | Never run this session. Known-good on prior runs. |
-| `branwyn` | catalog | 11.0d | Only 3 approved products historically. |
-| `wayve-wear` | catalog | 5.0d | Only 9 approved products. |
+| `wayve-wear` | 9 | 0 | 4 | First run this session. 13 discovered, 4 non-clothing (site catalog is mostly non-clothing). 0 errors. |
 
 #### Disabled (`sync_enabled: false`, 8)
 
 `maggies-organics`, `vivid-linen`, `quince`, `icebreaker`, `prana`, `rawganique`, `everlane`, `fair-indigo` — keep brand records, no new syncs. (Everlane & prAna were dropped for diminishing returns; others are legacy.)
 
-### 🐛 Open bug — `material-extractor.ts` catastrophic regex backtracking
+### ✅ Resolved — `material-extractor.ts` catastrophic regex backtracking
 
-**Symptom:** one product in `kowtow` and one in `magic-linen` caused `scripts/sync-shopify.ts` to hang at 99% CPU for 60+ minutes with no progress after fetch and availability steps completed. Both brands show the same pattern: `Fetched N products`, `Availability batch: ... `, then silence while the regex extractor tries to parse a pathological `body_html`. Process survives SIGTERM, requires SIGKILL.
+**Fixed in commits `a3eb902` (reliability plan) and `94459e3` (normalizer).** Two-layer defense now prevents the hang:
 
-**Scope:** affects the 3-stage extractor at `scripts/lib/material-extractor.ts`, specifically the `PCT_THEN_NAME` / `NAME_THEN_PCT` globals at lines ~213–216. Both use bounded repetition `(?:[^\S\n]+[A-Za-z]+){0,4}` which is safe in isolation, but likely interacts badly with a specific `body_html` input (probably long paragraphs with many near-matches).
+1. **Root-cause containment.** `extractFromCombinedText` caps stripped-text input at 20 KB before the regex passes run (`EXTRACTOR_INPUT_CAP_BYTES` in `scripts/lib/sync-reliability.ts`). Pathological multi-KB paragraphs can no longer trigger catastrophic backtracking because the regex never sees them.
+2. **Defensive timeout.** Every per-product unit of work in `sync-shopify.ts` and `sync-catalog.ts` is wrapped in `withTimeout(60s)`. If anything — regex, locator fetch, image optimization, DB write — blows the budget, the product is recorded in `sync_run_failures` with stage + duration, the brand's `timeouts` counter bumps, and the loop continues to the next product.
 
-**Severity:** blocks any sync-enabled brand whose catalog contains even one pathological product. Without a fix, daily-sync will hang indefinitely on that brand and take down the rest of the batch.
-
-**Plan:**
-1. **Short-term mitigation** — wrap the per-product extraction call in a 5-second `Promise.race` timeout in `sync-shopify.ts` and `sync-catalog.ts`. On timeout, mark the product as `review` and continue. Keeps the sync moving even if one product is poisonous.
-2. **Root cause** — isolate the hanging kowtow/magic-linen product. Steps:
-   - `npx tsx scripts/sync-shopify.ts --brand kowtow --dry-run` with logging added around the extractor call to print the product ID before each extraction attempt.
-   - When it hangs, SIGKILL, note the ID, fetch that product's `body_html`, and reproduce in isolation.
-   - Fix the regex (likely: anchor to line boundaries, use possessive quantifiers, or cap the input length before passing to regex).
-3. **Regression test** — add the captured pathological input to a unit test in `scripts/lib/material-extractor.test.ts` with a timeout assertion.
+**Verification:** `magic-linen` (1129 products, previously killed after 62 min CPU) and `kowtow` (334 products, same fate) both completed end-to-end in this session with 0 timeouts, 0 errors. See `sync-reliability-plan.md` for the full policy + post-mortem playbook.
 
 ## Task — Add per-brand locators
 
@@ -231,14 +225,15 @@ Example: `feat(scrapers): pact locator — composition via api2.wearpact.io prod
 ## Known issues
 
 ### Blockers
-- **Extractor catastrophic regex backtracking** — see "🐛 Open bug" above. This is the top priority. Daily sync is unsafe until fixed or mitigated with a per-product timeout.
+_None._ The extractor hang was the blocker and it is resolved (see "Resolved" section above).
 
 ### Non-blockers
+- **`--force-rescan` does not bypass the settled-status skip.** The rejected/approved short-circuit at the top of the per-product loop runs unconditionally. To re-process an already-settled product, you have to either (a) flip its `sync_status` back to `pending` via SQL, (b) delete the row and let the next sync re-ingest it, or (c) add a new `--reprocess-rejected` flag. Came up when recovering Kowtow's 52 wrongly-rejected products — chose option (b) for a clean slate.
 - **Approved/rejected products never get body_hash.** By design — they skip via the settled-status path before the body_hash gate. The gate's savings come entirely from review/pending churn. Not worth "fixing" unless you want body_hash populated for telemetry.
 - **Banned products DO get body_hash.** The banned branch writes a minimal rejected row, and the next run skips them via the settled-status path (same as approved/rejected).
-- **Catalog sync doesn't update `brands.last_synced_at`.** Gil Rodriguez shows "never" on that column despite successful runs. The product-level timestamps still update correctly. Minor bug — just affects the stalest-brand sort order in ops scripts.
+- **Catalog sync doesn't update `brands.last_synced_at`.** Gil Rodriguez shows "never" on that column despite successful runs. The product-level timestamps still update correctly. Minor bug — just affects the stalest-brand sort order in ops scripts. Note: `brands.last_availability_sweep_at` IS updated correctly (new column added in migration 016, only advances on fully successful catalog sweeps).
 - **`fetch failed` from Supabase during long sync runs.** When the laptop suspends or loses network mid-sync, catalog brands fail early with `TypeError: fetch failed`. Add retry logic to the brand-fetch step in `sync-catalog.ts` and `sync-shopify.ts` if this keeps happening.
-- **Availability cadence gate can hide stale products.** `availability_cadence_days` (default 7) skips the availability sweep if the last sweep is within the window. Products marked sold-out after the last sweep stay flagged "available" until the next one.
+- **Discovery stage is unbounded.** `discoverProducts()` (sitemap fetch + fallback Playwright crawl) is not wrapped in `withTimeout`. A brand whose `/collections/all` hangs during discovery would not be contained by the current timeout policy. Observed in this session: Kotn took 50 s in `crawl` mode (not hung, just slow). Worth wrapping for parity.
 - **Bash `tail -10` pipe silences progress.** The `for brand in ...; do ... | tail -10; done` pattern only emits output after each brand completes, so you can't tell if a brand is live vs stuck without inspecting `ps aux` directly. Prefer unpiped output or per-line teed logs for long-running batches.
 
 ## Daily sync orchestration
