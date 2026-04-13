@@ -71,6 +71,30 @@ const CONSTRUCTION_SUFFIXES = new RegExp(
   "gi"
 );
 
+// Ethical-sourcing prefixes that describe HOW a fiber was produced, not
+// WHAT it is. Stripped before alias lookup so phrases like "Fair Trade
+// Organic Cotton" and "Traceable Merino Wool" route to the right canonical
+// material instead of getting rejected as multi-word unknowns.
+//
+// Kept narrow on purpose: only prefixes that aren't already part of an
+// existing alias (e.g. "gots certified organic cotton" is in the alias map,
+// so don't strip "certified" here).
+const ETHICAL_PREFIXES = new RegExp(
+  "\\b(" +
+    [
+      "fair\\s*trade",
+      "fair-trade",
+      "fairtrade",
+      "ethically\\s+sourced",
+      "ethically\\s+made",
+      "responsibly\\s+sourced",
+      "responsibly\\s+grown",
+      "traceable",
+    ].join("|") +
+    ")\\b",
+  "gi"
+);
+
 // Non-material words that the regex might capture as material names
 const IGNORE_WORDS = new Set([
   "fabric", "material", "composition", "content", "blend", "made", "with", "from", "of",
@@ -169,6 +193,12 @@ function normalizeMaterialName(raw: string): string {
 
   // Strip fabric construction suffixes: "organic cotton fleece" → "organic cotton"
   name = name.replace(CONSTRUCTION_SUFFIXES, "").trim().replace(/\s+/g, " ");
+
+  // Strip ethical-sourcing prefixes: "fair trade organic cotton" → "organic cotton"
+  // Must run before alias lookup, otherwise multi-word-with-ignore-word
+  // rejection below rejects the whole phrase because "organic" is in
+  // IGNORE_WORDS.
+  name = name.replace(ETHICAL_PREFIXES, "").trim().replace(/\s+/g, " ");
 
   // Strip trailing connectors/junk: "Regenerative Hemp and" → "Regenerative Hemp"
   name = name.replace(TRAILING_JUNK, "").trim();
@@ -567,8 +597,15 @@ function extractFromCombinedText(combinedText: string): ExtractedMaterials | nul
   // repetition but we still do not want a pathological product to dominate
   // wall time. See sync-reliability.ts for the cap value.
   const capped = capExtractorInput(combinedText);
-  // Strip ®, ™, © symbols so they don't break regex word captures
-  const cleaned = capped.replace(/[®™©]/g, "");
+  const cleaned = capped
+    // Strip ®, ™, © symbols so they don't break regex word captures
+    .replace(/[®™©]/g, "")
+    // Collapse hyphenated ethical prefixes — the PCT_THEN_NAME regex
+    // tokenizes on whitespace only, so "100% fair-trade cotton" would
+    // capture just "fair". Normalizing here lets the space-separated
+    // ETHICAL_PREFIXES stripper in normalizeMaterialName() handle it.
+    .replace(/\bfair-trade\b/gi, "fair trade")
+    .replace(/\bfairtrade\b/gi, "fair trade");
   const regexResult = extractWithRegex(cleaned);
   if (regexResult) return regexResult;
 
