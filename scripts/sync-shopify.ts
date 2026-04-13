@@ -334,6 +334,24 @@ export async function syncBrand(
       if (options.dryRun) {
         console.log(`  SKIP (${rejection.reason}): ${shopifyProduct.title}`);
       }
+      // If the classifier previously let this through as pending/review,
+      // mark it rejected now so it drops out of the review queue instead
+      // of lingering as a stale row forever. New products (no DB entry)
+      // just fall through without a write. Approved/rejected rows are
+      // already short-circuited above and never reach this branch.
+      const prevStatus = existingStatusMap.get(shopifyProduct.id);
+      if (
+        !options.dryRun &&
+        (prevStatus === "pending" || prevStatus === "review")
+      ) {
+        await supabase
+          .from("products")
+          .update({
+            sync_status: "rejected",
+            last_synced_at: new Date().toISOString(),
+          })
+          .eq("shopify_product_id", shopifyProduct.id);
+      }
       continue;
     }
 

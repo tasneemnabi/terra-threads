@@ -23,6 +23,21 @@ export const CANONICAL_PRODUCT_TYPES = [
 
 export type ProductType = (typeof CANONICAL_PRODUCT_TYPES)[number];
 
+// Non-clothing Shopify `product_type` values. Checked independently of title
+// keywords: Kowtow's leather footwear collabs (e.g. "Artisanal Pump", "Etna
+// Leather", "V-90 O.T. Leather") don't include a shoe keyword in the product
+// *name*, but Shopify's `product_type` field reliably tags them `Sneaker`,
+// `Sandal`, `Shoe`, etc. Other shops use the same taxonomy, so a
+// substring-match on the product_type catches the whole class.
+//
+// Restricted to clearly-non-apparel categories we've observed slipping through
+// title-only checks. NOT a general accessory blacklist — the existing
+// ACCESSORY_KEYWORDS path handles belts/hats/scarves when they show up in the
+// title, and we don't want to accidentally reject a "Hoodie" just because some
+// brand tags it `Hoodies`.
+const NON_CLOTHING_PRODUCT_TYPES =
+  /\b(sneakers?|sandals?|shoes?|boots?|footwear|slippers?|heels?|loafers?|moccasins?|flip\s*flops?|pumps?)\b/i;
+
 // Non-clothing keywords → should be rejected entirely
 // Blacklist for non-lifestyle brands. Lifestyle brands use whitelist mode instead.
 // Avoid ambiguous words here — if a word commonly appears in clothing names, don't add it.
@@ -170,6 +185,11 @@ export function isNonClothing(title: string): boolean {
   return NON_CLOTHING_KEYWORDS.test(title);
 }
 
+export function isNonClothingProductType(productType?: string): boolean {
+  if (!productType) return false;
+  return NON_CLOTHING_PRODUCT_TYPES.test(productType);
+}
+
 export function isAccessory(title: string): boolean {
   return ACCESSORY_KEYWORDS.test(title);
 }
@@ -189,6 +209,15 @@ export function shouldRejectProduct(
   // regardless of brand mode — prevents "denim shoes" matching as pants
   if (isNonClothing(title)) {
     return { rejected: true, reason: "non-clothing" };
+  }
+
+  // Shopify-tag-based fallback for items whose *title* doesn't name the
+  // category but whose `product_type` does. Kowtow's leather footwear
+  // (Artisanal Pump, V-90 O.T. Leather, Campo Chromefree Leather, …) is
+  // the motivating case: names like "Etna Leather" contain no shoe
+  // keyword but the Shopify type is `Sneaker`/`Sandal`/`Shoe`.
+  if (isNonClothingProductType(shopifyProductType)) {
+    return { rejected: true, reason: "non-clothing-type" };
   }
 
   const clothingType = classifyProductType(title, shopifyProductType, tags);
