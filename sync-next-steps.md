@@ -53,7 +53,7 @@ Context for a fresh session picking up Phase 6 locator work. See also
 
 Locator-priority ordering by review-count impact: `beaumont-organic (15)` > `magic-linen (5)` > `unbound-merino (3)` > `pact (2)` ≈ `gil-rodriguez (2)` > `kowtow (1)` ≈ `fair-indigo (1)`. Beaumont is now unambiguously the top locator opportunity.
 
-### Brand sync status (as of 2026-04-13 evening)
+### Brand sync status (as of 2026-04-13 late evening)
 
 **33 total brands. 25 sync-enabled, 8 disabled. Every sync-enabled brand has now been run successfully through the new reliability machinery.**
 
