@@ -40,3 +40,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# claude code worktree-isolation state
+.claude/worktrees/
+
+# design-review skill output
+.gstack/
+
+# reference images at repo root — real site assets go in public/ or src/assets/
+/*.png
