@@ -37,9 +37,10 @@ Context for a fresh session picking up Phase 6 locator work. See also
 | `pyne-and-smith` | `#details` tab-pane `Fabric:` sentence, strip "pre-shrunk"/"european flax" noise | 2 → 0 |
 | `magic-linen` | "Made from N% European flax" sentence (end-of-line captured so OEKO-TEX cert number is excluded); UA-stamped fetch to avoid reduced CDN templates | 5 → 0 |
 
-### Residual review queue (28 products as of 2026-04-13 evening, pre-Kowtow-resync)
+### Residual review queue (49 products as of 2026-04-13 evening, post-Kowtow-resync)
 | Brand | Count | Notes |
 |---|---|---|
+| `kowtow` | 21 | **New — post-resync from scratch.** Products whose `body_html` has no fiber percentage at all (pure marketing prose like `Mural Jacket`). The default extractor can't find a composition because there's nothing numeric to match. A dedicated Kowtow locator that fetches the live product page and pulls from a composition tab / Shopify metafield would recover them. |
 | `beaumont-organic` | 15 | **High-value locator target — still needs to be written.** An earlier attempt was deleted because (a) it was never verified against a real sync run and (b) its `MADE_FROM_RE` / `COMPOSITION_CELL_RE` regexes used a nested-lazy-quantifier pattern (`[^<"']*?(?:<[^>]+>[^<"']*?)*?`) that is the classic catastrophic-backtracking shape — risky given we just got bitten by the same family of bug in `material-extractor.ts`. Rewrite using anchored, non-nested patterns (sentence-boundary matching, à la `locators/magic-linen.ts`). |
 | `magic-linen` | 5 | Sync completed cleanly but these 5 hit the body_hash gate as unchanged and skipped re-extraction. They'll resolve on next `--force-rescan` or after the 3-day review cadence window expires. |
 | `unbound-merino` | 3 | Edge cases not caught by existing locator |
@@ -47,7 +48,7 @@ Context for a fresh session picking up Phase 6 locator work. See also
 | `gil-rodriguez` | 2 | New additions |
 | `fair-indigo` | 1 | Orphan, `sync_enabled: false` — not worth a locator |
 
-Kowtow post-resync added 21 new review items — these are products whose `body_html` genuinely has no fiber percentage (pure marketing prose like `Mural Jacket`), so the default extractor can't find a composition. A dedicated Kowtow locator that fetches the live product page and looks for a composition tab/metafield would be the right way to recover them.
+Locator-priority ordering by review-count impact: `kowtow (21)` > `beaumont-organic (15)` > `magic-linen (5)` > `unbound-merino (3)` > `pact (2)` ≈ `gil-rodriguez (2)` > `fair-indigo (1)`. Note that Kowtow and Beaumont are now comparable in size — Kowtow overtook Beaumont as the single biggest locator opportunity.
 
 ### Brand sync status (as of 2026-04-13 evening)
 
@@ -113,7 +114,9 @@ Check current review counts before picking:
 npx tsx -e 'import { loadEnv, getSupabaseAdmin } from "./scripts/lib/env.js"; loadEnv(); const sb = getSupabaseAdmin(); const { data } = await sb.from("products").select("brands!inner(slug), sync_status").eq("sync_status", "review"); const counts: Record<string, number> = {}; for (const p of data || []) { const s = (p as any).brands.slug; counts[s] = (counts[s] || 0) + 1; } console.log(counts);'
 ```
 
-Next priority: **beaumont-organic (15)** — needs a new locator (prior attempt had unsafe regex, was deleted). Use the magic-linen locator as the template since Beaumont's composition data also lives in prose sentences.
+Next priority: **kowtow (21)** now outranks beaumont-organic (15). Kowtow's composition data is NOT in `body_html` at all — the product description is pure marketing prose. Strategy: fetch the live product page via `fetchHtml` (follow the `kowtowclothing.com → nz.kowtowclothing.com` 301), look for a dedicated composition tab, Shopify metafield, or `.product-specifications` block. The live page reliably contains strings like `100% Fair Trade Organic Cotton` (confirmed by manual curl during session — see commit `3b0823f`), so the locator just needs to find the right selector/section.
+
+Second priority: **beaumont-organic (15)** — still needs a new locator (prior attempt had unsafe regex, was deleted). Use the magic-linen locator as the template since Beaumont's composition data also lives in prose sentences.
 
 ### Investigation loop
 
