@@ -199,8 +199,7 @@ Server-side filtering by category, product_type, brand slugs, material names, pr
 - [x] Agent prompt for automated brand research (`scripts/add-brand-agent.md`)
 - [x] Shopify sync pipeline (`scripts/sync-shopify.ts`) — fetches products, extracts materials via regex + Gemini LLM, auto-approves trusted compositions
 - [x] Material extractor (`scripts/lib/material-extractor.ts`) — regex + dictionary + LLM, title extraction, multi-component split, alias normalization
-- [x] Admin review dashboard (`/admin/review`) — approve/reject products, keyboard shortcuts, batch actions
-- [x] CLI review tool (`scripts/review-products.ts`) — interactive terminal product review
+- [x] CLI review tool (`scripts/review-products.ts`) — interactive terminal product review (the `/admin/review` web dashboard was deleted in the 2026-04-13 security remediation; product review is CLI-only now)
 - [x] Playwright scraper (`scripts/scrape-products.ts`) — headless browser for JS-rendered pages
 - [x] DB helpers with trusted materials guard — prevents junk material names from entering DB
 - [x] **4,445 products approved** across 17 Shopify brands with real images from Shopify CDN
