@@ -24,6 +24,14 @@ import { extractMaterialsFromText } from "./lib/material-extractor.js";
 import { initStorageBucket, optimizeProductImages } from "./lib/image-optimizer.js";
 import { getLocator } from "./brand-scrapers/registry.js";
 import type { LocatedComposition } from "./brand-scrapers/locators/types.js";
+import {
+  BrandRunContext,
+  TIMEOUT_PER_PRODUCT_MS,
+  BRAND_WALL_TIME_MS,
+  DEFAULT_REVIEW_CADENCE_DAYS,
+  TimeoutError,
+  withTimeout,
+} from "./lib/sync-reliability.js";
 
 function sha256(input: string): string {
   return createHash("sha256").update(input).digest("hex");
@@ -51,13 +59,16 @@ interface SyncStats {
   skippedNonClothing: number;
   skippedSettled: number;
   skippedUnchanged: number;
+  skippedReviewCadence: number;
   availabilityUpdated: number;
   scrapeHits: number;
   flaggedReview: number;
   removed: number;
   missingPrice: number;
   missingImage: number;
+  timeouts: number;
   errors: number;
+  abortedByWallCeiling: boolean;
   locatorSources: Record<string, number>;
 }
 
@@ -85,7 +96,13 @@ import { classifyProductType, mapActivewearType, shouldRejectProduct, classifyAu
 export async function syncBrand(
   supabase: SupabaseClient,
   brand: BrandRow,
-  options: { dryRun: boolean; forceRescan?: boolean },
+  options: {
+    dryRun: boolean;
+    forceRescan?: boolean;
+    brandCtx?: BrandRunContext;
+    reviewCadenceDays?: number;
+    wallTimeCeilingMs?: number;
+  },
   materialCache: Map<string, string>
 ): Promise<SyncStats> {
   const stats: SyncStats = {
@@ -98,48 +115,81 @@ export async function syncBrand(
     skippedNonClothing: 0,
     skippedSettled: 0,
     skippedUnchanged: 0,
+    skippedReviewCadence: 0,
     availabilityUpdated: 0,
     scrapeHits: 0,
     flaggedReview: 0,
     removed: 0,
     missingPrice: 0,
     missingImage: 0,
+    timeouts: 0,
     errors: 0,
+    abortedByWallCeiling: false,
     locatorSources: {},
   };
+  const brandCtx = options.brandCtx;
+  const wallCeilingMs = options.wallTimeCeilingMs ?? BRAND_WALL_TIME_MS;
+  const reviewCadenceDays =
+    options.reviewCadenceDays ?? DEFAULT_REVIEW_CADENCE_DAYS;
+  const reviewCadenceMs = reviewCadenceDays * 24 * 60 * 60 * 1000;
 
   console.log(`\n${"═".repeat(60)}`);
   console.log(`Syncing: ${brand.name} (${brand.shopify_domain})`);
   console.log(`${"═".repeat(60)}`);
 
   let shopifyProducts: ShopifyProduct[];
+  const fetchStart = Date.now();
   try {
     shopifyProducts = await fetchAllProducts(brand.shopify_domain);
   } catch (err) {
-    console.error(`  Failed to fetch products: ${(err as Error).message}`);
+    const msg = (err as Error).message;
+    console.error(`  Failed to fetch products: ${msg}`);
     stats.errors++;
+    if (brandCtx) {
+      brandCtx.addStage("fetch_ms", Date.now() - fetchStart);
+      await brandCtx.recordProductFailure({
+        stage: "fetch",
+        startedAt: new Date(fetchStart),
+        durationMs: Date.now() - fetchStart,
+        failureType: "error",
+        message: msg,
+      });
+    }
     return stats;
   }
+  const fetchMs = Date.now() - fetchStart;
+  brandCtx?.addStage("fetch_ms", fetchMs);
 
   stats.fetched = shopifyProducts.length;
-  console.log(`  Fetched ${shopifyProducts.length} products from Shopify`);
+  brandCtx?.bump("fetched_or_discovered", shopifyProducts.length);
+  console.log(`  Fetched ${shopifyProducts.length} products from Shopify (${fetchMs}ms)`);
 
   if (shopifyProducts.length === 0) return stats;
 
   const seenShopifyIds = new Set<number>();
 
-  // Fetch existing product statuses so we don't re-process settled products
+  // Fetch existing product statuses so we don't re-process settled products.
+  // last_synced_at and source_updated_at feed the review cadence gate below.
   const existingStatusMap = new Map<number, string>();
   const existingHashMap = new Map<number, string | null>();
+  const existingLastSyncedMap = new Map<number, string | null>();
+  const existingSourceUpdatedMap = new Map<number, string | null>();
   {
     const { data: existing } = await supabase
       .from("products")
-      .select("shopify_product_id, sync_status, body_hash")
+      .select(
+        "shopify_product_id, sync_status, body_hash, last_synced_at, source_updated_at"
+      )
       .eq("brand_id", brand.id)
       .not("shopify_product_id", "is", null);
     for (const row of existing || []) {
       existingStatusMap.set(row.shopify_product_id, row.sync_status);
       existingHashMap.set(row.shopify_product_id, row.body_hash ?? null);
+      existingLastSyncedMap.set(row.shopify_product_id, row.last_synced_at ?? null);
+      existingSourceUpdatedMap.set(
+        row.shopify_product_id,
+        row.source_updated_at ?? null
+      );
     }
     const rejectedCount = [...existingStatusMap.values()].filter((s) => s === "rejected").length;
     const approvedCount = [...existingStatusMap.values()].filter((s) => s === "approved").length;
@@ -160,6 +210,7 @@ export async function syncBrand(
   }
 
   if (!options.dryRun && (availableIds.length > 0 || unavailableIds.length > 0)) {
+    const availStart = Date.now();
     const now = new Date().toISOString();
     if (availableIds.length > 0) {
       await supabase
@@ -176,25 +227,50 @@ export async function syncBrand(
         .in("shopify_product_id", unavailableIds);
     }
     stats.availabilityUpdated = availableIds.length + unavailableIds.length;
+    brandCtx?.addStage("availability_ms", Date.now() - availStart);
+    brandCtx?.bump("approved_availability_checked", stats.availabilityUpdated);
     console.log(`  Availability batch: ${availableIds.length} available, ${unavailableIds.length} unavailable`);
   }
 
   // Regex-only extraction for all products
   let regexHits = 0;
   const zeroMaterialProducts: Array<{ url: string; productId: string; name: string; price: number | null; imageUrl: string | null }> = [];
+  let productWorkMs = 0;
   for (const shopifyProduct of shopifyProducts) {
+    // Wall-time ceiling: if this brand has been running too long, bail and
+    // let the orchestrator move on to the next brand.
+    if (brandCtx && brandCtx.checkWallTime(wallCeilingMs)) {
+      brandCtx.abortedByWallCeiling = true;
+      stats.abortedByWallCeiling = true;
+      console.warn(
+        `  ! Wall-time ceiling ${(wallCeilingMs / 1000).toFixed(0)}s exceeded — aborting brand`
+      );
+      await brandCtx.recordProductFailure({
+        stage: "brand",
+        startedAt: new Date(),
+        durationMs: brandCtx.elapsedMs(),
+        failureType: "error",
+        message: `wall-time ceiling ${wallCeilingMs}ms exceeded`,
+      });
+      break;
+    }
+
     seenShopifyIds.add(shopifyProduct.id);
+    const productUrl = `https://${brand.shopify_domain}/products/${shopifyProduct.handle}`;
+    const productRef = String(shopifyProduct.id);
 
     // Skip rejected products entirely
     const existingStatus = existingStatusMap.get(shopifyProduct.id);
     if (existingStatus === "rejected") {
       stats.skippedSettled++;
+      brandCtx?.bump("skipped_settled");
       continue;
     }
 
     // Approved products: already handled in batch above
     if (existingStatus === "approved") {
       stats.skippedSettled++;
+      brandCtx?.bump("skipped_settled");
       continue;
     }
 
@@ -213,133 +289,179 @@ export async function syncBrand(
       existingStatusForSkip !== "pending"
     ) {
       stats.skippedUnchanged++;
+      brandCtx?.bump("skipped_unchanged");
       continue;
+    }
+
+    // Review cadence gate: unresolved pending/review products shouldn't be
+    // re-extracted every single day. If Shopify's updated_at hasn't moved
+    // and our last sync was within the cadence window, skip.
+    //
+    // This is the unresolved-product analog of the body_hash gate. body_hash
+    // works for settled products (it's compared to HTML), but pending/review
+    // products are precisely the ones where we want to retry _eventually_,
+    // just not every run. Using Shopify's updated_at as the change signal is
+    // slightly more sensitive than body_hash (it bumps on variant/tag/stock
+    // changes too) but that's fine — we still want a retry when anything
+    // upstream moves.
+    if (
+      !options.forceRescan &&
+      !options.dryRun &&
+      (existingStatusForSkip === "pending" || existingStatusForSkip === "review")
+    ) {
+      const lastSynced = existingLastSyncedMap.get(shopifyProduct.id);
+      const prevSourceUpdated = existingSourceUpdatedMap.get(shopifyProduct.id);
+      const incomingSourceUpdated = shopifyProduct.updated_at ?? null;
+      const sourceUnchanged =
+        !!prevSourceUpdated &&
+        !!incomingSourceUpdated &&
+        prevSourceUpdated === incomingSourceUpdated;
+      const lastSyncedMs = lastSynced ? new Date(lastSynced).getTime() : 0;
+      const withinCadence =
+        lastSyncedMs > 0 && Date.now() - lastSyncedMs < reviewCadenceMs;
+      if (sourceUnchanged && withinCadence) {
+        stats.skippedReviewCadence++;
+        brandCtx?.bump("skipped_review_cadence");
+        continue;
+      }
     }
 
     // Skip non-clothing products
     const rejection = shouldRejectProduct(shopifyProduct.title, brand.slug, shopifyProduct.product_type, shopifyProduct.tags);
     if (rejection.rejected) {
       stats.skippedNonClothing++;
+      brandCtx?.bump("skipped_non_clothing");
       if (options.dryRun) {
         console.log(`  SKIP (${rejection.reason}): ${shopifyProduct.title}`);
       }
       continue;
     }
 
-    const locator = getLocator(brand.slug);
-    let located: LocatedComposition | null = null;
-    try {
-      located = await locator({
-        brandSlug: brand.slug,
-        shopifyProduct,
-        productUrl: `https://${brand.shopify_domain}/products/${shopifyProduct.handle}`,
-        fetchHtml: async () => {
-          const resp = await fetch(`https://${brand.shopify_domain}/products/${shopifyProduct.handle}`);
-          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-          return resp.text();
-        },
-      });
-    } catch (err) {
-      console.error(`  locator error for ${shopifyProduct.title}: ${(err as Error).message}`);
-    }
-
-    // Track source distribution for telemetry
-    if (located) {
-      stats.locatorSources[located.source] = (stats.locatorSources[located.source] || 0) + 1;
-    }
-
-    // Convert LocatedComposition to ExtractedMaterials shape for downstream code
-    const extraction: ExtractedMaterials | null = located
-      ? {
-          materials: located.materials,
-          confidence: located.confidence,
-          hasBanned: Object.keys(located.materials).some((m) =>
-            /Nylon|Polyester|Acrylic|Polyamide|Polypropylene/i.test(m)
-          ),
-          method: "regex",
-        }
-      : null;
-    const hasMaterials = extraction !== null && Object.keys(extraction.materials).length > 0;
-
-    if (hasMaterials) regexHits++;
-
-    // If regex found banned materials, upsert a minimal rejected row so the
-    // body_hash gets written. Next run short-circuits via the settled-status
-    // skip (which runs before the body_hash gate).
-    if (extraction && isExtractionBanned(extraction)) {
-      stats.skippedBanned++;
-      if (options.dryRun) {
-        console.log(`  SKIP (banned): ${shopifyProduct.title}`);
-        continue;
-      }
-      const bannedCategory = guessCategory(
-        `${shopifyProduct.title} ${shopifyProduct.product_type} ${(shopifyProduct.tags || []).join(" ")}`
-      );
-      const bannedSlug = `${brand.slug}-${slugify(shopifyProduct.title)}`;
-      const bannedRow = {
-        brand_id: brand.id,
-        name: shopifyProduct.title,
-        slug: bannedSlug,
-        category: bannedCategory,
-        shopify_product_id: shopifyProduct.id,
-        sync_status: "rejected",
-        material_confidence: extraction.confidence,
-        body_hash: incomingHash,
-      };
-      const { error: bannedErr } = await supabase
-        .from("products")
-        .upsert(bannedRow, {
-          onConflict: "brand_id,shopify_product_id",
-          ignoreDuplicates: false,
+    // ─── Expensive work wrapped in a per-product timeout ──────────
+    //
+    // Everything below — locator fetch, extraction, banned upsert, image
+    // optimization, product upsert, material sync — runs inside a single
+    // withTimeout wrapper. If any of it blows the 60s ceiling we catch the
+    // TimeoutError, record a failure row, increment counters, and move on.
+    // The rest of the brand's products still run.
+    const productStart = new Date();
+    const productStartMs = Date.now();
+    const processProduct = async (): Promise<void> => {
+      const locator = getLocator(brand.slug);
+      let located: LocatedComposition | null = null;
+      try {
+        located = await locator({
+          brandSlug: brand.slug,
+          shopifyProduct,
+          productUrl,
+          fetchHtml: async () => {
+            const resp = await fetch(productUrl);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            return resp.text();
+          },
         });
-      if (bannedErr?.code === "23505" && bannedErr.message.includes("slug")) {
-        await supabase
-          .from("products")
-          .upsert(
-            { ...bannedRow, slug: `${bannedSlug}-${shopifyProduct.id}` },
-            { onConflict: "brand_id,shopify_product_id", ignoreDuplicates: false }
-          );
-      } else if (bannedErr) {
-        console.error(
-          `  ERROR upserting banned ${shopifyProduct.title}: ${bannedErr.message}`
-        );
-        stats.errors++;
+      } catch (err) {
+        console.error(`  locator error for ${shopifyProduct.title}: ${(err as Error).message}`);
       }
-      continue;
-    }
 
-    const variant = shopifyProduct.variants?.[0];
-    const images = getImages(shopifyProduct);
-    const price = getFirstVariantPrice(shopifyProduct);
+      // Track source distribution for telemetry
+      if (located) {
+        stats.locatorSources[located.source] = (stats.locatorSources[located.source] || 0) + 1;
+        brandCtx?.recordLocatorSource(located.source);
+      }
 
-    // Track missing data
-    if (!price) stats.missingPrice++;
-    if (!images.primary) stats.missingImage++;
+      // Convert LocatedComposition to ExtractedMaterials shape for downstream code
+      const extraction: ExtractedMaterials | null = located
+        ? {
+            materials: located.materials,
+            confidence: located.confidence,
+            hasBanned: Object.keys(located.materials).some((m) =>
+              /Nylon|Polyester|Acrylic|Polyamide|Polypropylene/i.test(m)
+            ),
+            method: "regex",
+          }
+        : null;
+      const hasMaterials = extraction !== null && Object.keys(extraction.materials).length > 0;
 
-    // Determine sync status: auto-approve if trusted materials + high confidence + complete data
-    const syncStatus = hasMaterials ? determineSyncStatus(extraction!, price, images.primary) : "review";
-    if (syncStatus === "review") stats.flaggedReview++;
-    const confidence = hasMaterials ? extraction!.confidence : 0;
-    const category = guessCategory(`${shopifyProduct.title} ${shopifyProduct.product_type} ${(shopifyProduct.tags || []).join(" ")}`);
-    const rawProductType = classifyProductType(shopifyProduct.title, shopifyProduct.product_type, shopifyProduct.tags);
-    const productType = rawProductType && category === "activewear" ? mapActivewearType(rawProductType) : rawProductType;
-    const audience = classifyAudience(shopifyProduct.title, shopifyProduct.tags, productType, brand.audience);
-    const productSlug = `${brand.slug}-${slugify(shopifyProduct.title)}`;
+      if (hasMaterials) regexHits++;
 
-    if (syncStatus === "approved") stats.autoApproved++;
+      // If regex found banned materials, upsert a minimal rejected row so the
+      // body_hash gets written. Next run short-circuits via the settled-status
+      // skip (which runs before the body_hash gate).
+      if (extraction && isExtractionBanned(extraction)) {
+        stats.skippedBanned++;
+        brandCtx?.bump("skipped_banned");
+        if (options.dryRun) {
+          console.log(`  SKIP (banned): ${shopifyProduct.title}`);
+          return;
+        }
+        const bannedCategory = guessCategory(
+          `${shopifyProduct.title} ${shopifyProduct.product_type} ${(shopifyProduct.tags || []).join(" ")}`
+        );
+        const bannedSlug = `${brand.slug}-${slugify(shopifyProduct.title)}`;
+        const bannedRow = {
+          brand_id: brand.id,
+          name: shopifyProduct.title,
+          slug: bannedSlug,
+          category: bannedCategory,
+          shopify_product_id: shopifyProduct.id,
+          sync_status: "rejected",
+          material_confidence: extraction.confidence,
+          body_hash: incomingHash,
+        };
+        const { error: bannedErr } = await supabase
+          .from("products")
+          .upsert(bannedRow, {
+            onConflict: "brand_id,shopify_product_id",
+            ignoreDuplicates: false,
+          });
+        if (bannedErr?.code === "23505" && bannedErr.message.includes("slug")) {
+          await supabase
+            .from("products")
+            .upsert(
+              { ...bannedRow, slug: `${bannedSlug}-${shopifyProduct.id}` },
+              { onConflict: "brand_id,shopify_product_id", ignoreDuplicates: false }
+            );
+        } else if (bannedErr) {
+          throw new Error(`banned-upsert ${bannedErr.message}`);
+        }
+        return;
+      }
 
-    if (options.dryRun) {
-      const mats = hasMaterials
-        ? Object.entries(extraction!.materials).map(([m, p]) => `${p}% ${m}`).join(", ")
-        : "(none)";
-      const icon = syncStatus === "approved" ? "✓" : syncStatus === "review" ? "?" : "+";
-      console.log(`  ${icon} ${shopifyProduct.title} [${syncStatus}]`);
-      console.log(`    Materials: ${mats} [regex, conf=${confidence.toFixed(2)}]`);
-      console.log(`    Price: ${price ? `$${price.toFixed(2)}` : "?"} | Category: ${category}`);
-      continue;
-    }
+      const variant = shopifyProduct.variants?.[0];
+      const images = getImages(shopifyProduct);
+      const price = getFirstVariantPrice(shopifyProduct);
 
-    try {
+      // Track missing data
+      if (!price) stats.missingPrice++;
+      if (!images.primary) stats.missingImage++;
+
+      // Determine sync status: auto-approve if trusted materials + high confidence + complete data
+      const syncStatus = hasMaterials ? determineSyncStatus(extraction!, price, images.primary) : "review";
+      if (syncStatus === "review") {
+        stats.flaggedReview++;
+        brandCtx?.bump("flagged_review");
+      }
+      const confidence = hasMaterials ? extraction!.confidence : 0;
+      const category = guessCategory(`${shopifyProduct.title} ${shopifyProduct.product_type} ${(shopifyProduct.tags || []).join(" ")}`);
+      const rawProductType = classifyProductType(shopifyProduct.title, shopifyProduct.product_type, shopifyProduct.tags);
+      const productType = rawProductType && category === "activewear" ? mapActivewearType(rawProductType) : rawProductType;
+      const audience = classifyAudience(shopifyProduct.title, shopifyProduct.tags, productType, brand.audience);
+      const productSlug = `${brand.slug}-${slugify(shopifyProduct.title)}`;
+
+      if (syncStatus === "approved") stats.autoApproved++;
+
+      if (options.dryRun) {
+        const mats = hasMaterials
+          ? Object.entries(extraction!.materials).map(([m, p]) => `${p}% ${m}`).join(", ")
+          : "(none)";
+        const icon = syncStatus === "approved" ? "✓" : syncStatus === "review" ? "?" : "+";
+        console.log(`  ${icon} ${shopifyProduct.title} [${syncStatus}]`);
+        console.log(`    Materials: ${mats} [regex, conf=${confidence.toFixed(2)}]`);
+        console.log(`    Price: ${price ? `$${price.toFixed(2)}` : "?"} | Category: ${category}`);
+        return;
+      }
+
       // Optimize images: download, resize to WebP, upload to Supabase Storage
       const optimizedImages = await optimizeProductImages(
         supabase,
@@ -360,7 +482,7 @@ export async function syncBrand(
         currency: "USD",
         image_url: optimizedImages.imageUrl,
         additional_images: optimizedImages.additionalImages,
-        affiliate_url: `https://${brand.shopify_domain}/products/${shopifyProduct.handle}`,
+        affiliate_url: productUrl,
         product_type: productType,
         shopify_product_type: shopifyProduct.product_type || null,
         audience,
@@ -428,11 +550,42 @@ export async function syncBrand(
       }
 
       stats.inserted++;
+      brandCtx?.bump("inserted");
+    };
+
+    try {
+      await withTimeout(
+        processProduct(),
+        TIMEOUT_PER_PRODUCT_MS,
+        `shopify[${brand.slug}/${shopifyProduct.id}]`
+      );
     } catch (err) {
-      console.error(`  ERROR: ${shopifyProduct.title}: ${(err as Error).message}`);
-      stats.errors++;
+      const isTimeout = err instanceof TimeoutError;
+      const duration = Date.now() - productStartMs;
+      const message = (err as Error).message;
+      if (isTimeout) {
+        stats.timeouts++;
+        console.error(`  TIMEOUT (${duration}ms): ${shopifyProduct.title}`);
+      } else {
+        stats.errors++;
+        console.error(`  ERROR: ${shopifyProduct.title}: ${message}`);
+      }
+      if (brandCtx) {
+        await brandCtx.recordProductFailure({
+          stage: "product",
+          url: productUrl,
+          productRef,
+          startedAt: productStart,
+          durationMs: duration,
+          failureType: isTimeout ? "timeout" : "error",
+          message,
+        });
+      }
+    } finally {
+      productWorkMs += Date.now() - productStartMs;
     }
   }
+  brandCtx?.addStage("extract_ms", productWorkMs);
 
   console.log(`  Regex extracted: ${regexHits}/${shopifyProducts.length}, review: ${stats.flaggedReview}`);
 

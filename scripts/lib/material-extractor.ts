@@ -9,6 +9,12 @@
 import { GoogleGenAI } from "@google/genai";
 import type { ShopifyProduct } from "./shopify-fetcher.js";
 import { BANNED_MATERIALS } from "./curation.js";
+import {
+  TIMEOUT_GEMINI_MS,
+  TimeoutError,
+  withTimeout,
+  capExtractorInput,
+} from "./sync-reliability.js";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -456,11 +462,52 @@ Rules:
 - If you cannot determine a product's composition, use empty materials and confidence 0.0
 - confidence: 0.9+ if explicitly stated, 0.6-0.8 if inferred, below 0.5 if guessing`;
 
+  // Gemini timeout policy: wrap generateContent in withTimeout, allow a single
+  // retry, then treat the batch as failed. The SDK does not honour AbortSignal
+  // consistently, so withTimeout is defensive — the underlying promise may keep
+  // running in the background, but the caller gets a bounded wait.
+  const callGemini = async (): Promise<{ text: string }> => {
+    const resp = await withTimeout(
+      client.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+      }),
+      TIMEOUT_GEMINI_MS,
+      "gemini.generateContent"
+    );
+    return { text: resp.text ?? "" };
+  };
+
   try {
-    const response = await client.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-    });
+    let response: { text: string };
+    try {
+      response = await callGemini();
+    } catch (firstErr) {
+      const isTimeout = firstErr instanceof TimeoutError;
+      console.warn(
+        `  Gemini ${isTimeout ? "timeout" : "error"}, retrying once: ${(firstErr as Error).message}`
+      );
+      try {
+        response = await callGemini();
+      } catch (secondErr) {
+        console.error(
+          `  Gemini retry failed, abandoning batch: ${(secondErr as Error).message}`
+        );
+        // Same fallback as the outer catch — fill every requested index with
+        // an empty result so callers don't hang waiting for entries.
+        for (const p of products) {
+          if (!results.has(p.index)) {
+            results.set(p.index, {
+              materials: {},
+              confidence: 0,
+              hasBanned: false,
+              method: "llm",
+            });
+          }
+        }
+        return results;
+      }
+    }
 
     const text = response.text ?? "";
 
@@ -515,8 +562,13 @@ Rules:
  * Used by both extractMaterialsRegex (ShopifyProduct) and extractMaterialsFromText (raw text).
  */
 function extractFromCombinedText(combinedText: string): ExtractedMaterials | null {
+  // Defensive: cap stripped-text size. A 200KB body_html that survives
+  // stripping should not get handed to regex — the patterns have bounded
+  // repetition but we still do not want a pathological product to dominate
+  // wall time. See sync-reliability.ts for the cap value.
+  const capped = capExtractorInput(combinedText);
   // Strip ®, ™, © symbols so they don't break regex word captures
-  const cleaned = combinedText.replace(/[®™©]/g, "");
+  const cleaned = capped.replace(/[®™©]/g, "");
   const regexResult = extractWithRegex(cleaned);
   if (regexResult) return regexResult;
 

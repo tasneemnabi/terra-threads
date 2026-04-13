@@ -40,6 +40,21 @@ import {
 import { initStorageBucket, optimizeProductImages } from "./lib/image-optimizer.js";
 import { getLocator } from "./brand-scrapers/registry.js";
 import type { LocatedComposition } from "./brand-scrapers/locators/types.js";
+import {
+  BrandRunContext,
+  TIMEOUT_PER_PRODUCT_MS,
+  TIMEOUT_SCRAPE_MS,
+  BRAND_WALL_TIME_MS,
+  DEFAULT_REVIEW_CADENCE_DAYS,
+  TimeoutError,
+  withTimeout,
+  runWithConcurrency,
+} from "./lib/sync-reliability.js";
+
+// Default catalog concurrency. Conservative: one shared browser, three
+// workers. Start here and tune up once we have a baseline wall-time number
+// from telemetry.
+const CATALOG_CONCURRENCY = 3;
 
 function sha256(input: string): string {
   return createHash("sha256").update(input).digest("hex");
@@ -69,12 +84,15 @@ interface SyncStats {
   skippedBanned: number;
   skippedDuplicate: number;
   skippedUnchanged: number;
+  skippedReviewCadence: number;
   availabilityUpdated: number;
   availabilitySkipped: boolean;
   flaggedReview: number;
   missingPrice: number;
   missingImage: number;
+  timeouts: number;
   errors: number;
+  abortedByWallCeiling: boolean;
   locatorSources: Record<string, number>;
 }
 
@@ -85,7 +103,15 @@ interface SyncStats {
 export async function syncCatalogBrand(
   supabase: SupabaseClient,
   brand: CatalogBrandRow,
-  options: { dryRun: boolean; discoverOnly: boolean; forceRescan?: boolean },
+  options: {
+    dryRun: boolean;
+    discoverOnly: boolean;
+    forceRescan?: boolean;
+    brandCtx?: BrandRunContext;
+    reviewCadenceDays?: number;
+    wallTimeCeilingMs?: number;
+    concurrency?: number;
+  },
   materialCache: Map<string, string>
 ): Promise<SyncStats> {
   const stats: SyncStats = {
@@ -98,26 +124,41 @@ export async function syncCatalogBrand(
     skippedBanned: 0,
     skippedDuplicate: 0,
     skippedUnchanged: 0,
+    skippedReviewCadence: 0,
     availabilityUpdated: 0,
     availabilitySkipped: false,
     flaggedReview: 0,
     missingPrice: 0,
     missingImage: 0,
+    timeouts: 0,
     errors: 0,
+    abortedByWallCeiling: false,
     locatorSources: {},
   };
+  const brandCtx = options.brandCtx;
+  const wallCeilingMs = options.wallTimeCeilingMs ?? BRAND_WALL_TIME_MS;
+  const concurrency = options.concurrency ?? CATALOG_CONCURRENCY;
+  // reviewCadenceDays is plumbed through but catalog's main cadence gate is
+  // the brand-level availability sweep below. Kept for parity with Shopify.
+  void (options.reviewCadenceDays ?? DEFAULT_REVIEW_CADENCE_DAYS);
 
   console.log(`\n${"═".repeat(60)}`);
   console.log(`Syncing: ${brand.name} (${brand.website_url})`);
   console.log(`${"═".repeat(60)}`);
 
   // 1. Discover product URLs
+  const discoveryStart = Date.now();
   const discovery = await discoverProducts(brand.website_url, {
     brandSlug: brand.slug,
   });
+  const discoveryMs = Date.now() - discoveryStart;
+  brandCtx?.addStage("discovery_ms", discoveryMs);
 
   stats.discovered = discovery.urls.length;
-  console.log(`  Discovered ${discovery.urls.length} products via ${discovery.method}`);
+  brandCtx?.bump("fetched_or_discovered", discovery.urls.length);
+  console.log(
+    `  Discovered ${discovery.urls.length} products via ${discovery.method} (${discoveryMs}ms)`
+  );
 
   if (discovery.urls.length === 0) {
     console.log(`  No products found — skipping`);
@@ -177,16 +218,20 @@ export async function syncCatalogBrand(
     // Cadence gate: only run the availability sweep if the last sweep is older
     // than the brand's configured cadence. Avoids daily full-scrape cost for
     // stable brands.
-    const { data: lastSync } = await supabase
-      .from("products")
-      .select("last_synced_at")
-      .eq("brand_id", brand.id)
-      .not("last_synced_at", "is", null)
-      .order("last_synced_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    const lastSweep = lastSync?.last_synced_at ? new Date(lastSync.last_synced_at) : null;
+    //
+    // We use brands.last_availability_sweep_at as the explicit source of
+    // truth instead of inferring from max(products.last_synced_at). The old
+    // implementation was noisy because last_synced_at gets bumped by every
+    // write, so a partial sweep could fool the gate into thinking the brand
+    // had been swept recently when it hadn't.
+    const { data: brandRow } = await supabase
+      .from("brands")
+      .select("last_availability_sweep_at")
+      .eq("id", brand.id)
+      .single();
+    const lastSweep = brandRow?.last_availability_sweep_at
+      ? new Date(brandRow.last_availability_sweep_at)
+      : null;
     const cadenceDays = brand.availability_cadence_days ?? 7;
     const cadenceMs = cadenceDays * 24 * 60 * 60 * 1000;
     const daysSince = lastSweep
@@ -198,22 +243,69 @@ export async function syncCatalogBrand(
         `  availability sweep skipped (last sweep ${daysSince.toFixed(1)}d ago, cadence ${cadenceDays}d)`
       );
       stats.availabilitySkipped = true;
+      brandCtx?.bump("skipped_review_cadence", approvedUrls.length);
     } else {
+      const availStart = Date.now();
       await launchBrowser();
       try {
+        let sweepCompleted = true;
         for (const { url, id } of approvedUrls) {
-          const scraped = await scrapeProductData(url);
-          const isAvailable = scraped.success ? scraped.isAvailable : true;
-          await supabase
-            .from("products")
-            .update({ is_available: isAvailable, last_synced_at: new Date().toISOString() })
-            .eq("id", id);
-          stats.availabilityUpdated++;
+          if (brandCtx?.checkWallTime(wallCeilingMs)) {
+            brandCtx.abortedByWallCeiling = true;
+            stats.abortedByWallCeiling = true;
+            sweepCompleted = false;
+            console.warn(
+              `  ! Wall-time ceiling exceeded during availability sweep — aborting brand`
+            );
+            break;
+          }
+          const sweepProductStart = Date.now();
+          try {
+            const scraped = await withTimeout(
+              scrapeProductData(url),
+              TIMEOUT_SCRAPE_MS,
+              `catalog-avail[${brand.slug}]`
+            );
+            const isAvailable = scraped.success ? scraped.isAvailable : true;
+            await supabase
+              .from("products")
+              .update({ is_available: isAvailable, last_synced_at: new Date().toISOString() })
+              .eq("id", id);
+            stats.availabilityUpdated++;
+            brandCtx?.bump("approved_availability_checked");
+          } catch (err) {
+            const isTimeout = err instanceof TimeoutError;
+            if (isTimeout) stats.timeouts++;
+            else stats.errors++;
+            sweepCompleted = false;
+            await brandCtx?.recordProductFailure({
+              stage: "scrape",
+              url,
+              productRef: id,
+              startedAt: new Date(sweepProductStart),
+              durationMs: Date.now() - sweepProductStart,
+              failureType: isTimeout ? "timeout" : "error",
+              message: (err as Error).message,
+            });
+            console.warn(
+              `  availability ${isTimeout ? "TIMEOUT" : "ERROR"} for ${url}: ${(err as Error).message}`
+            );
+          }
           await new Promise((r) => setTimeout(r, 2000));
+        }
+        // Only mark the brand as freshly swept if every URL succeeded. A
+        // partial sweep should NOT advance the cadence — the gate would
+        // hide stale stock.
+        if (sweepCompleted && stats.availabilityUpdated === approvedUrls.length) {
+          await supabase
+            .from("brands")
+            .update({ last_availability_sweep_at: new Date().toISOString() })
+            .eq("id", brand.id);
         }
       } finally {
         await closeBrowser();
       }
+      brandCtx?.addStage("availability_ms", Date.now() - availStart);
     }
   }
 
@@ -222,185 +314,223 @@ export async function syncCatalogBrand(
     return stats;
   }
 
-  console.log(`  Scraping ${newUrls.length} new product pages...`);
+  console.log(
+    `  Scraping ${newUrls.length} new product pages (concurrency=${concurrency})...`
+  );
 
-  // 3. Scrape each product page
+  // 3. Scrape each product page in a bounded concurrency pool. The browser
+  //    process is shared across workers; each worker opens its own page.
+  //    The whole per-product unit of work is wrapped in a 60s timeout so a
+  //    single slow page can't stall the whole brand.
+  const scrapeStart = Date.now();
+  let processedCount = 0;
+  let aborted = false;
   await launchBrowser();
   try {
-    for (let i = 0; i < newUrls.length; i++) {
-      const url = newUrls[i];
-
-      if ((i + 1) % 25 === 0 || i === 0) {
-        console.log(`  Progress: ${i + 1}/${newUrls.length}`);
-      }
-
-      const scraped = await scrapeProductData(url);
-      stats.scraped++;
-
-      if (!scraped.success || !scraped.name) {
-        stats.errors++;
-        continue;
-      }
-
-      // Clean up name: strip trailing " | Brand Name" suffixes (common in og:title)
-      // Require spaces around separator to avoid stripping hyphenated words like "Ultra-Soft"
-      const cleanName = scraped.name.replace(/\s+[|–—-]\s+[^|–—-]+$/, "").trim();
-
-      // 4. Skip non-clothing products
-      const rejection = shouldRejectProduct(cleanName, brand.slug);
-      if (rejection.rejected) {
-        stats.skippedNonClothing++;
-        if (options.dryRun) {
-          console.log(`  SKIP (${rejection.reason}): ${cleanName}`);
+    await runWithConcurrency(newUrls, concurrency, async (url, i) => {
+      if (aborted) return;
+      // Wall-time check before grabbing more work.
+      if (brandCtx?.checkWallTime(wallCeilingMs)) {
+        if (!aborted) {
+          aborted = true;
+          brandCtx.abortedByWallCeiling = true;
+          stats.abortedByWallCeiling = true;
+          console.warn(
+            `  ! Wall-time ceiling ${(wallCeilingMs / 1000).toFixed(0)}s exceeded — aborting brand`
+          );
+          await brandCtx.recordProductFailure({
+            stage: "brand",
+            startedAt: new Date(),
+            durationMs: brandCtx.elapsedMs(),
+            failureType: "error",
+            message: `wall-time ceiling ${wallCeilingMs}ms exceeded`,
+          });
         }
-        continue;
+        return;
       }
 
-      // Body-hash skip gate: if the source HTML hasn't changed and the product
-      // is already settled (not pending), skip re-processing. Dry-runs and
-      // --force-rescan bypass the gate so operators can always force a full pass.
-      // NOTE: the page has already been scraped by Playwright above — this gate
-      // only saves parser + DB write time. The cadence gate above is where the
-      // real Playwright savings come from.
-      const incomingHash = sha256(scraped.html || "");
-      const existingHash = existingHashMap.get(url);
-      const existingInfo = existingUrls.get(url);
-      const skippable =
-        !options.forceRescan &&
-        !options.dryRun &&
-        existingHash &&
-        existingHash === incomingHash &&
-        existingInfo &&
-        existingInfo.status !== "pending";
+      const productStart = new Date();
+      const productStartMs = Date.now();
+      let stageReached: string = "scrape";
 
-      if (skippable) {
-        stats.skippedUnchanged++;
-        // Still bump availability/last_synced_at so the cadence gate works
-        await supabase
-          .from("products")
-          .update({
-            is_available: scraped.isAvailable,
-            last_synced_at: new Date().toISOString(),
-          })
-          .eq("id", existingInfo!.id);
-        continue;
-      }
-
-      // 5. Extract materials via brand-specific locator (falls back to default)
-      const locator = getLocator(brand.slug);
-      let located: LocatedComposition | null = null;
-      try {
-        located = await locator({
-          brandSlug: brand.slug,
-          productUrl: url,
-          fetchHtml: async () => scraped.html || "",
-        });
-      } catch (err) {
-        console.warn(
-          `  locator failed for ${url}: ${(err as Error).message}`
+      const processProduct = async (): Promise<void> => {
+        // ─── Scrape the page (Playwright) ────────────────────
+        stageReached = "scrape";
+        const scraped: ScrapedProduct = await withTimeout(
+          scrapeProductData(url),
+          TIMEOUT_SCRAPE_MS,
+          `catalog-scrape[${brand.slug}]`
         );
-      }
+        stats.scraped++;
 
-      if (located) {
-        stats.locatorSources[located.source] =
-          (stats.locatorSources[located.source] || 0) + 1;
-      }
-
-      const extraction: ExtractedMaterials | null = located
-        ? {
-            materials: located.materials,
-            confidence: located.confidence,
-            hasBanned: Object.keys(located.materials).some((m) =>
-              /Nylon|Polyester|Acrylic|Polyamide|Polypropylene/i.test(m)
-            ),
-            method: "regex",
-          }
-        : null;
-      const hasMaterials =
-        extraction !== null && Object.keys(extraction.materials).length > 0;
-
-      // If banned, upsert a minimal rejected row so body_hash gets written.
-      // Next run will short-circuit via the rejected-status skip above.
-      if (extraction && isExtractionBanned(extraction)) {
-        stats.skippedBanned++;
-        if (options.dryRun) {
-          console.log(`  SKIP (banned): ${cleanName}`);
-          continue;
+        if (!scraped.success || !scraped.name) {
+          throw new Error(scraped.error || "scrape failed: no name");
         }
-        const existing = existingUrls.get(url);
-        if (existing) {
+
+        // Clean up name: strip trailing " | Brand Name" suffixes (common in og:title)
+        // Require spaces around separator to avoid stripping hyphenated words like "Ultra-Soft"
+        const cleanName = scraped.name.replace(/\s+[|–—-]\s+[^|–—-]+$/, "").trim();
+
+        // 4. Skip non-clothing products
+        const rejection = shouldRejectProduct(cleanName, brand.slug);
+        if (rejection.rejected) {
+          stats.skippedNonClothing++;
+          brandCtx?.bump("skipped_non_clothing");
+          if (options.dryRun) {
+            console.log(`  SKIP (${rejection.reason}): ${cleanName}`);
+          }
+          return;
+        }
+
+        // Body-hash skip gate: if the source HTML hasn't changed and the product
+        // is already settled (not pending), skip re-processing. Dry-runs and
+        // --force-rescan bypass the gate so operators can always force a full pass.
+        // NOTE: the page has already been scraped by Playwright above — this gate
+        // only saves parser + DB write time. The cadence gate above is where the
+        // real Playwright savings come from.
+        const incomingHash = sha256(scraped.html || "");
+        const existingHash = existingHashMap.get(url);
+        const existingInfo = existingUrls.get(url);
+        const skippable =
+          !options.forceRescan &&
+          !options.dryRun &&
+          existingHash &&
+          existingHash === incomingHash &&
+          existingInfo &&
+          existingInfo.status !== "pending";
+
+        if (skippable) {
+          stats.skippedUnchanged++;
+          brandCtx?.bump("skipped_unchanged");
+          // Still bump availability/last_synced_at so the cadence gate works
           await supabase
             .from("products")
             .update({
+              is_available: scraped.isAvailable,
+              last_synced_at: new Date().toISOString(),
+            })
+            .eq("id", existingInfo!.id);
+          return;
+        }
+
+        // 5. Extract materials via brand-specific locator (falls back to default)
+        stageReached = "extract";
+        const locator = getLocator(brand.slug);
+        let located: LocatedComposition | null = null;
+        try {
+          located = await locator({
+            brandSlug: brand.slug,
+            productUrl: url,
+            fetchHtml: async () => scraped.html || "",
+          });
+        } catch (err) {
+          console.warn(
+            `  locator failed for ${url}: ${(err as Error).message}`
+          );
+        }
+
+        if (located) {
+          stats.locatorSources[located.source] =
+            (stats.locatorSources[located.source] || 0) + 1;
+          brandCtx?.recordLocatorSource(located.source);
+        }
+
+        const extraction: ExtractedMaterials | null = located
+          ? {
+              materials: located.materials,
+              confidence: located.confidence,
+              hasBanned: Object.keys(located.materials).some((m) =>
+                /Nylon|Polyester|Acrylic|Polyamide|Polypropylene/i.test(m)
+              ),
+              method: "regex",
+            }
+          : null;
+        const hasMaterials =
+          extraction !== null && Object.keys(extraction.materials).length > 0;
+
+        // If banned, upsert a minimal rejected row so body_hash gets written.
+        // Next run will short-circuit via the rejected-status skip above.
+        if (extraction && isExtractionBanned(extraction)) {
+          stageReached = "db";
+          stats.skippedBanned++;
+          brandCtx?.bump("skipped_banned");
+          if (options.dryRun) {
+            console.log(`  SKIP (banned): ${cleanName}`);
+            return;
+          }
+          const existing = existingUrls.get(url);
+          if (existing) {
+            await supabase
+              .from("products")
+              .update({
+                sync_status: "rejected",
+                material_confidence: extraction.confidence,
+                body_hash: incomingHash,
+              })
+              .eq("id", existing.id);
+          } else {
+            const bannedSlug = `${brand.slug}-${slugify(cleanName)}`;
+            const bannedRow = {
+              brand_id: brand.id,
+              name: cleanName,
+              slug: bannedSlug,
+              category: guessCategory(cleanName),
+              affiliate_url: url,
               sync_status: "rejected",
               material_confidence: extraction.confidence,
               body_hash: incomingHash,
-            })
-            .eq("id", existing.id);
-        } else {
-          const bannedSlug = `${brand.slug}-${slugify(cleanName)}`;
-          const bannedRow = {
-            brand_id: brand.id,
-            name: cleanName,
-            slug: bannedSlug,
-            category: guessCategory(cleanName),
-            affiliate_url: url,
-            sync_status: "rejected",
-            material_confidence: extraction.confidence,
-            body_hash: incomingHash,
-          };
-          const { error: bannedErr } = await supabase
-            .from("products")
-            .insert(bannedRow);
-          if (bannedErr?.code === "23505" && bannedErr.message.includes("slug")) {
-            await supabase
+            };
+            const { error: bannedErr } = await supabase
               .from("products")
-              .insert({ ...bannedRow, slug: `${bannedSlug}-${Date.now()}` });
-          } else if (bannedErr) {
-            console.error(
-              `  ERROR upserting banned ${cleanName}: ${bannedErr.message}`
-            );
-            stats.errors++;
+              .insert(bannedRow);
+            if (bannedErr?.code === "23505" && bannedErr.message.includes("slug")) {
+              await supabase
+                .from("products")
+                .insert({ ...bannedRow, slug: `${bannedSlug}-${Date.now()}` });
+            } else if (bannedErr) {
+              throw new Error(`banned-insert ${bannedErr.message}`);
+            }
           }
+          return;
         }
-        continue;
-      }
 
-      // Track missing data
-      if (!scraped.price) stats.missingPrice++;
-      if (!scraped.imageUrl) stats.missingImage++;
+        // Track missing data
+        if (!scraped.price) stats.missingPrice++;
+        if (!scraped.imageUrl) stats.missingImage++;
 
-      // 6. Classify
-      const syncStatus = hasMaterials
-        ? determineSyncStatus(extraction!, scraped.price, scraped.imageUrl)
-        : "review";
-      const confidence = hasMaterials ? extraction!.confidence : 0;
-      const category = guessCategory(cleanName);
-      const productType = classifyProductType(cleanName);
-      const audience = classifyAudience(cleanName, undefined, productType, brand.audience);
-      const productSlug = `${brand.slug}-${slugify(cleanName)}`;
+        // 6. Classify
+        const syncStatus = hasMaterials
+          ? determineSyncStatus(extraction!, scraped.price, scraped.imageUrl)
+          : "review";
+        const confidence = hasMaterials ? extraction!.confidence : 0;
+        const category = guessCategory(cleanName);
+        const productType = classifyProductType(cleanName);
+        const audience = classifyAudience(cleanName, undefined, productType, brand.audience);
+        const productSlug = `${brand.slug}-${slugify(cleanName)}`;
 
-      if (syncStatus === "approved") stats.autoApproved++;
-      if (syncStatus === "review") stats.flaggedReview++;
+        if (syncStatus === "approved") stats.autoApproved++;
+        if (syncStatus === "review") {
+          stats.flaggedReview++;
+          brandCtx?.bump("flagged_review");
+        }
 
-      if (options.dryRun) {
-        const mats = hasMaterials
-          ? Object.entries(extraction!.materials)
-              .map(([m, p]) => `${p}% ${m}`)
-              .join(", ")
-          : "(none)";
-        const icon = syncStatus === "approved" ? "✓" : "?";
-        console.log(`  ${icon} ${cleanName} [${syncStatus}]`);
-        console.log(`    Materials: ${mats} [conf=${confidence.toFixed(2)}]`);
-        console.log(
-          `    Price: ${scraped.price ? `$${scraped.price.toFixed(2)}` : "?"} | Category: ${category}`
-        );
-        continue;
-      }
+        if (options.dryRun) {
+          const mats = hasMaterials
+            ? Object.entries(extraction!.materials)
+                .map(([m, p]) => `${p}% ${m}`)
+                .join(", ")
+            : "(none)";
+          const icon = syncStatus === "approved" ? "✓" : "?";
+          console.log(`  ${icon} ${cleanName} [${syncStatus}]`);
+          console.log(`    Materials: ${mats} [conf=${confidence.toFixed(2)}]`);
+          console.log(
+            `    Price: ${scraped.price ? `$${scraped.price.toFixed(2)}` : "?"} | Category: ${category}`
+          );
+          return;
+        }
 
-      // 7. Optimize images then insert into Supabase
-      try {
-        // Optimize images: download, resize to WebP, upload to Supabase Storage
+        // 7. Optimize images then insert into Supabase
+        stageReached = "image";
         const optimizedImages = await optimizeProductImages(
           supabase,
           productSlug,
@@ -408,6 +538,7 @@ export async function syncCatalogBrand(
           scraped.additionalImages || []
         );
 
+        stageReached = "db";
         // Check if product already exists (e.g. from a previous partial run)
         const { data: existing } = await supabase
           .from("products")
@@ -505,21 +636,47 @@ export async function syncCatalogBrand(
         }
 
         stats.inserted++;
-      } catch (err) {
-        console.error(
-          `  ERROR: ${cleanName}: ${(err as Error).message}`
-        );
-        stats.errors++;
-      }
+        brandCtx?.bump("inserted");
+      };
 
-      // Polite delay between requests
-      if (i < newUrls.length - 1) {
-        await new Promise((r) => setTimeout(r, 2000));
+      try {
+        await withTimeout(
+          processProduct(),
+          TIMEOUT_PER_PRODUCT_MS,
+          `catalog[${brand.slug}/${i}]`
+        );
+      } catch (err) {
+        const isTimeout = err instanceof TimeoutError;
+        const duration = Date.now() - productStartMs;
+        const message = (err as Error).message;
+        if (isTimeout) {
+          stats.timeouts++;
+          console.error(`  TIMEOUT (${duration}ms, stage=${stageReached}): ${url}`);
+        } else {
+          stats.errors++;
+          console.error(`  ERROR: ${url}: ${message}`);
+        }
+        if (brandCtx) {
+          await brandCtx.recordProductFailure({
+            stage: stageReached,
+            url,
+            startedAt: productStart,
+            durationMs: duration,
+            failureType: isTimeout ? "timeout" : "error",
+            message,
+          });
+        }
+      } finally {
+        processedCount++;
+        if (processedCount % 25 === 0 || processedCount === newUrls.length) {
+          console.log(`  Progress: ${processedCount}/${newUrls.length}`);
+        }
       }
-    }
+    });
   } finally {
     await closeBrowser();
   }
+  brandCtx?.addStage("scrape_ms", Date.now() - scrapeStart);
 
   // Update brand sync timestamp
   if (!options.dryRun) {
