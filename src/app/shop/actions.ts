@@ -1,6 +1,8 @@
 "use server";
 
+import { headers } from "next/headers";
 import { getFilteredProducts, getProductTypesForCategory, getAvailableBrandSlugs, searchProducts } from "@/lib/queries/products";
+import { rateLimit } from "@/lib/rate-limit";
 import type { FilterState, ProductWithBrand } from "@/types/database";
 
 /**
@@ -70,6 +72,11 @@ export async function fetchSearchResults(
   query: string
 ): Promise<ProductWithBrand[]> {
   try {
+    const headerStore = await headers();
+    const ip = headerStore.get("x-forwarded-for") ?? "unknown";
+    if (!rateLimit(`search:${ip}`, 30, 60_000)) {
+      return [];
+    }
     return await searchProducts(query);
   } catch (e) {
     console.error("fetchSearchResults action failed:", e);

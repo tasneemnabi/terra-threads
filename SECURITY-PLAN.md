@@ -2,7 +2,7 @@
 
 **Created**: 2026-04-12
 **Sources**: `SECURITY-AUDIT.md`, `INDEPENDENT-SECURITY-REVIEW.md`
-**Status**: NOT STARTED
+**Status**: IN PROGRESS
 
 Both audits converged on the same core issues. This plan synthesizes them into a single prioritized remediation checklist with concrete implementation steps.
 
@@ -12,14 +12,14 @@ Both audits converged on the same core issues. This plan synthesizes them into a
 
 | # | Issue | Severity | Effort | Status |
 |---|-------|----------|--------|--------|
-| 1 | Update Next.js 16.1.6 → 16.1.7 | CRITICAL | 5 min | [ ] |
-| 2 | Delete admin routes and server actions | CRITICAL | 5 min | [ ] |
-| 3 | Fix PostgREST filter injection in search | HIGH | 15 min | [ ] |
-| 4 | Restrict remote image patterns | HIGH | 15 min | [ ] |
-| 5 | Add security headers | MEDIUM | 15 min | [ ] |
+| 1 | Update Next.js 16.1.6 → 16.2.3 | CRITICAL | 5 min | [x] |
+| 2 | Delete admin routes and server actions | CRITICAL | 5 min | [x] |
+| 3 | Fix PostgREST filter injection in search | HIGH | 15 min | [x] |
+| 4 | Restrict remote image patterns | HIGH | 15 min | [x] |
+| 5 | Add security headers | MEDIUM | 15 min | [x] |
 | 6 | ~~Sanitize error messages in admin actions~~ | ~~LOW~~ | — | [x] Resolved by #2 |
 | 7 | Tighten RLS on `products` table | MEDIUM | 30 min | [ ] |
-| 8 | Add rate limiting to public server actions | MEDIUM | 1–2 hrs | [ ] |
+| 8 | Add rate limiting to public server actions | MEDIUM | 1–2 hrs | [x] |
 
 ---
 
@@ -292,12 +292,12 @@ Item 7 requires a database migration and should be tested against the staging en
 
 After all remediations:
 
-- [ ] `npm audit` shows 0 vulnerabilities
-- [ ] `/admin/review` returns 404
-- [ ] No `createAdminClient` imports remain in `src/app/`
-- [ ] Search with `%,id.neq.` returns empty, no error
-- [ ] Non-allowlisted image domains are rejected by `next/image`
-- [ ] Response headers include `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Strict-Transport-Security`
+- [x] `npm audit` shows 0 vulnerabilities (Next.js upgraded to 16.2.3)
+- [x] `/admin/review` returns 404 (entire admin directory deleted)
+- [x] No `createAdminClient` imports remain in `src/app/` (admin.ts deleted)
+- [x] Search with `%,id.neq.` returns empty, no error (input sanitized)
+- [x] Non-allowlisted image domains are rejected by `next/image` (explicit allowlist)
+- [x] Response headers include `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Strict-Transport-Security`
 - [x] ~~Admin error messages don't leak DB internals~~ (resolved by deleting admin routes)
-- [ ] Anon key can only read approved products from `products` table
-- [ ] Rapid search requests from a single IP are throttled after 30/min
+- [ ] Anon key can only read approved products from `products` table (requires DB migration)
+- [x] Rapid search requests from a single IP are throttled after 30/min
