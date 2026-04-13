@@ -45,10 +45,14 @@ export async function searchProducts(
 ): Promise<ProductWithBrand[]> {
   const supabase = await createClient();
 
+  // Sanitize input: escape SQL LIKE wildcards, then strip PostgREST filter metacharacters
+  const escaped = query.replace(/[%_\\]/g, "\\$&");
+  const safe = escaped.replace(/[,.()]/g, "");
+
   const { data, error } = await supabase
     .from("products_with_materials")
     .select("*")
-    .or(`name.ilike.%${query}%,brand_name.ilike.%${query}%`)
+    .or(`name.ilike.%${safe}%,brand_name.ilike.%${safe}%`)
     .order("created_at", { ascending: false })
     .limit(limit);
 
