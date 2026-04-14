@@ -480,12 +480,16 @@ export async function syncBrand(
         return;
       }
 
-      // Optimize images: download, resize to WebP, upload to Supabase Storage
+      // Optimize images: download, resize to WebP, upload to Supabase Storage.
+      // Pass the full pool as a candidate list so failures (404, timeouts)
+      // fall through to the next source instead of stranding a broken URL.
+      const imageCandidates = [images.primary, ...images.additional].filter(
+        (u): u is string => !!u
+      );
       const optimizedImages = await optimizeProductImages(
         supabase,
         productSlug,
-        images.primary,
-        images.additional
+        imageCandidates
       );
 
       const productData = {

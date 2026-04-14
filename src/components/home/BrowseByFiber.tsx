@@ -1,5 +1,5 @@
-import Link from "next/link";
 import Image from "next/image";
+import { TrackedLink } from "@/components/ui/TrackedLink";
 
 const fibers = [
   {
@@ -49,8 +49,11 @@ export function BrowseByFiber() {
         {/* Asymmetric: hero fiber left + stacked list right */}
         <div className="mt-8 flex flex-col lg:flex-row gap-5 lg:gap-6">
           {/* Hero fiber — large feature card with image */}
-          <Link
+          <TrackedLink
             href={`/shop?fiber=${encodeURIComponent(hero.param)}`}
+            section="browse-by-fiber"
+            ctaText={`Shop ${hero.shortName}`}
+            itemName={hero.name}
             className="group lg:w-[45%] lg:flex-shrink-0 relative rounded-xl overflow-hidden flex flex-col justify-end transition-all duration-300 hover:shadow-lg"
           >
             <div className="absolute inset-0">
@@ -78,14 +81,17 @@ export function BrowseByFiber() {
                 Shop merino <span>&rarr;</span>
               </p>
             </div>
-          </Link>
+          </TrackedLink>
 
           {/* Remaining fibers — image thumbnails with text */}
           <div className="flex-1 flex flex-col gap-3">
             {rest.map((fiber) => (
-              <Link
+              <TrackedLink
                 key={fiber.name}
                 href={`/shop?fiber=${encodeURIComponent(fiber.param)}`}
+                section="browse-by-fiber"
+                ctaText={`Shop ${fiber.shortName}`}
+                itemName={fiber.name}
                 className="group flex items-center gap-4 rounded-lg bg-surface px-5 py-4 sm:px-6 sm:py-5 transition-all duration-200 hover:bg-surface-dark/30"
               >
                 {/* Fiber thumbnail */}
@@ -110,12 +116,14 @@ export function BrowseByFiber() {
                 <span className="font-body text-[13px] font-medium text-accent flex-shrink-0 group-hover:translate-x-0.5 transition-transform duration-200">
                   Shop &rarr;
                 </span>
-              </Link>
+              </TrackedLink>
             ))}
 
             {/* All fibers link */}
-            <Link
+            <TrackedLink
               href="/shop"
+              section="browse-by-fiber"
+              ctaText="Browse all fibers"
               className="group flex items-center justify-between gap-4 rounded-lg border border-surface-dark/40 px-5 py-4 sm:px-6 sm:py-5 transition-colors duration-200 hover:bg-surface/50"
             >
               <div>
@@ -129,7 +137,7 @@ export function BrowseByFiber() {
               <span className="font-body text-[13px] font-medium text-accent flex-shrink-0 group-hover:translate-x-0.5 transition-transform duration-200">
                 Browse all &rarr;
               </span>
-            </Link>
+            </TrackedLink>
           </div>
         </div>
       </div>

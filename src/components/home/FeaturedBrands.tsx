@@ -1,5 +1,5 @@
-import Link from "next/link";
 import Image from "next/image";
+import { TrackedLink } from "@/components/ui/TrackedLink";
 import { brandLogoUrl } from "@/lib/utils";
 import type { BrandWithDetails } from "@/types/database";
 
@@ -24,9 +24,12 @@ export function FeaturedBrands({ brands }: FeaturedBrandsProps) {
               {brands.map((brand) => {
                 const logoSrc = brandLogoUrl(brand.website_url ?? null);
                 return (
-                  <Link
+                  <TrackedLink
                     key={brand.slug}
                     href={`/brand/${brand.slug}`}
+                    section="featured-brands"
+                    ctaText={brand.name}
+                    itemName={brand.name}
                     className="group flex-shrink-0"
                   >
                     {logoSrc ? (
@@ -45,17 +48,19 @@ export function FeaturedBrands({ brands }: FeaturedBrandsProps) {
                         {brand.name}
                       </span>
                     )}
-                  </Link>
+                  </TrackedLink>
                 );
               })}
             </div>
 
-            <Link
+            <TrackedLink
               href="/brands"
+              section="featured-brands"
+              ctaText="All brands"
               className="font-body text-[14px] font-medium text-accent hover:text-accent/80 transition-colors flex-shrink-0"
             >
               All brands &rarr;
-            </Link>
+            </TrackedLink>
           </div>
         </div>
       </div>

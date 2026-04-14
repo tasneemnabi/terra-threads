@@ -5,20 +5,38 @@ import Link from "next/link";
 import Image from "next/image";
 import { FiberFactsMini } from "@/components/product/FiberFactsMini";
 import { formatPrice } from "@/lib/utils";
+import { trackProductCardClick, type ProductCardSource } from "@/lib/posthog/events";
 import type { ProductWithBrand } from "@/types/database";
 
 interface ProductCardProps {
   product: ProductWithBrand;
   hideBrand?: boolean;
+  source: ProductCardSource;
 }
 
-export function ProductCard({ product, hideBrand }: ProductCardProps) {
+export function ProductCard({ product, hideBrand, source }: ProductCardProps) {
   const [imgError, setImgError] = useState(false);
   const hasImage = product.image_url && product.image_url.startsWith("http") && !imgError;
+
+  const handleClick = () => {
+    trackProductCardClick({
+      product_slug: product.slug,
+      product_name: product.name,
+      brand_name: product.brand_name,
+      brand_slug: product.brand_slug,
+      category: product.category,
+      price: product.price || null,
+      currency: product.currency || null,
+      is_available: product.is_available,
+      source,
+      destination: `/product/${product.slug}`,
+    });
+  };
 
   return (
     <Link
       href={`/product/${product.slug}`}
+      onClick={handleClick}
       className="group block transition-transform duration-300 ease-out hover:-translate-y-1"
     >
       <div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-surface ring-1 ring-black/[0.04]">

@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Space_Grotesk, DM_Sans } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { PHProvider } from "@/lib/posthog/provider";
+import { PostHogPageview } from "@/lib/posthog/pageview";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -49,10 +52,15 @@ export default function RootLayout({
       <body
         className={`${spaceGrotesk.variable} ${dmSans.variable} antialiased`}
       >
-        <Header />
-        <main className="min-h-screen">{children}</main>
-        <Footer />
-        <Analytics />
+        <PHProvider>
+          <Suspense fallback={null}>
+            <PostHogPageview />
+          </Suspense>
+          <Header />
+          <main className="min-h-screen">{children}</main>
+          <Footer />
+          <Analytics />
+        </PHProvider>
       </body>
     </html>
   );

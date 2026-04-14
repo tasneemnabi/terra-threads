@@ -32,6 +32,12 @@ export interface ScrapedProduct {
   price: number | null;
   currency: string | null;
   description: string | null;
+  // Ranked candidate list of image URLs (JSON-LD → og:image → DOM), deduped
+  // and normalized. The optimizer walks this list and uses the first one that
+  // actually downloads successfully, so bad sources fall through automatically.
+  imageCandidates: string[];
+  // Convenience: imageCandidates[0] / slice(1). These are unverified — prefer
+  // imageCandidates for anything that needs a working URL.
   imageUrl: string | null;
   additionalImages: string[];
   isAvailable: boolean;
@@ -358,32 +364,57 @@ export async function scrapeProductData(
       null;
     const description = rawDescription ? decodeHtmlEntities(rawDescription) : null;
 
-    // Images: JSON-LD → og:image → DOM selectors
-    const jsonLdImages = jsonLd?.images || [];
+    // Images: merge JSON-LD, og:image, and DOM selectors into a ranked
+    // candidate list. JSON-LD path-relative strings are dropped because
+    // schema.org requires absolute URLs in Product.image; sites that ship
+    // relative paths (e.g. "img/product/foo.jpg") are almost always CMS
+    // internals that don't resolve against the product page URL.
+    const jsonLdImages = (jsonLd?.images || []).filter((u) =>
+      /^https?:\/\//i.test(u) || u.startsWith("//") || u.startsWith("/")
+    );
     const ogImage = await metaContent("og:image");
-    const productImages: string[] = await page!.$$eval(
+    // DOM scan: narrow product-gallery selectors first (high-signal on
+    // Shopify-ish themes), then a broad `main img` fallback ranked by
+    // natural size so we surface real product shots before icons/logos
+    // on sites that don't use standard classnames.
+    const narrowDomImages: string[] = await page!.$$eval(
       '.product-gallery img, .product__media img, .product-images img, [data-product-image] img',
       (imgs) => imgs.map((img) => (img as HTMLImageElement).src).filter((s) => s && !s.includes("placeholder"))
     ).catch(() => []);
 
-    // Priority: JSON-LD images first, then og:image, then DOM
-    let allImages: string[];
-    if (jsonLdImages.length > 0) {
-      allImages = jsonLdImages;
-    } else if (ogImage) {
-      allImages = [ogImage, ...productImages.filter((i) => i !== ogImage)];
-    } else {
-      allImages = productImages;
-    }
-    // Normalize image URLs: decode pre-encoded chars, resolve relative paths
-    allImages = allImages.map((u) => {
-      const decoded = decodeURIComponent(u);
-      if (decoded.startsWith("//")) return `https:${decoded}`;
-      if (!decoded.startsWith("http")) {
-        try { return new URL(decoded, url).href; } catch { return decoded; }
-      }
-      return decoded;
-    });
+    const broadDomImages: string[] = await page!.$$eval(
+      "main img, article img",
+      (imgs) =>
+        (imgs as HTMLImageElement[])
+          .filter((img) => {
+            const src = img.src || "";
+            if (!src || src.startsWith("data:")) return false;
+            if (/placeholder|sprite|logo|icon|favicon/i.test(src)) return false;
+            // Reject tiny images when dimensions are known — skips thumbs/UI chrome
+            const w = img.naturalWidth || img.width || 0;
+            const h = img.naturalHeight || img.height || 0;
+            if (w && h && (w < 200 || h < 200)) return false;
+            return true;
+          })
+          .sort((a, b) => {
+            const areaA = (a.naturalWidth || 0) * (a.naturalHeight || 0);
+            const areaB = (b.naturalWidth || 0) * (b.naturalHeight || 0);
+            return areaB - areaA;
+          })
+          .map((img) => img.src)
+    ).catch(() => []);
+
+    const domImages = [...narrowDomImages, ...broadDomImages];
+
+    // Ranking: JSON-LD first (usually variant-specific CDN URLs), then DOM
+    // scan (reflects the rendered page — the user's actual product image,
+    // including selected color variant), then og:image as last resort.
+    // og:image is deprioritized because sites commonly ship the default
+    // variant there regardless of which color the URL targets.
+    const imageCandidates = buildImageCandidates(
+      [...jsonLdImages, ...domImages, ...(ogImage ? [ogImage] : [])],
+      url
+    );
 
     const text = await extractProductText(page!);
 
@@ -402,7 +433,7 @@ export async function scrapeProductData(
 
     // Log warnings for missing data
     if (!price) console.warn(`  WARN: No price extracted for ${url}`);
-    if (allImages.length === 0) console.warn(`  WARN: No image extracted for ${url}`);
+    if (imageCandidates.length === 0) console.warn(`  WARN: No image extracted for ${url}`);
     if (!name) console.warn(`  WARN: No product name extracted for ${url}`);
 
     return {
@@ -411,8 +442,9 @@ export async function scrapeProductData(
       price: price && !isNaN(price) ? price : null,
       currency,
       description: description?.slice(0, 500) || null,
-      imageUrl: allImages[0] || null,
-      additionalImages: allImages.slice(1),
+      imageCandidates,
+      imageUrl: imageCandidates[0] || null,
+      additionalImages: imageCandidates.slice(1),
       isAvailable,
       text,
       html,
@@ -425,6 +457,7 @@ export async function scrapeProductData(
       price: null,
       currency: null,
       description: null,
+      imageCandidates: [],
       imageUrl: null,
       additionalImages: [],
       isAvailable: true,
@@ -435,6 +468,42 @@ export async function scrapeProductData(
     };
   } finally {
     if (page) await page.close().catch(() => {});
+  }
+}
+
+/**
+ * Normalize and dedupe a raw list of image URL strings into a ranked
+ * candidate list. Drops empties, resolves protocol- and path-relative
+ * URLs against the page URL, and caps the result at MAX_CANDIDATES to
+ * bound retry cost downstream in the optimizer.
+ */
+const MAX_IMAGE_CANDIDATES = 10;
+function buildImageCandidates(raw: string[], pageUrl: string): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const u of raw) {
+    const normalized = normalizeImageUrl(u, pageUrl);
+    if (!normalized || seen.has(normalized)) continue;
+    seen.add(normalized);
+    out.push(normalized);
+    if (out.length >= MAX_IMAGE_CANDIDATES) break;
+  }
+  return out;
+}
+
+function normalizeImageUrl(raw: string, pageUrl: string): string | null {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith("//")) return `https:${trimmed}`;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  // Resolve site-absolute (/foo.jpg) and path-relative (foo.jpg) forms.
+  // This is only reached for DOM img[src] values; JSON-LD path-relative
+  // strings were already filtered upstream as non-conformant.
+  try {
+    return new URL(trimmed, pageUrl).href;
+  } catch {
+    return null;
   }
 }
 

@@ -124,6 +124,13 @@ export default async function ProductPage({ params }: Props) {
               <AffiliateButton
                 url={product.affiliate_url}
                 brandName={product.brand_name}
+                brandSlug={product.brand_slug}
+                productSlug={product.slug}
+                productName={product.name}
+                category={product.category}
+                price={product.price}
+                currency={product.currency}
+                isAvailable={product.is_available}
                 soldOut={!product.is_available}
               />
             )}

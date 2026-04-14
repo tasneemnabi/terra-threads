@@ -5,6 +5,7 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import type { BrandWithDetails } from "@/types/database";
 import { BrandCard } from "./BrandCard";
 import { formatCategory } from "@/lib/utils";
+import { trackFilterChanged, trackFiltersCleared } from "@/lib/posthog/events";
 
 type TierFilter = "all" | "natural" | "nearly";
 
@@ -93,13 +94,100 @@ export function BrandsContent({ brands }: BrandsContentProps) {
     [searchParams, router, pathname]
   );
 
-  const setTier = (t: TierFilter) => setParam("tier", t);
-  const setSelectedFiber = (f: string | null) => setParam("fiber", f);
-  const setSelectedCategory = (c: string | null) => setParam("category", c);
-  const setSelectedAudience = (a: string | null) => setParam("audience", a);
+  const countActiveDirectory = (next: {
+    tier: TierFilter;
+    fiber: string | null;
+    category: string | null;
+    audience: string | null;
+  }): number => {
+    let n = 0;
+    if (next.tier !== "all") n++;
+    if (next.fiber) n++;
+    if (next.category) n++;
+    if (next.audience) n++;
+    return n;
+  };
+
+  const setTier = (t: TierFilter) => {
+    const prev = tier;
+    setParam("tier", t);
+    trackFilterChanged({
+      page: "brands-directory",
+      filter_key: "tier",
+      action: t === "all" ? "remove" : prev === "all" ? "add" : "replace",
+      ui_value: t === "all" ? null : t === "natural" ? "100% Natural" : "Nearly Natural",
+      query_value: t === "all" ? null : t,
+      active_filter_count: countActiveDirectory({
+        tier: t,
+        fiber: selectedFiber,
+        category: selectedCategory,
+        audience: selectedAudience,
+      }),
+    });
+  };
+  const setSelectedFiber = (f: string | null) => {
+    const prev = selectedFiber;
+    setParam("fiber", f);
+    trackFilterChanged({
+      page: "brands-directory",
+      filter_key: "fiber_family",
+      action: f === null ? "remove" : prev && prev !== f ? "replace" : "add",
+      ui_value: f ?? prev,
+      query_value: f,
+      active_filter_count: countActiveDirectory({
+        tier,
+        fiber: f,
+        category: selectedCategory,
+        audience: selectedAudience,
+      }),
+    });
+  };
+  const setSelectedCategory = (c: string | null) => {
+    const prev = selectedCategory;
+    setParam("category", c);
+    trackFilterChanged({
+      page: "brands-directory",
+      filter_key: "category",
+      action: c === null ? "remove" : prev && prev !== c ? "replace" : "add",
+      ui_value: c ? formatCategory(c) : prev ? formatCategory(prev) : null,
+      query_value: c,
+      active_filter_count: countActiveDirectory({
+        tier,
+        fiber: selectedFiber,
+        category: c,
+        audience: selectedAudience,
+      }),
+    });
+  };
+  const setSelectedAudience = (a: string | null) => {
+    const prev = selectedAudience;
+    setParam("audience", a);
+    trackFilterChanged({
+      page: "brands-directory",
+      filter_key: "audience",
+      action: a === null ? "remove" : prev && prev !== a ? "replace" : "add",
+      ui_value: a ?? prev,
+      query_value: a,
+      active_filter_count: countActiveDirectory({
+        tier,
+        fiber: selectedFiber,
+        category: selectedCategory,
+        audience: a,
+      }),
+    });
+  };
 
   const clearAllFilters = () => {
+    const before = countActiveDirectory({
+      tier,
+      fiber: selectedFiber,
+      category: selectedCategory,
+      audience: selectedAudience,
+    });
     router.replace(pathname, { scroll: false });
+    if (before > 0) {
+      trackFiltersCleared({ page: "brands-directory", cleared_filter_count: before });
+    }
   };
 
   const hasActiveFilters =

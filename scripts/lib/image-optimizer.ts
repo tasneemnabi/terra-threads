@@ -124,31 +124,45 @@ export async function optimizeAndUploadImage(
 }
 
 /**
- * Optimize all images for a single product: primary image + additional images.
- * Returns Supabase Storage URLs (or original URLs on failure).
+ * Walk a ranked list of candidate image URLs, downloading and optimizing
+ * each. Returns the first successful one as the primary and any additional
+ * successes as gallery images. Failures (404, timeout, invalid data) are
+ * transparently skipped so the next candidate gets a chance — which makes
+ * the pipeline robust to sites that ship broken metadata in JSON-LD.
+ *
+ * Success is detected by `isAlreadyOptimized` on the returned URL:
+ * `optimizeAndUploadImage` returns the Supabase Storage URL on success
+ * and the original URL on any error, so a storage URL in the result is
+ * the unambiguous success signal. A storage index is only consumed when
+ * an upload actually succeeds, so gallery indices stay dense.
  */
 export async function optimizeProductImages(
   supabase: SupabaseClient,
   slug: string,
-  primaryUrl: string | null,
-  additionalUrls: string[]
+  candidates: string[]
 ): Promise<{ imageUrl: string | null; additionalImages: string[] }> {
-  // Optimize primary image (index 0)
-  const imageUrl = primaryUrl
-    ? await optimizeAndUploadImage(supabase, primaryUrl, slug, 0)
-    : null;
+  const successful: string[] = [];
+  const seen = new Set<string>();
+  let storageIndex = 0;
 
-  // Optimize additional images (index 1, 2, 3, ...)
-  const additionalImages: string[] = [];
-  for (let i = 0; i < additionalUrls.length; i++) {
-    const optimized = await optimizeAndUploadImage(
+  for (const candidate of candidates) {
+    if (!candidate || seen.has(candidate)) continue;
+    seen.add(candidate);
+
+    const result = await optimizeAndUploadImage(
       supabase,
-      additionalUrls[i],
+      candidate,
       slug,
-      i + 1
+      storageIndex
     );
-    additionalImages.push(optimized);
+    if (isAlreadyOptimized(result)) {
+      successful.push(result);
+      storageIndex++;
+    }
   }
 
-  return { imageUrl, additionalImages };
+  return {
+    imageUrl: successful[0] || null,
+    additionalImages: successful.slice(1),
+  };
 }

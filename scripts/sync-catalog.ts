@@ -534,8 +534,7 @@ export async function syncCatalogBrand(
         const optimizedImages = await optimizeProductImages(
           supabase,
           productSlug,
-          scraped.imageUrl,
-          scraped.additionalImages || []
+          scraped.imageCandidates
         );
 
         stageReached = "db";

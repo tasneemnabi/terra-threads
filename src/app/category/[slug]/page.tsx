@@ -65,7 +65,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
         </aside>
 
         <div>
-          <ProductGrid products={products} />
+          <ProductGrid products={products} source="shop" />
           <Pagination currentPage={page} totalPages={totalPages} />
         </div>
       </div>

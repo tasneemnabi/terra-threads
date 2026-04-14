@@ -6,6 +6,13 @@ import type { FilterState, ProductWithBrand } from "@/types/database";
 import { ProductCard } from "@/components/product/ProductCard";
 import { fetchProducts, fetchProductTypes, fetchAvailableBrands, fetchSearchResults } from "@/app/shop/actions";
 import { formatCategory } from "@/lib/utils";
+import {
+  trackFilterChanged,
+  trackFiltersCleared,
+  trackLoadMore,
+  trackSearchResultsLoaded,
+  trackSortChanged,
+} from "@/lib/posthog/events";
 
 type TierFilter = "all" | "natural" | "nearly";
 type SortOption = "newest" | "price-asc" | "price-desc";
@@ -241,6 +248,27 @@ const PRODUCT_TYPE_LABELS: Record<string, string> = {
   outerwear: "Outerwear",
 };
 
+function countActiveFilters(f: {
+  category?: string | null;
+  audience?: string | null;
+  productTypes?: string[];
+  brands?: string[];
+  fibers?: string[];
+  tier?: TierFilter;
+  minPrice?: number;
+  maxPrice?: number;
+}): number {
+  let n = 0;
+  if (f.category) n++;
+  if (f.audience) n++;
+  if (f.productTypes?.length) n++;
+  if (f.brands?.length) n++;
+  if (f.fibers?.length) n++;
+  if (f.tier && f.tier !== "all") n++;
+  if (f.minPrice !== undefined || f.maxPrice !== undefined) n++;
+  return n;
+}
+
 export function ShopContent({
   initialProducts,
   initialTotalCount,
@@ -304,17 +332,24 @@ export function ShopContent({
 
   // Execute search
   useEffect(() => {
-    if (!debouncedSearch.trim()) {
+    const query = debouncedSearch.trim();
+    if (!query) {
       setSearchResults(null);
       setIsSearching(false);
       return;
     }
     let cancelled = false;
     setIsSearching(true);
-    fetchSearchResults(debouncedSearch.trim()).then((results) => {
+    fetchSearchResults(query).then((results) => {
       if (!cancelled) {
         setSearchResults(results);
         setIsSearching(false);
+        trackSearchResultsLoaded({
+          query,
+          query_length: query.length,
+          result_count: results.length,
+          page: "shop",
+        });
       }
     });
     return () => { cancelled = true; };
@@ -400,12 +435,24 @@ export function ShopContent({
     setIsLoadingMore(true);
     try {
       const result = await fetchProducts({ ...currentFilters, page: nextPage });
+      let loadedCount = 0;
+      let totalVisible = 0;
       setProducts((prev) => {
         const existingIds = new Set(prev.map((p) => p.id));
         const newProducts = result.products.filter((p) => !existingIds.has(p.id));
-        return [...prev, ...newProducts];
+        loadedCount = newProducts.length;
+        const merged = [...prev, ...newProducts];
+        totalVisible = merged.length;
+        return merged;
       });
       setPage(nextPage);
+      trackLoadMore({
+        page: "shop",
+        next_page: nextPage,
+        products_loaded: loadedCount,
+        total_visible: totalVisible,
+        total_available: result.totalCount,
+      });
     } finally {
       setIsLoadingMore(false);
     }
@@ -448,24 +495,79 @@ export function ShopContent({
     [searchParams, router, pathname]
   );
 
+  const currentCountBase = {
+    category: selectedCategory ?? undefined,
+    audience: selectedAudience ?? undefined,
+    productTypes: selectedProductTypes,
+    brands: selectedBrands,
+    fibers: selectedFibers,
+    tier,
+    minPrice,
+    maxPrice,
+  };
+
   const setSort = (s: SortOption) => {
     setParams({ sort: s === "newest" ? null : s });
     setSortOpen(false);
+    trackSortChanged({
+      page: "shop",
+      sort_value: s,
+      previous_sort: sort,
+    });
   };
   const setCategory = (c: string | null) => {
+    const prev = selectedCategory;
     setParams({ category: c, type: null });
     if (c) {
       fetchProductTypes(c).then(setProductTypes);
     } else {
       setProductTypes([]);
     }
+    trackFilterChanged({
+      page: "shop",
+      filter_key: "category",
+      action: c === null ? "remove" : prev && prev !== c ? "replace" : "add",
+      ui_value: c ? formatCategory(c) : prev ? formatCategory(prev) : null,
+      query_value: c,
+      active_filter_count: countActiveFilters({
+        ...currentCountBase,
+        category: c ?? undefined,
+        productTypes: [],
+      }),
+    });
   };
-  const setAudience = (a: string | null) => setParams({ audience: a });
+  const setAudience = (a: string | null) => {
+    const prev = selectedAudience;
+    setParams({ audience: a });
+    trackFilterChanged({
+      page: "shop",
+      filter_key: "audience",
+      action: a === null ? "remove" : prev && prev !== a ? "replace" : "add",
+      ui_value: a ?? prev,
+      query_value: a,
+      active_filter_count: countActiveFilters({
+        ...currentCountBase,
+        audience: a ?? undefined,
+      }),
+    });
+  };
   const toggleProductType = (t: string) => {
-    const next = selectedProductTypes.includes(t)
+    const wasSelected = selectedProductTypes.includes(t);
+    const next = wasSelected
       ? selectedProductTypes.filter((pt) => pt !== t)
       : [...selectedProductTypes, t];
     setParams({ type: next.length ? next.join(",") : null });
+    trackFilterChanged({
+      page: "shop",
+      filter_key: "product_type",
+      action: wasSelected ? "remove" : "add",
+      ui_value: PRODUCT_TYPE_LABELS[t] || formatCategory(t),
+      query_value: t,
+      active_filter_count: countActiveFilters({
+        ...currentCountBase,
+        productTypes: next,
+      }),
+    });
   };
 
   // Build fiber groups filtered to only materials that exist in the DB
@@ -494,13 +596,37 @@ export function ShopContent({
       ? selectedFibers.filter((f) => !family.members.includes(f))
       : [...new Set([...selectedFibers, ...family.members])];
     setParams({ fiber: next.length ? next.join(",") : null });
+    trackFilterChanged({
+      page: "shop",
+      filter_key: "fiber_family",
+      action: allSelected ? "remove" : "add",
+      ui_value: family.label,
+      query_value: family.members.join("|"),
+      active_filter_count: countActiveFilters({
+        ...currentCountBase,
+        fibers: next,
+      }),
+    });
   };
 
   const toggleBrand = (brandSlug: string) => {
-    const next = selectedBrands.includes(brandSlug)
+    const wasSelected = selectedBrands.includes(brandSlug);
+    const next = wasSelected
       ? selectedBrands.filter((b) => b !== brandSlug)
       : [...selectedBrands, brandSlug];
     setParams({ brand: next.length ? next.join(",") : null });
+    const brand = brands.find((b) => b.slug === brandSlug);
+    trackFilterChanged({
+      page: "shop",
+      filter_key: "brand",
+      action: wasSelected ? "remove" : "add",
+      ui_value: brand?.name ?? brandSlug,
+      query_value: brandSlug,
+      active_filter_count: countActiveFilters({
+        ...currentCountBase,
+        brands: next,
+      }),
+    });
   };
 
   const visibleBrands = useMemo(
@@ -512,7 +638,11 @@ export function ShopContent({
   );
 
   const clearAllFilters = () => {
+    const before = countActiveFilters(currentCountBase);
     router.replace(pathname, { scroll: false });
+    if (before > 0) {
+      trackFiltersCleared({ page: "shop", cleared_filter_count: before });
+    }
   };
 
   const hasActiveFilters =
@@ -700,7 +830,29 @@ export function ShopContent({
         <PriceRangeInputs
           minPrice={minPrice}
           maxPrice={maxPrice}
-          onApply={(min, max) => setParams({ minPrice: min, maxPrice: max })}
+          onApply={(min, max) => {
+            setParams({ minPrice: min, maxPrice: max });
+            const nextMin = min ? Number(min) : undefined;
+            const nextMax = max ? Number(max) : undefined;
+            const willBeActive = nextMin !== undefined || nextMax !== undefined;
+            const wasActive = minPrice !== undefined || maxPrice !== undefined;
+            trackFilterChanged({
+              page: "shop",
+              filter_key: "price",
+              action: !willBeActive
+                ? "remove"
+                : wasActive
+                  ? "replace"
+                  : "add",
+              ui_value: willBeActive ? `$${nextMin ?? 0}-$${nextMax ?? "∞"}` : null,
+              query_value: willBeActive ? `${nextMin ?? ""}:${nextMax ?? ""}` : null,
+              active_filter_count: countActiveFilters({
+                ...currentCountBase,
+                minPrice: nextMin,
+                maxPrice: nextMax,
+              }),
+            });
+          }}
         />
       </AccordionFilter>
     </>
@@ -751,7 +903,26 @@ export function ShopContent({
               {(Object.entries(TIER_LABELS) as [TierFilter, string][]).map(([value, label]) => (
                 <button
                   key={value}
-                  onClick={() => setParams({ tier: value === "all" ? null : value })}
+                  onClick={() => {
+                    const prev = tier;
+                    setParams({ tier: value === "all" ? null : value });
+                    trackFilterChanged({
+                      page: "shop",
+                      filter_key: "tier",
+                      action:
+                        value === "all"
+                          ? "remove"
+                          : prev === "all"
+                            ? "add"
+                            : "replace",
+                      ui_value: label,
+                      query_value: value,
+                      active_filter_count: countActiveFilters({
+                        ...currentCountBase,
+                        tier: value,
+                      }),
+                    });
+                  }}
                   title={TIER_DESCRIPTIONS[value]}
                   className={`rounded-full px-3 py-1.5 font-body text-[12px] font-medium transition-colors ${
                     tier === value
@@ -889,7 +1060,11 @@ export function ShopContent({
                 <>
                   <div className="grid grid-cols-2 gap-x-5 gap-y-8 pt-4 sm:grid-cols-3 lg:grid-cols-4">
                     {displayProducts.map((product) => (
-                      <ProductCard key={product.id} product={product} />
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        source={isSearchActive ? "search" : "shop"}
+                      />
                     ))}
                   </div>
 
