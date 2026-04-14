@@ -8,6 +8,7 @@
  */
 
 import type { Locator } from "./locators/types.js";
+import { beaumontOrganic } from "./locators/beaumont-organic.js";
 import { defaultLocator } from "./locators/default.js";
 import { gilRodriguez } from "./locators/gil-rodriguez.js";
 import { jungmaven } from "./locators/jungmaven.js";
@@ -19,6 +20,7 @@ import { pyneAndSmith } from "./locators/pyne-and-smith.js";
 import { unboundMerino } from "./locators/unbound-merino.js";
 
 export const locators: Record<string, Locator> = {
+  "beaumont-organic": beaumontOrganic,
   "gil-rodriguez": gilRodriguez,
   "jungmaven": jungmaven,
   "kowtow": kowtow,

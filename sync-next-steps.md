@@ -3,7 +3,7 @@
 Context for a fresh session picking up Phase 6 locator work. See also
 `sync-reliability-plan.md` for the timeout / concurrency / telemetry layer.
 
-## Current state (2026-04-13 late evening)
+## Current state (2026-04-13 late night — post-Beaumont locator + residual sweep)
 
 ### Infrastructure
 - Migration 015 is applied: `products.body_hash`, `products.source_updated_at`, `brands.availability_cadence_days`.
@@ -28,7 +28,7 @@ Context for a fresh session picking up Phase 6 locator work. See also
 - Product classifier now rejects by Shopify `product_type` in addition to title keywords — `NON_CLOTHING_PRODUCT_TYPES` regex matches `Sneaker`, `Sandal`, `Shoe`, `Boot`, `Slipper`, `Pump`, `Heel`, `Loafer`, etc. Motivating case: Kowtow's leather-footwear collabs (Artisanal Pump, Etna Leather, V-90 O.T. Leather, Campo Chromefree Leather, Volley O.T. Leather) named without any shoe keyword in the title but reliably tagged `Sneaker`/`Sandal`/`Shoe` in Shopify. Classifier reason: `non-clothing-type`.
 - Non-clothing skip in `sync-shopify.ts` now flips existing pending/review rows to `rejected` (previously the skip was pure `continue` with no DB write, leaving stale review entries whenever the classifier learned a new rejection category). New products without a DB row still just fall through.
 
-### Locators shipped (8)
+### Locators shipped (9)
 | Brand | Strategy | Review impact |
 |---|---|---|
 | `unbound-merino` | `<div class="product-fabric">` | baseline |
@@ -39,19 +39,31 @@ Context for a fresh session picking up Phase 6 locator work. See also
 | `pyne-and-smith` | `#details` tab-pane `Fabric:` sentence, strip "pre-shrunk"/"european flax" noise | 2 → 0 |
 | `magic-linen` | "Made from N% European flax" sentence (end-of-line captured so OEKO-TEX cert number is excluded); UA-stamped fetch to avoid reduced CDN templates | 5 → 0 |
 | `kowtow` | `details_and_care__fabric_highlighted-description` div — inner `<p>` captured via HTML class-attribute anchor (not a CSS selector); extractor normalizer handles the "plastic free / 100% Fair Trade Organic Cotton" prefix and alias on its own | 21 → 1 (combined with classifier fix: 5 locator hits + 15 classifier-fix rejections; Tissue Wrap remains as no-price) |
+| `beaumont-organic` | Iterates every `Made from …` bullet (first match is often prose, fall through to the `- Made from N% …` explicit bullet); strips parentheticals like `(80% Recycled Denim)`; dual-panel `100% X front and 100% Y back` → 50/50 flatten; single-fiber prose inference (`crafted from lambswool` → `{Lambswool: 100}`) with a `\b<canonical>\b` check to reject dictionary substring bleed (`wool` inside `lambswool`); mojibake nbsp fixup (`\u00ac\u2020` → space) for Finley/Geraldine; optional "drop Other ≤5% and rebalance into largest trusted" post-processor gated on `namedSum ≥ 90%` + all-trusted named materials, for recycled denim blends with undisclosed sliver fibers | 15 → 0 (all 15 review products expected to auto-approve on next sync; dry-run confirmed) |
 
-### Residual review queue (29 products as of 2026-04-13 late evening, post-Kowtow-locator + classifier fix)
-| Brand | Count | Notes |
+### Residual review queue (6 products after this session's sweep)
+
+Post-locator, after every sync-enabled brand's residuals have been triaged. All deterministic locator work is done — the remaining 6 are either no-data upstream, disabled-brand orphans, or pending a production sync run with `--force-rescan`.
+
+| Brand | Count | Disposition |
 |---|---|---|
-| `beaumont-organic` | 15 | **Top locator target now that Kowtow is handled.** An earlier attempt was deleted because (a) it was never verified against a real sync run and (b) its `MADE_FROM_RE` / `COMPOSITION_CELL_RE` regexes used a nested-lazy-quantifier pattern (`[^<"']*?(?:<[^>]+>[^<"']*?)*?`) — the classic catastrophic-backtracking shape. Rewrite using anchored, non-nested patterns (sentence-boundary matching, à la `locators/magic-linen.ts` or `locators/kowtow.ts`). |
-| `magic-linen` | 5 | Sync completed cleanly but these 5 hit the body_hash gate as unchanged and skipped re-extraction. They'll resolve on next `--force-rescan` or after the 3-day review cadence window expires. |
-| `unbound-merino` | 3 | Edge cases not caught by existing locator |
-| `pact` | 2 | Bundles (e.g. "Airplane Arrivals Set") — SKU prefix doesn't map to per-item API |
-| `gil-rodriguez` | 2 | New additions |
+| `pact` | 1 | `Women's Airplane Arrivals Set` — bundle URL uses the `bdl-` SKU prefix which doesn't resolve in Pact's per-item `api2.wearpact.io` response. The locator returns null (verified). Leave in review or reject manually. A bundle-aware code path would need to enumerate the bundle's component SKUs — not worth it for one SKU. |
+| `unbound-merino` | 3 | `Men's Merino Cashmere Quarter Zip`, `Women's 3 Pack // Merino Socks`, `Men's 3 Pack // Merino Socks`. The brand deliberately hides `.product-fabric { display: none; }` on these via CSS and doesn't render composition anywhere else in the DOM. Body_html is pure prose ("Made from a Merino wool blend") with no percentages. No locator can extract what the brand doesn't disclose. These are **legitimate no-data residuals**. |
 | `kowtow` | 1 | `Tissue Wrap` — locator extracts `100% Organic Cotton` cleanly, but the product has no price and hits the auto-approve gate. Will resolve if Kowtow sets a price, or can be force-approved manually. |
-| `fair-indigo` | 1 | Orphan, `sync_enabled: false` — not worth a locator |
+| `fair-indigo` | 1 | `Meet the Joobles Bilingual Picture Book` — non-clothing children's book in a `sync_enabled: false` brand. No sync will touch this row. Needs a manual `DELETE` or `UPDATE sync_status = 'rejected'` in SQL. Not worth a classifier change for one orphan. |
 
-Locator-priority ordering by review-count impact: `beaumont-organic (15)` > `magic-linen (5)` > `unbound-merino (3)` > `pact (2)` ≈ `gil-rodriguez (2)` > `kowtow (1)` ≈ `fair-indigo (1)`. Beaumont is now unambiguously the top locator opportunity.
+#### Resolved on next `sync-shopify` / `sync-catalog --force-rescan` run (no new code required)
+
+| Brand | Count | Why they clear |
+|---|---|---|
+| `beaumont-organic` | 15 | New `beaumont-organic` locator shipped. Dry-run `sync-shopify --force-rescan --brand beaumont-organic` confirms 0 review (down from 15). Expected production result: 7 bamboo lingerie (Nyra/Yoka/Zaria × colorways) auto-approve via the default extractor hitting body_html; Phoebe-Paige/Maria/Lily-Ella auto-approve via single-fiber prose inference; Dominique/Fleur/Cecily-May auto-approve via parenthetical strip + dual-panel flatten; Finley/Geraldine auto-approve via the `Other ≤5%` drop-and-rebalance post-processor. |
+| `magic-linen` | 5 | Body-hash-gated stale rows. Verified: `sync-shopify --force-rescan --brand magic-linen` dry-run shows 0 review. Next production `--force-rescan` clears them. |
+| `pact` | 1 (of 2) | `PACT Women's Black On the Go-To Pocket Legging M` — existing `pact` locator returns `{Organic Cotton: 90, Spandex: 10}` (conf 0.98) when fed the product URL directly. Will auto-approve on `sync-catalog --force-rescan --brand pact`. |
+| `gil-rodriguez` | 2 | Both `Tricot x Gil Rodriguez Cashmere Cardigan` (marmotta + rosa) — existing `gil-rodriguez` locator returns `{Cashmere: 50, Wool: 50}` (conf 0.95) when tested directly. Will auto-approve on `sync-catalog --force-rescan --brand gil-rodriguez`. |
+
+### Known bug (pre-existing, surfaced during Beaumont dry-run)
+
+The `--force-rescan` dry-run of `beaumont-organic` shows 3 sock products (`Anna Wool, Cotton and Hemp mix Socks in Grey`, `Camelia …`, `Viola Organic Cotton and Hemp Socks in Ecru`) going through the per-product extraction loop even though all three are `sync_status: 'approved'` in the DB with valid `shopify_product_id` values that match the current Shopify API response. They should short-circuit at `sync-shopify.ts:271` (`if (existingStatus === "approved") continue`), but somehow they slip past the `existingStatusMap.get(shopifyProduct.id)` lookup for ~93 products out of ~1086 expected approved rows (993 skipped correctly + 93 re-extracted = ~1086). Most of the 93 happen to re-extract cleanly; these 3 socks don't (prose-only multi-fiber body_html with no percentages) so they land in review. **Not caused by the new beaumont locator** — it's a pre-existing lookup bug in the settled-status skip. In production (without `--force-rescan`), the body_hash gate catches them so they stay approved; the issue only surfaces with force-rescan. Worth investigating separately — suspects include `shopify_product_id` type coercion in the Supabase client return type, or stale rows from brand re-adds.
 
 ### Brand sync status (as of 2026-04-13 late evening)
 
@@ -64,7 +76,7 @@ Shopify (20):
 |---|---|---|---|---|
 | `allwear` | 289 | 0 | 84 | |
 | `aya` | 101 | 0 | 78 | |
-| `beaumont-organic` | 1086 | 15 | 400 | Partial: fetch + auto-approve + availability done. 15 new reviews waiting for a (yet-to-be-written) locator. |
+| `beaumont-organic` | 1086 (→ ~1101 post-rescan) | 15 → 0 | 400 → 427 | **Locator shipped (commit pending).** Dry-run `sync-shopify --force-rescan --brand beaumont-organic` with the new locator reports `1455 fetched, 993 settled, 11 non-clothing, 421 auto-approved, 27 banned, 3 review [fabric_div: 425, fallback_scan: 23], 0 errors`. The 3 "review" are the pre-existing settled-skip bug on Anna/Camelia/Viola wool-hemp socks (see Known bug below) — every one of the 15 original review rows now auto-approves. |
 | `happy-earth-apparel` | 162 | 0 | 1 | Availability-only pass (2026-04-13 evening) — 0 errors, 0 timeouts. |
 | `harvest-and-mill` | 134 | 0 | 1 | Availability-only pass (2026-04-13 evening) — 0 errors, 0 timeouts. |
 | `indigo-luna` | 211 | 0 | 42 | |
@@ -73,7 +85,7 @@ Shopify (20):
 | `kowtow` | 299 | 1 | 16 | **Locator + classifier fix shipped.** 333 fetched, 295 settled, 32 non-clothing (15 leather-footwear review items flipped to rejected via the new `non-clothing-type` path), 6 synced (new locator routed through `fabric_div`), 5 auto-approved, 1 review (Tissue Wrap — no price), 0 errors, 0 timeouts. Review queue dropped 21 → 1. |
 | `layere` | 52 | 0 | 5 | Availability-only pass |
 | `losano` | 92 | 0 | 1 | |
-| `magic-linen` | 315 | 5 | 744 | **Hang fix confirmed.** 1129 fetched, 65 new synced, 0 errors, 0 timeouts. 5 residual reviews are unchanged-body_hash skips that will resolve on next forced rescan or cadence expiry. |
+| `magic-linen` | 315 → 320 | 5 → 0 | 744 | **Residuals verified clearable.** `sync-shopify --dry-run --force-rescan --brand magic-linen` reports `1128 fetched, 994 settled, 77 non-clothing, 57 auto-approved, 0 banned, 0 review, 0 errors`. All 5 body-hash-gated residuals auto-approve. Needs a production `--force-rescan` to land. |
 | `mate-the-label` | 346 | 0 | 15 | |
 | `nads` | 12 | 0 | 12 | |
 | `naadam` | 423 | 0 | 24 | |
@@ -81,15 +93,15 @@ Shopify (20):
 | `pyne-and-smith` | 75 | 0 | 11 | |
 | `ryker` | 30 | 0 | 2 | |
 | `sold-out-nyc` | 116 | 0 | 3 | |
-| `unbound-merino` | 83 | 3 | 55 | 3 residual reviews |
+| `unbound-merino` | 83 | 3 | 55 | 3 residual reviews — **legitimate no-data** (see Residual review queue above). Brand hides `.product-fabric { display: none; }` on the cashmere zip + sock packs and doesn't disclose composition in body_html, tags, variants, or metafields. No locator can fix what isn't published. |
 
 Catalog (5):
 | Slug | Approved | Review | Rejected | Notes |
 |---|---|---|---|---|
 | `branwyn` | 3 | 0 | 15 | First run this session. 15 scraped items flagged as banned (synthetic performance wear dominates the catalog). 0 errors, concurrency pool ran clean. |
-| `gil-rodriguez` | 57 | 2 | 10 | Locator + locale-regex fix cut crawl ~90min → ~40min |
+| `gil-rodriguez` | 57 → 59 | 2 → 0 | 10 | 2 residual reviews (both Cashmere Cardigan marmotta/rosa colorways) are stale — locator tested directly returns `{Cashmere: 50, Wool: 50}` cleanly. Will auto-approve on next `sync-catalog --force-rescan --brand gil-rodriguez`. Locator + locale-regex fix cut crawl ~90min → ~40min. |
 | `kotn` | 16+ | 1 | 5+ | First run this session. 89 discovered, 16 synced via concurrency pool. 0 errors. |
-| `pact` | 80 | 2 | 27 | 2 bundles leaked through (SKU prefix doesn't hit per-item API) |
+| `pact` | 80 → 81 | 2 → 1 | 27 | 1 residual: the `Airplane Arrivals Set` bundle — `bdl-` SKU prefix doesn't resolve in the per-item API (verified). The other review, `PACT Women's Black On the Go-To Pocket Legging M`, is stale — locator tested directly returns `{Organic Cotton: 90, Spandex: 10}` (conf 0.98). Will auto-approve on next `sync-catalog --force-rescan --brand pact`. |
 | `wayve-wear` | 9 | 0 | 4 | First run this session. 13 discovered, 4 non-clothing (site catalog is mostly non-clothing). 0 errors. |
 
 #### Disabled (`sync_enabled: false`, 8)
@@ -117,7 +129,7 @@ Check current review counts before picking:
 npx tsx -e 'import { loadEnv, getSupabaseAdmin } from "./scripts/lib/env.js"; loadEnv(); const sb = getSupabaseAdmin(); const { data } = await sb.from("products").select("brands!inner(slug), sync_status").eq("sync_status", "review"); const counts: Record<string, number> = {}; for (const p of data || []) { const s = (p as any).brands.slug; counts[s] = (counts[s] || 0) + 1; } console.log(counts);'
 ```
 
-Next priority: **beaumont-organic (15)** — still needs a new locator (prior attempt had unsafe regex, was deleted). Use `locators/magic-linen.ts` or `locators/kowtow.ts` as templates — both match anchored, non-nested patterns (sentence-boundary or HTML class-attribute based). Beaumont's composition data lives in prose sentences.
+Next priority: **no high-impact locator targets remain.** All brands with ≥2 residuals are either resolved, verified-clearable-on-force-rescan, or blocked by no-data-at-source. Future locator work happens only when a new brand is added or a new review pattern emerges. The remaining 6 residuals (pact bundle, 3 unbound-merino no-data, kowtow Tissue Wrap, fair-indigo orphan) are listed above in the "Residual review queue" table with dispositions.
 
 ### Investigation loop
 
@@ -204,6 +216,7 @@ export const locators: Record<string, Locator> = {
   - `locators/pyne-and-smith.ts` — tab-pane isolation + marketing-adjective stripping
   - `locators/magic-linen.ts` — sentence-shaped regex with explicit end-of-line anchor to avoid dragging in adjacent noise (OEKO-TEX cert number)
   - `locators/kowtow.ts` — HTML `class="..."` attribute anchor (not CSS selector) so it can't match a stylesheet rule earlier in the document; character-class-negation quantifiers end-to-end
+  - `locators/beaumont-organic.ts` — iterates multiple `Made from …` matches (prose sentence first, explicit bullet second), parenthetical stripping for nested qualifiers, dual-panel 50/50 flatten, single-fiber prose inference with `\b<canonical>\b` bleed check against the extractor's dictionary substring bug (`wool` inside `lambswool`), mojibake nbsp fixup, optional "drop Other ≤5% and rebalance" post-processor for recycled blends with undisclosed slivers
 
 ### Verification
 
