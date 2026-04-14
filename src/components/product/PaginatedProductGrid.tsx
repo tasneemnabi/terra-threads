@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ProductGrid } from "./ProductGrid";
+import type { ProductCardSource } from "@/lib/posthog/events";
 import type { ProductWithBrand } from "@/types/database";
 
 const PAGE_SIZE = 24;
@@ -9,9 +10,10 @@ const PAGE_SIZE = 24;
 interface PaginatedProductGridProps {
   products: ProductWithBrand[];
   hideBrand?: boolean;
+  source: ProductCardSource;
 }
 
-export function PaginatedProductGrid({ products, hideBrand }: PaginatedProductGridProps) {
+export function PaginatedProductGrid({ products, hideBrand, source }: PaginatedProductGridProps) {
   const [shown, setShown] = useState(PAGE_SIZE);
   const visible = products.slice(0, shown);
   const remaining = products.length - shown;
@@ -19,7 +21,7 @@ export function PaginatedProductGrid({ products, hideBrand }: PaginatedProductGr
 
   return (
     <>
-      <ProductGrid products={visible} hideBrand={hideBrand} />
+      <ProductGrid products={visible} hideBrand={hideBrand} source={source} />
       {hasMore && (
         <div className="mt-10 text-center">
           <button

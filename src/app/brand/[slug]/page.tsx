@@ -5,7 +5,8 @@ import type { Metadata } from "next";
 import { getBrandBySlug } from "@/lib/queries/brands";
 import { getProductsByBrand } from "@/lib/queries/products";
 import { BrandProducts } from "@/components/brand/BrandProducts";
-import { brandLogoUrl, affiliateUrl } from "@/lib/utils";
+import { BrandAffiliateLink } from "@/components/brand/BrandAffiliateLink";
+import { brandLogoUrl } from "@/lib/utils";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -89,10 +90,11 @@ export default async function BrandPage({ params }: Props) {
           )}
 
           {brand.website_url && (
-            <a
-              href={affiliateUrl(brand.website_url, "brand-detail")}
-              target="_blank"
-              rel="noopener noreferrer"
+            <BrandAffiliateLink
+              url={brand.website_url}
+              brandName={brand.name}
+              brandSlug={brand.slug}
+              source="brand-detail"
               className="self-start inline-flex items-center gap-2 rounded-full bg-accent px-5 py-3 min-h-[44px] font-body text-[14px] font-medium text-white transition-colors hover:bg-accent/90"
             >
               Shop {brand.name}
@@ -109,7 +111,7 @@ export default async function BrandPage({ params }: Props) {
                   d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
                 />
               </svg>
-            </a>
+            </BrandAffiliateLink>
           )}
         </div>
       </section>
@@ -133,10 +135,11 @@ export default async function BrandPage({ params }: Props) {
                 collection. Check back soon.
               </p>
               {brand.website_url && (
-                <a
-                  href={affiliateUrl(brand.website_url, "brand-detail-empty")}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <BrandAffiliateLink
+                  url={brand.website_url}
+                  brandName={brand.name}
+                  brandSlug={brand.slug}
+                  source="brand-detail-empty"
                   className="mt-4 inline-flex items-center gap-1 font-body text-[14px] font-medium text-accent hover:text-accent/80 transition-colors"
                 >
                   Shop {brand.name} directly
@@ -153,7 +156,7 @@ export default async function BrandPage({ params }: Props) {
                       d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
                     />
                   </svg>
-                </a>
+                </BrandAffiliateLink>
               )}
             </div>
           )}

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { TrackedLink } from "@/components/ui/TrackedLink";
 
 export function FinalCTA() {
   return (
@@ -11,21 +11,25 @@ export function FinalCTA() {
           Every piece here is vetted for natural fibers. No polyester, no compromise. Just clothes that feel as good as they look.
         </p>
         <div className="mt-8 flex flex-col sm:flex-row items-start gap-4">
-          <Link
+          <TrackedLink
             href="/shop"
+            section="final-cta"
+            ctaText="Start Shopping"
             className="inline-flex items-center justify-center rounded-full bg-background px-8 py-3.5 font-body text-[15px] font-semibold text-text transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/10 active:translate-y-0 active:shadow-md"
           >
             Start Shopping
-          </Link>
-          <Link
+          </TrackedLink>
+          <TrackedLink
             href="/brands"
+            section="final-cta"
+            ctaText="See All Brands"
             className="group/arrow inline-flex items-center justify-center px-2 py-3.5 font-body text-[15px] font-medium text-background/70 transition-colors hover:text-background"
           >
             See All Brands{" "}
             <span className="inline-block ml-1 transition-transform duration-200 group-hover/arrow:translate-x-1">
               &rarr;
             </span>
-          </Link>
+          </TrackedLink>
         </div>
       </div>
     </section>

@@ -1,11 +1,31 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { FiberFactsMini } from "@/components/product/FiberFactsMini";
 import { formatPrice } from "@/lib/utils";
+import { trackProductCardClick, trackHomepageCtaClick } from "@/lib/posthog/events";
 import type { ProductWithBrand } from "@/types/database";
 
 interface EditorialPicksProps {
   products: ProductWithBrand[];
+}
+
+function editorialClickHandler(product: ProductWithBrand) {
+  return () => {
+    trackProductCardClick({
+      product_slug: product.slug,
+      product_name: product.name,
+      brand_name: product.brand_name,
+      brand_slug: product.brand_slug,
+      category: product.category,
+      price: product.price || null,
+      currency: product.currency || null,
+      is_available: product.is_available,
+      source: "editorial-picks",
+      destination: `/product/${product.slug}`,
+    });
+  };
 }
 
 function ProductCard({
@@ -16,7 +36,11 @@ function ProductCard({
   priority?: boolean;
 }) {
   return (
-    <Link href={`/product/${product.slug}`} className="group block transition-transform duration-300 ease-out hover:-translate-y-1">
+    <Link
+      href={`/product/${product.slug}`}
+      onClick={editorialClickHandler(product)}
+      className="group block transition-transform duration-300 ease-out hover:-translate-y-1"
+    >
       <div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-surface">
         {product.image_url && (
           <Image
@@ -62,6 +86,14 @@ export function EditorialPicks({ products }: EditorialPicksProps) {
           </h2>
           <Link
             href="/shop?sort=newest"
+            onClick={() =>
+              trackHomepageCtaClick({
+                section: "editorial-picks",
+                cta_text: "See all",
+                destination: "/shop?sort=newest",
+                item_name: null,
+              })
+            }
             className="group/arrow inline-flex items-center gap-1.5 font-body text-[14px] sm:text-[15px] font-medium text-accent hover:text-accent/80 transition-colors"
           >
             See all{" "}
@@ -75,7 +107,11 @@ export function EditorialPicks({ products }: EditorialPicksProps) {
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
           {/* Featured large card */}
           <div className="lg:w-[45%] lg:flex-shrink-0">
-            <Link href={`/product/${featured.slug}`} className="group block transition-transform duration-300 ease-out hover:-translate-y-1">
+            <Link
+              href={`/product/${featured.slug}`}
+              onClick={editorialClickHandler(featured)}
+              className="group block transition-transform duration-300 ease-out hover:-translate-y-1"
+            >
               <div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-surface">
                 {featured.image_url && (
                   <Image

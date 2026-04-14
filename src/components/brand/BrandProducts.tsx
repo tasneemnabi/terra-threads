@@ -3,6 +3,12 @@
 import { useState, useMemo, useEffect } from "react";
 import { ProductCard } from "@/components/product/ProductCard";
 import { formatCategory } from "@/lib/utils";
+import {
+  trackFilterChanged,
+  trackFiltersCleared,
+  trackLoadMore,
+  trackSortChanged,
+} from "@/lib/posthog/events";
 import type { ProductWithBrand } from "@/types/database";
 
 type SortOption = "newest" | "price-asc" | "price-desc";
@@ -224,17 +230,59 @@ export function BrandProducts({ products }: BrandProductsProps) {
   const visible = filtered.slice(0, shown);
   const hasMore = shown < filtered.length;
 
+  // Count helper — matches the activeChips semantics
+  const countActiveBrandFilters = (f: {
+    category: string | null;
+    fibers: string[];
+    min: number | undefined;
+    max: number | undefined;
+  }): number => {
+    let n = 0;
+    if (f.category) n++;
+    if (f.fibers.length > 0) n++;
+    if (f.min !== undefined || f.max !== undefined) n++;
+    return n;
+  };
+
   // Toggle helpers
-  const toggleCategory = (cat: string) =>
-    setSelectedCategory(selectedCategory === cat ? null : cat);
+  const toggleCategory = (cat: string) => {
+    const prev = selectedCategory;
+    const next = prev === cat ? null : cat;
+    setSelectedCategory(next);
+    trackFilterChanged({
+      page: "brand-page",
+      filter_key: "category",
+      action: next === null ? "remove" : prev && prev !== next ? "replace" : "add",
+      ui_value: (next ?? prev) ? formatCategory((next ?? prev)!) : null,
+      query_value: next,
+      active_filter_count: countActiveBrandFilters({
+        category: next,
+        fibers: selectedFibers,
+        min: minPrice,
+        max: maxPrice,
+      }),
+    });
+  };
 
   const toggleFiberFamily = (family: { label: string; members: string[] }) => {
     const allSelected = family.members.every((m) => selectedFibers.includes(m));
-    setSelectedFibers(
-      allSelected
-        ? selectedFibers.filter((f) => !family.members.includes(f))
-        : [...new Set([...selectedFibers, ...family.members])]
-    );
+    const next = allSelected
+      ? selectedFibers.filter((f) => !family.members.includes(f))
+      : [...new Set([...selectedFibers, ...family.members])];
+    setSelectedFibers(next);
+    trackFilterChanged({
+      page: "brand-page",
+      filter_key: "fiber_family",
+      action: allSelected ? "remove" : "add",
+      ui_value: family.label,
+      query_value: family.members.join("|"),
+      active_filter_count: countActiveBrandFilters({
+        category: selectedCategory,
+        fibers: next,
+        min: minPrice,
+        max: maxPrice,
+      }),
+    });
   };
 
   const hasActiveFilters =
@@ -244,10 +292,50 @@ export function BrandProducts({ products }: BrandProductsProps) {
     maxPrice !== undefined;
 
   const clearAllFilters = () => {
+    const before = countActiveBrandFilters({
+      category: selectedCategory,
+      fibers: selectedFibers,
+      min: minPrice,
+      max: maxPrice,
+    });
     setSelectedCategory(null);
     setSelectedFibers([]);
     setMinPrice(undefined);
     setMaxPrice(undefined);
+    if (before > 0) {
+      trackFiltersCleared({ page: "brand-page", cleared_filter_count: before });
+    }
+  };
+
+  const handleSort = (value: SortOption) => {
+    const previous = sort;
+    setSort(value);
+    setSortOpen(false);
+    trackSortChanged({
+      page: "brand-page",
+      sort_value: value,
+      previous_sort: previous,
+    });
+  };
+
+  const handlePriceCommit = (nextMin: number | undefined, nextMax: number | undefined) => {
+    const wasActive = minPrice !== undefined || maxPrice !== undefined;
+    const willBeActive = nextMin !== undefined || nextMax !== undefined;
+    if (!wasActive && !willBeActive) return;
+    if (wasActive && willBeActive && nextMin === minPrice && nextMax === maxPrice) return;
+    trackFilterChanged({
+      page: "brand-page",
+      filter_key: "price",
+      action: !willBeActive ? "remove" : wasActive ? "replace" : "add",
+      ui_value: willBeActive ? `$${nextMin ?? 0}-$${nextMax ?? "∞"}` : null,
+      query_value: willBeActive ? `${nextMin ?? ""}:${nextMax ?? ""}` : null,
+      active_filter_count: countActiveBrandFilters({
+        category: selectedCategory,
+        fibers: selectedFibers,
+        min: nextMin,
+        max: nextMax,
+      }),
+    });
   };
 
   // Active filter chips
@@ -321,7 +409,11 @@ export function BrandProducts({ products }: BrandProductsProps) {
               type="number"
               placeholder="$0"
               value={minPrice ?? ""}
-              onBlur={(e) => setMinPrice(e.target.value ? Number(e.target.value) : undefined)}
+              onBlur={(e) => {
+                const v = e.target.value ? Number(e.target.value) : undefined;
+                setMinPrice(v);
+                handlePriceCommit(v, maxPrice);
+              }}
               onChange={(e) => setMinPrice(e.target.value ? Number(e.target.value) : undefined)}
               className="w-full rounded-md border border-muted-light bg-background px-3 py-2 font-body text-[13px] text-text outline-none focus:border-muted focus-visible:ring-2 focus-visible:ring-accent/50"
             />
@@ -333,7 +425,11 @@ export function BrandProducts({ products }: BrandProductsProps) {
               type="number"
               placeholder="$500"
               value={maxPrice ?? ""}
-              onBlur={(e) => setMaxPrice(e.target.value ? Number(e.target.value) : undefined)}
+              onBlur={(e) => {
+                const v = e.target.value ? Number(e.target.value) : undefined;
+                setMaxPrice(v);
+                handlePriceCommit(minPrice, v);
+              }}
               onChange={(e) => setMaxPrice(e.target.value ? Number(e.target.value) : undefined)}
               className="w-full rounded-md border border-muted-light bg-background px-3 py-2 font-body text-[13px] text-text outline-none focus:border-muted focus-visible:ring-2 focus-visible:ring-accent/50"
             />
@@ -396,7 +492,7 @@ export function BrandProducts({ products }: BrandProductsProps) {
                       key={value}
                       role="option"
                       aria-selected={sort === value}
-                      onClick={() => { setSort(value); setSortOpen(false); }}
+                      onClick={() => handleSort(value)}
                       className={`flex w-full items-center justify-between px-4 py-2.5 text-left font-body text-[13px] transition-colors ${
                         sort === value
                           ? "font-medium text-text"
@@ -434,14 +530,25 @@ export function BrandProducts({ products }: BrandProductsProps) {
 
           <div className="grid grid-cols-2 gap-x-5 gap-y-8 pt-4 sm:grid-cols-3 lg:grid-cols-3">
             {visible.map((product) => (
-              <ProductCard key={product.id} product={product} hideBrand />
+              <ProductCard key={product.id} product={product} hideBrand source="brand-page" />
             ))}
           </div>
 
           {hasMore && (
             <div className="mt-10 text-center">
               <button
-                onClick={() => setShown((s) => Math.min(s + PAGE_SIZE, filtered.length))}
+                onClick={() => {
+                  const nextShown = Math.min(shown + PAGE_SIZE, filtered.length);
+                  const loaded = nextShown - shown;
+                  setShown(nextShown);
+                  trackLoadMore({
+                    page: "brand-page",
+                    next_page: Math.ceil(nextShown / PAGE_SIZE),
+                    products_loaded: loaded,
+                    total_visible: nextShown,
+                    total_available: filtered.length,
+                  });
+                }}
                 className="inline-flex items-center gap-2 rounded-full border border-muted-light px-6 py-3 font-body text-[14px] font-medium text-text transition-colors hover:border-text"
               >
                 Show more ({filtered.length - shown} remaining)

@@ -1,7 +1,10 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import type { BrandWithDetails } from "@/types/database";
 import { brandLogoUrl, formatCategory } from "@/lib/utils";
+import { trackBrandCardClick } from "@/lib/posthog/events";
 
 interface BrandCardProps {
   brand: BrandWithDetails;
@@ -29,9 +32,20 @@ export function BrandCard({ brand, priority = false }: BrandCardProps) {
     ...brand.categories.map(formatCategory),
   ];
 
+  const handleClick = () => {
+    trackBrandCardClick({
+      brand_name: brand.name,
+      brand_slug: brand.slug,
+      is_fully_natural: brand.is_fully_natural,
+      source: "brands-directory",
+      destination: `/brand/${brand.slug}`,
+    });
+  };
+
   return (
     <Link
       href={`/brand/${brand.slug}`}
+      onClick={handleClick}
       className="group relative flex flex-col gap-5 rounded-[14px] border border-[#DDD5CB] bg-white p-7 shadow-[0_2px_8px_rgba(140,120,100,0.07)] transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/30 hover:shadow-lg"
     >
       {/* Top row: Logo + Name */}

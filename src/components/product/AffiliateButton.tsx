@@ -1,22 +1,58 @@
 "use client";
 
 import { affiliateUrl, brandDomain } from "@/lib/utils";
+import { trackAffiliateClick } from "@/lib/posthog/events";
 
 interface AffiliateButtonProps {
   url: string;
   brandName: string;
+  brandSlug: string;
+  productSlug: string;
+  productName: string;
+  category: string | null;
+  price: number | null;
+  currency: string | null;
+  isAvailable: boolean;
   soldOut?: boolean;
 }
 
-export function AffiliateButton({ url, brandName, soldOut }: AffiliateButtonProps) {
+export function AffiliateButton({
+  url,
+  brandName,
+  brandSlug,
+  productSlug,
+  productName,
+  category,
+  price,
+  currency,
+  isAvailable,
+  soldOut,
+}: AffiliateButtonProps) {
   const domain = brandDomain(url);
+  const destinationUrl = affiliateUrl(url, "product-page");
+
+  const handleClick = () => {
+    trackAffiliateClick({
+      brand_name: brandName,
+      brand_slug: brandSlug,
+      product_slug: productSlug,
+      product_name: productName,
+      category,
+      price,
+      currency,
+      is_available: isAvailable,
+      source: "product-page",
+      destination_url: destinationUrl,
+    });
+  };
 
   return (
     <div className="space-y-2">
       <a
-        href={affiliateUrl(url, "product-page")}
+        href={destinationUrl}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={handleClick}
         className={
           soldOut
             ? "inline-flex w-full items-center justify-center gap-2 rounded-lg border border-surface-dark bg-surface px-6 py-3.5 text-base font-medium text-muted transition-all hover:bg-surface-dark focus:outline-none focus:ring-2 focus:ring-text/50"

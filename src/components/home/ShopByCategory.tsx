@@ -1,5 +1,5 @@
-import Link from "next/link";
 import Image from "next/image";
+import { TrackedLink } from "@/components/ui/TrackedLink";
 import { formatCategory } from "@/lib/utils";
 
 interface CategoryItem {
@@ -22,24 +22,29 @@ export function ShopByCategory({ categories }: ShopByCategoryProps) {
           <h2 className="font-display text-[24px] sm:text-[28px] font-semibold leading-tight tracking-[-0.01em] text-text">
             Start somewhere good.
           </h2>
-          <Link
+          <TrackedLink
             href="/shop"
+            section="shop-by-category"
+            ctaText="View all"
             className="group/arrow hidden sm:inline-flex items-center gap-1.5 font-body text-[14px] font-medium text-accent hover:text-accent/80 transition-colors"
           >
             View all{" "}
             <span className="inline-block transition-transform duration-200 group-hover/arrow:translate-x-0.5">
               &rarr;
             </span>
-          </Link>
+          </TrackedLink>
         </div>
       </div>
 
       <div className="px-5 sm:px-8 lg:px-20">
         <div className="mx-auto max-w-[1280px] grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4">
           {categories.map((item, i) => (
-            <Link
+            <TrackedLink
               key={item.category}
               href={`/shop?category=${encodeURIComponent(item.category)}`}
+              section="shop-by-category"
+              ctaText={formatCategory(item.category)}
+              itemName={item.category}
               className="group relative aspect-[3/4] overflow-hidden rounded-lg"
             >
               <Image
@@ -57,7 +62,7 @@ export function ShopByCategory({ categories }: ShopByCategoryProps) {
                   {formatCategory(item.category)}
                 </p>
               </div>
-            </Link>
+            </TrackedLink>
           ))}
         </div>
       </div>

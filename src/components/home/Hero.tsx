@@ -1,6 +1,6 @@
-import Link from "next/link";
 import Image from "next/image";
 import { HeroProductCollage } from "./HeroProductImage";
+import { TrackedLink } from "@/components/ui/TrackedLink";
 import type { ProductWithBrand } from "@/types/database";
 
 interface HeroProps {
@@ -62,21 +62,25 @@ export function Hero({ products = [] }: HeroProps) {
             never shed microplastics.
           </p>
           <div className="animate-fade-up [--delay:240ms] mt-8 sm:mt-10 flex flex-col sm:flex-row items-start gap-4">
-            <Link
+            <TrackedLink
               href="/shop"
+              section="hero"
+              ctaText="Shop All Products"
               className="inline-flex items-center justify-center rounded-full bg-white px-8 py-3.5 font-body text-[15px] font-semibold text-text transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/10 active:translate-y-0 active:shadow-md"
             >
               Shop All Products
-            </Link>
-            <Link
+            </TrackedLink>
+            <TrackedLink
               href="/brands"
+              section="hero"
+              ctaText="Browse Brands"
               className="group/arrow inline-flex items-center justify-center px-2 py-3.5 font-body text-[15px] font-medium text-white/60 transition-colors hover:text-white"
             >
               Browse Brands{" "}
               <span className="inline-block ml-1 transition-transform duration-200 group-hover/arrow:translate-x-1">
                 &rarr;
               </span>
-            </Link>
+            </TrackedLink>
           </div>
         </div>
       </div>
