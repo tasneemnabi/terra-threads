@@ -58,7 +58,7 @@ export async function searchProducts(
 
   if (error) {
     console.error("Error searching products:", error);
-    return [];
+    throw new Error("Failed to search products.");
   }
 
   return data as ProductWithBrand[];
