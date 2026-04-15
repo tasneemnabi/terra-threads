@@ -30,7 +30,7 @@ import {
   determineSyncStatus,
 } from "./lib/curation.js";
 import { loadEnv, getSupabaseAdmin } from "./lib/env.js";
-import { ensureMaterialExists, syncProductMaterials } from "./lib/db-helpers.js";
+import { syncProductMaterials } from "./lib/db-helpers.js";
 import {
   classifyProductType,
   classifyAudience,

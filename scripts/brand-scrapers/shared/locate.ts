@@ -1,7 +1,6 @@
 /**
  * Generic fiber-chunk scanner.
  *
- * Ported from Strategy 2/3 of scripts/fix-unbound-materials.ts::extractFabric:
  *   1. Find inline element text containing % + a fiber keyword
  *   2. Score candidates by fiber-keyword hits * 2 + percentage-sign hits
  *   3. Try the integer parser (extractMaterialsFromText) on each candidate

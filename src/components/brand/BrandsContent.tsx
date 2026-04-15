@@ -108,23 +108,6 @@ export function BrandsContent({ brands }: BrandsContentProps) {
     return n;
   };
 
-  const setTier = (t: TierFilter) => {
-    const prev = tier;
-    setParam("tier", t);
-    trackFilterChanged({
-      page: "brands-directory",
-      filter_key: "tier",
-      action: t === "all" ? "remove" : prev === "all" ? "add" : "replace",
-      ui_value: t === "all" ? null : t === "natural" ? "100% Natural" : "Nearly Natural",
-      query_value: t === "all" ? null : t,
-      active_filter_count: countActiveDirectory({
-        tier: t,
-        fiber: selectedFiber,
-        category: selectedCategory,
-        audience: selectedAudience,
-      }),
-    });
-  };
   const setSelectedFiber = (f: string | null) => {
     const prev = selectedFiber;
     setParam("fiber", f);

@@ -22,7 +22,6 @@ interface BrandInput {
   audience: string[];       // e.g. ["Women", "Men", "Kids"]
   fiber_types: string[];    // e.g. ["Organic Cotton", "Merino Wool"]
   categories: string[];     // e.g. ["Activewear", "Basics"]
-  products?: unknown[];     // deprecated — ignored with warning
 }
 
 // ─── Logo Download ──────────────────────────────────────────────────
@@ -141,11 +140,6 @@ async function main() {
   if (missing.length > 0) {
     console.error(`Missing required brand metadata: ${missing.join(", ")}`);
     process.exit(1);
-  }
-
-  // Warn if products array is present (deprecated)
-  if (input.products && (input.products as unknown[]).length > 0) {
-    console.warn(`\n⚠ Products array ignored — use 'npx tsx scripts/sync-catalog.ts --brand ${slugify(input.name)}' to ingest products.\n`);
   }
 
   const brandSlug = slugify(input.name);

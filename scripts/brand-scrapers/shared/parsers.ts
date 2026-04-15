@@ -1,7 +1,6 @@
 /**
  * Shared parsers for brand-scraper locators.
  *
- * Ported verbatim from scripts/fix-unbound-materials.ts:
  *   - stripHtml
  *   - ALIAS table + parseDecimalComposition (decimal % rebalanced to int 100)
  *

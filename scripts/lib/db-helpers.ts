@@ -14,7 +14,7 @@ import {
  * Ensure a material exists in the database, inserting it if needed.
  * Uses a cache to avoid repeated lookups within a single run.
  */
-export async function ensureMaterialExists(
+async function ensureMaterialExists(
   supabase: SupabaseClient,
   materialName: string,
   materialCache: Map<string, string>

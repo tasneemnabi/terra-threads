@@ -15,12 +15,15 @@
 import { createHash } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { fetchAllProducts, type ShopifyProduct } from "./lib/shopify-fetcher.js";
-import { extractMaterialsRegex, extractMaterialsBatch, type ExtractedMaterials } from "./lib/material-extractor.js";
+import {
+  extractMaterialsBatch,
+  extractMaterialsFromText,
+  type ExtractedMaterials,
+} from "./lib/material-extractor.js";
 import { slugify, isExtractionBanned, determineSyncStatus } from "./lib/curation.js";
 import { loadEnv, getSupabaseAdmin } from "./lib/env.js";
-import { ensureMaterialExists, syncProductMaterials } from "./lib/db-helpers.js";
+import { syncProductMaterials } from "./lib/db-helpers.js";
 import { launchBrowser, closeBrowser, scrapePage } from "./lib/page-scraper.js";
-import { extractMaterialsFromText } from "./lib/material-extractor.js";
 import { initStorageBucket, optimizeProductImages } from "./lib/image-optimizer.js";
 import { getLocator } from "./brand-scrapers/registry.js";
 import type { LocatedComposition } from "./brand-scrapers/locators/types.js";
