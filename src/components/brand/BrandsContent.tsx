@@ -2,12 +2,10 @@
 
 import { useMemo, useCallback, useState, useEffect } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import type { BrandWithDetails } from "@/types/database";
+import type { BrandWithDetails, TierFilter } from "@/types/database";
 import { BrandCard } from "./BrandCard";
 import { formatCategory } from "@/lib/utils";
 import { trackFilterChanged, trackFiltersCleared } from "@/lib/posthog/events";
-
-type TierFilter = "all" | "natural" | "nearly";
 
 interface BrandsContentProps {
   brands: BrandWithDetails[];

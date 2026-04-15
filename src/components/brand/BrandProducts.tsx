@@ -9,9 +9,7 @@ import {
   trackLoadMore,
   trackSortChanged,
 } from "@/lib/posthog/events";
-import type { ProductWithBrand } from "@/types/database";
-
-type SortOption = "newest" | "price-asc" | "price-desc";
+import type { ProductWithBrand, SortOption } from "@/types/database";
 
 const SORT_LABELS: Record<SortOption, string> = {
   newest: "Newest",

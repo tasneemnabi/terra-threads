@@ -2,7 +2,7 @@
 
 import { useMemo, useCallback, useState, useEffect, useRef, useTransition } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import type { FilterState, ProductWithBrand } from "@/types/database";
+import type { FilterState, ProductWithBrand, SortOption, TierFilter } from "@/types/database";
 import { ProductCard } from "@/components/product/ProductCard";
 import { fetchProducts, fetchProductTypes, fetchAvailableBrands, fetchSearchResults } from "@/app/shop/actions";
 import { formatCategory } from "@/lib/utils";
@@ -13,9 +13,6 @@ import {
   trackSearchResultsLoaded,
   trackSortChanged,
 } from "@/lib/posthog/events";
-
-type TierFilter = "all" | "natural" | "nearly";
-type SortOption = "newest" | "price-asc" | "price-desc";
 
 const SORT_LABELS: Record<SortOption, string> = {
   newest: "Newest",
