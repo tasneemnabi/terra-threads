@@ -1,8 +1,6 @@
 import posthog from "posthog-js";
 import { isPostHogEnabled } from "./provider";
 
-// --- Event name constants ---
-
 const EVENTS = {
   AFFILIATE_CLICK: "affiliate_click",
   PRODUCT_CARD_CLICK: "product_card_click",
@@ -15,7 +13,7 @@ const EVENTS = {
   BRAND_CARD_CLICK: "brand_card_click",
 } as const;
 
-// --- Source / page enums (string unions for DX, not runtime checked) ---
+// String unions for DX, not runtime checked.
 
 export type AffiliateSource = "product-page" | "brand-detail" | "brand-detail-empty";
 
@@ -37,8 +35,6 @@ export type HomepageSection =
   | "final-cta";
 
 type BrandCardSource = "brands-directory";
-
-// --- Payload shapes ---
 
 interface AffiliateClickPayload {
   brand_name: string;
@@ -126,8 +122,6 @@ interface BrandCardClickPayload {
   destination: string;
 }
 
-// --- Helper: parse domain from URL safely ---
-
 function parseDomain(rawUrl: string): string {
   try {
     return new URL(rawUrl).hostname.replace(/^www\./, "");
@@ -136,8 +130,7 @@ function parseDomain(rawUrl: string): string {
   }
 }
 
-// --- Safe capture: no-op when PostHog isn't configured ---
-
+// No-op when PostHog isn't configured.
 function safeCapture(event: string, properties: object) {
   if (!isPostHogEnabled()) return;
   try {
@@ -146,8 +139,6 @@ function safeCapture(event: string, properties: object) {
     // Swallow — analytics should never break user flows
   }
 }
-
-// --- Tracking helpers ---
 
 export function trackAffiliateClick(
   payload: Omit<AffiliateClickPayload, "domain"> & { domain?: string }

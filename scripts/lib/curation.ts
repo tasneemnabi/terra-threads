@@ -77,17 +77,12 @@ function isBannedMaterial(name: string): boolean {
   return BANNED_MATERIALS.some((b) => name.toLowerCase().includes(b));
 }
 
-/**
- * Check if a material is natural (not synthetic stretch or banned).
- */
 export function isMaterialNatural(name: string): boolean {
   if (KNOWN_MATERIALS[name]) return KNOWN_MATERIALS[name].is_natural;
   return !isSyntheticStretch(name) && !isBannedMaterial(name);
 }
 
-/**
- * Check if an extraction result contains banned materials or exceeds synthetic limits.
- */
+// Banned if any material is on the banned list, or synthetic stretch exceeds MAX_SYNTHETIC_PERCENT.
 export function isExtractionBanned(extraction: { hasBanned: boolean; materials: Record<string, number> }): boolean {
   if (extraction.hasBanned) return true;
   let syntheticPct = 0;

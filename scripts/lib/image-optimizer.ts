@@ -48,9 +48,6 @@ export async function initStorageBucket(supabase: SupabaseClient): Promise<void>
   console.log(`[image-optimizer] Created public bucket: ${BUCKET_NAME}`);
 }
 
-/**
- * Returns true if the URL already points to Supabase Storage (no need to re-process).
- */
 export function isAlreadyOptimized(url: string): boolean {
   if (!url) return false;
   return url.includes("/storage/v1/object/public/product-images/");
@@ -71,7 +68,6 @@ async function optimizeAndUploadImage(
   if (isAlreadyOptimized(imageUrl)) return imageUrl;
 
   try {
-    // 1. Download image
     const response = await fetch(imageUrl, {
       headers: { "User-Agent": "FiberBot/1.0 (image-optimizer)" },
       signal: AbortSignal.timeout(15000),
@@ -85,7 +81,6 @@ async function optimizeAndUploadImage(
     const arrayBuffer = await response.arrayBuffer();
     const inputBuffer = Buffer.from(arrayBuffer);
 
-    // 2. Resize and convert to WebP
     const optimized = await sharp(inputBuffer)
       .resize({
         width: MAX_DIMENSION,
@@ -96,7 +91,6 @@ async function optimizeAndUploadImage(
       .webp({ quality: WEBP_QUALITY })
       .toBuffer();
 
-    // 3. Upload to Supabase Storage
     const storagePath = `${productSlug}/${index}.webp`;
 
     const { error: uploadError } = await supabase.storage
@@ -111,7 +105,6 @@ async function optimizeAndUploadImage(
       return imageUrl;
     }
 
-    // 4. Get public URL
     const { data: publicUrlData } = supabase.storage
       .from(BUCKET_NAME)
       .getPublicUrl(storagePath);

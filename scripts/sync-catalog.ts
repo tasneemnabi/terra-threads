@@ -96,10 +96,6 @@ interface SyncStats {
   locatorSources: Record<string, number>;
 }
 
-// ─── Helpers ────────────────────────────────────────────────────────
-
-// ─── Sync single brand ─────────────────────────────────────────────
-
 export async function syncCatalogBrand(
   supabase: SupabaseClient,
   brand: CatalogBrandRow,
@@ -146,7 +142,6 @@ export async function syncCatalogBrand(
   console.log(`Syncing: ${brand.name} (${brand.website_url})`);
   console.log(`${"═".repeat(60)}`);
 
-  // 1. Discover product URLs
   const discoveryStart = Date.now();
   const discovery = await discoverProducts(brand.website_url, {
     brandSlug: brand.slug,
@@ -172,7 +167,7 @@ export async function syncCatalogBrand(
     return stats;
   }
 
-  // 2. Deduplicate against existing DB products
+  // Deduplicate against existing DB products
   const { data: existingProducts } = await supabase
     .from("products")
     .select("id, affiliate_url, sync_status, body_hash")
@@ -318,10 +313,10 @@ export async function syncCatalogBrand(
     `  Scraping ${newUrls.length} new product pages (concurrency=${concurrency})...`
   );
 
-  // 3. Scrape each product page in a bounded concurrency pool. The browser
-  //    process is shared across workers; each worker opens its own page.
-  //    The whole per-product unit of work is wrapped in a 60s timeout so a
-  //    single slow page can't stall the whole brand.
+  // Scrape each product page in a bounded concurrency pool. The browser
+  // process is shared across workers; each worker opens its own page.
+  // Per-product work is wrapped in a 60s timeout so a single slow page
+  // can't stall the whole brand.
   const scrapeStart = Date.now();
   let processedCount = 0;
   let aborted = false;
@@ -354,7 +349,6 @@ export async function syncCatalogBrand(
       let stageReached: string = "scrape";
 
       const processProduct = async (): Promise<void> => {
-        // ─── Scrape the page (Playwright) ────────────────────
         stageReached = "scrape";
         const scraped: ScrapedProduct = await withTimeout(
           scrapeProductData(url),
@@ -371,7 +365,6 @@ export async function syncCatalogBrand(
         // Require spaces around separator to avoid stripping hyphenated words like "Ultra-Soft"
         const cleanName = scraped.name.replace(/\s+[|–—-]\s+[^|–—-]+$/, "").trim();
 
-        // 4. Skip non-clothing products
         const rejection = shouldRejectProduct(cleanName, brand.slug);
         if (rejection.rejected) {
           stats.skippedNonClothing++;
@@ -413,7 +406,7 @@ export async function syncCatalogBrand(
           return;
         }
 
-        // 5. Extract materials via brand-specific locator (falls back to default)
+        // Extract materials via brand-specific locator (falls back to default)
         stageReached = "extract";
         const locator = getLocator(brand.slug);
         let located: LocatedComposition | null = null;
@@ -498,7 +491,6 @@ export async function syncCatalogBrand(
         if (!scraped.price) stats.missingPrice++;
         if (!scraped.imageUrl) stats.missingImage++;
 
-        // 6. Classify
         const syncStatus = hasMaterials
           ? determineSyncStatus(extraction!, scraped.price, scraped.imageUrl)
           : "review";
@@ -529,7 +521,6 @@ export async function syncCatalogBrand(
           return;
         }
 
-        // 7. Optimize images then insert into Supabase
         stageReached = "image";
         const optimizedImages = await optimizeProductImages(
           supabase,
@@ -549,7 +540,6 @@ export async function syncCatalogBrand(
         let productId: string;
 
         if (existing) {
-          // Update existing product
           const { error: updateError } = await supabase
             .from("products")
             .update({
@@ -574,7 +564,6 @@ export async function syncCatalogBrand(
           if (updateError) throw updateError;
           productId = existing.id;
         } else {
-          // Insert new product
           const productData = {
             brand_id: brand.id,
             name: cleanName,

@@ -45,15 +45,6 @@ function stripHtml(html: string): string {
 
 // ─── Stage 1: Regex extraction ──────────────────────────────────────
 
-/**
- * Regex patterns for common material composition formats:
- * - "95% Organic Cotton, 5% Elastane"
- * - "95% organic cotton / 5% spandex"
- * - "Cotton 95%, Elastane 5%"
- */
-// Material pattern note: split into PCT_THEN_NAME and NAME_THEN_PCT
-// (defined near extractFromText) to avoid alternation cursor issues.
-
 // Fabric construction suffixes to strip before alias lookup
 const CONSTRUCTION_SUFFIXES = new RegExp(
   "\\b(" +

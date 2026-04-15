@@ -49,7 +49,7 @@ const FIBER_GROUPS: { heading: string; families: { label: string; members: strin
 
 const PAGE_SIZE = 24;
 
-// --- Shared UI components (same as ShopContent) ---
+// Shared UI components mirror the ones in ShopContent — keep them in sync.
 
 function FilterCheckbox({
   label,
@@ -131,8 +131,6 @@ function ActiveFilterChip({ label, onRemove }: { label: string; onRemove: () => 
     </button>
   );
 }
-
-// --- Main component ---
 
 interface BrandProductsProps {
   products: ProductWithBrand[];

@@ -42,10 +42,9 @@ export function scanForFiberChunk(
     candidates.push({ text, score: fiberHits * 2 + pctHits });
   }
 
-  // Sort by score descending — try highest-signal chunks first
   candidates.sort((a, b) => b.score - a.score);
 
-  // Strategy 2: integer parser (most accurate when it hits)
+  // Integer parser first (more accurate), then decimal-aware fallback
   for (const c of candidates) {
     const ex = extractMaterialsFromText(c.text);
     if (ex && Object.keys(ex.materials).length > 0) {
@@ -53,7 +52,6 @@ export function scanForFiberChunk(
     }
   }
 
-  // Strategy 3: decimal-aware parser for "53.5% Merino Wool, …"
   for (const c of candidates) {
     const mats = parseDecimalComposition(c.text);
     if (mats) {
