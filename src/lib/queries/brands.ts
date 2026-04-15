@@ -1,6 +1,22 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Brand, BrandWithDetails } from "@/types/database";
 
+interface BrandProductMaterialRow {
+  percentage: number | null;
+  materials: { name: string; is_natural: boolean } | null;
+}
+
+interface BrandProductRow {
+  id: string;
+  category: string;
+  sync_status: "pending" | "review" | "approved" | "rejected" | null;
+  product_materials: BrandProductMaterialRow[] | null;
+}
+
+interface BrandWithProductsRow extends Brand {
+  products: BrandProductRow[] | null;
+}
+
 export async function getAllBrands(): Promise<Brand[]> {
   const supabase = await createClient();
 
@@ -39,19 +55,19 @@ export async function getBrandsWithDetails(): Promise<BrandWithDetails[]> {
       )
     `
     )
-    .order("name");
+    .order("name")
+    .returns<BrandWithProductsRow[]>();
 
   if (error) {
     console.error("Error fetching brands with details:", error);
     throw new Error("Failed to load brand details.");
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const result = (data || []).map((brand: any) => {
+  const rows = data || [];
+  const result = rows.map((brand) => {
     // Only count visible products (sync_status is null or 'approved')
     const products = (brand.products || []).filter(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (p: any) => p.sync_status == null || p.sync_status === "approved"
+      (p) => p.sync_status == null || p.sync_status === "approved"
     );
 
     // Prefer brand-level metadata; fall back to product-derived if empty

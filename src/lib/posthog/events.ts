@@ -131,10 +131,12 @@ function parseDomain(rawUrl: string): string {
 }
 
 // No-op when PostHog isn't configured.
-function safeCapture(event: string, properties: object) {
+// Generic so each call site keeps its specific payload type; posthog.capture
+// accepts `Properties` (Record<string, any>) so any object literal widens safely.
+function safeCapture<P extends object>(event: string, properties: P) {
   if (!isPostHogEnabled()) return;
   try {
-    posthog.capture(event, properties as Record<string, unknown>);
+    posthog.capture(event, { ...properties });
   } catch {
     // Swallow — analytics should never break user flows
   }

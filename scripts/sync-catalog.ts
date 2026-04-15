@@ -700,6 +700,16 @@ export async function llmPass(
 
   // Get review products that have affiliate_url but no shopify_product_id
   // (i.e. catalog-scraped products). Exclude dropped brands.
+  interface ReviewProductRow {
+    id: string;
+    name: string;
+    price: number;
+    image_url: string | null;
+    affiliate_url: string;
+    sync_status: "pending" | "review" | "approved" | "rejected" | null;
+    brands: { slug: string } | { slug: string }[] | null;
+  }
+
   let query = supabase
     .from("products")
     .select("id, name, price, image_url, affiliate_url, sync_status, brands!inner(slug)")
@@ -716,7 +726,7 @@ export async function llmPass(
     query = query.eq("brands.slug", brandSlug);
   }
 
-  const { data: products, error } = await query.limit(500);
+  const { data: products, error } = await query.limit(500).returns<ReviewProductRow[]>();
 
   if (error) {
     console.error("Failed to fetch products:", error.message);
@@ -736,7 +746,7 @@ export async function llmPass(
     /\/bdl-/i,                // Pact bundle URLs (no individual price)
   ];
 
-  const validProducts = [];
+  const validProducts: ReviewProductRow[] = [];
   let preRejected = 0;
   for (const product of products) {
     const isJunk = JUNK_URL_PATTERNS.some((p) => p.test(product.affiliate_url));
@@ -762,7 +772,8 @@ export async function llmPass(
   try {
     for (const product of validProducts) {
       // Re-run product classifier on existing name (catches items missed on initial sync)
-      const brandSlugVal = (product as any).brands?.slug ?? "";
+      const brandRel = Array.isArray(product.brands) ? product.brands[0] : product.brands;
+      const brandSlugVal = brandRel?.slug ?? "";
       const rejection = shouldRejectProduct(product.name, brandSlugVal);
       if (rejection.rejected) {
         await supabase
