@@ -2,6 +2,13 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { ProductCard } from "@/components/product/ProductCard";
+import {
+  FilterCheckbox,
+  AccordionFilter,
+  ActiveFilterChip,
+  FIBER_GROUPS,
+  SORT_LABELS,
+} from "@/components/filters/primitives";
 import { formatCategory } from "@/lib/utils";
 import {
   trackFilterChanged,
@@ -11,124 +18,7 @@ import {
 } from "@/lib/posthog/events";
 import type { ProductWithBrand, SortOption } from "@/types/database";
 
-const SORT_LABELS: Record<SortOption, string> = {
-  newest: "Newest",
-  "price-asc": "Price: Low to High",
-  "price-desc": "Price: High to Low",
-};
-
-// Same fiber family grouping as ShopContent
-const FIBER_GROUPS: { heading: string; families: { label: string; members: string[] }[] }[] = [
-  {
-    heading: "Natural",
-    families: [
-      { label: "Cotton", members: ["Cotton", "Organic Cotton", "Organic Pima Cotton", "Pima Cotton"] },
-      { label: "Wool", members: ["Wool", "Merino Wool", "Lambswool", "Cashmere", "Mohair", "Alpaca"] },
-      { label: "Linen", members: ["Linen"] },
-      { label: "Hemp", members: ["Hemp"] },
-      { label: "Silk", members: ["Silk"] },
-    ],
-  },
-  {
-    heading: "Semi-Synthetic",
-    families: [
-      { label: "Lyocell", members: ["Tencel Lyocell", "Bamboo Lyocell"] },
-      { label: "Modal", members: ["Modal"] },
-      { label: "Viscose", members: ["Viscose"] },
-    ],
-  },
-  {
-    heading: "Synthetic",
-    families: [
-      { label: "Spandex", members: ["Spandex"] },
-    ],
-  },
-];
-
 const PAGE_SIZE = 24;
-
-// Shared UI components mirror the ones in ShopContent — keep them in sync.
-
-function FilterCheckbox({
-  label,
-  checked,
-  onChange,
-}: {
-  label: string;
-  checked: boolean;
-  onChange: () => void;
-}) {
-  return (
-    <button
-      role="checkbox"
-      aria-checked={checked}
-      onClick={onChange}
-      className="group/cb flex items-center gap-2.5 rounded-md px-1 py-1 text-left transition-colors hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:rounded-md"
-    >
-      <div
-        className={`flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-[3px] border transition-all duration-150 ${
-          checked
-            ? "border-accent bg-accent"
-            : "border-muted-light group-hover/cb:border-muted"
-        }`}
-      >
-        {checked && (
-          <svg className="h-2.5 w-2.5 text-background" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-          </svg>
-        )}
-      </div>
-      <span className={`font-body text-[13px] transition-colors ${checked ? "font-medium text-text" : "text-text group-hover/cb:text-secondary"}`}>
-        {label}
-      </span>
-    </button>
-  );
-}
-
-function AccordionFilter({
-  title,
-  children,
-  defaultOpen = false,
-}: {
-  title: string;
-  children: React.ReactNode;
-  defaultOpen?: boolean;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
-  return (
-    <div className="border-b border-muted-light/60">
-      <button
-        onClick={() => setOpen(!open)}
-        aria-expanded={open}
-        className="flex w-full items-center justify-between py-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:rounded-md"
-      >
-        <span className="font-display text-[14px] font-semibold text-text">{title}</span>
-        <svg className="h-4 w-4 shrink-0 text-text" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          {open ? (
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
-          ) : (
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m-7-7h14" />
-          )}
-        </svg>
-      </button>
-      {open && <div className="flex flex-col gap-1.5 pb-4">{children}</div>}
-    </div>
-  );
-}
-
-function ActiveFilterChip({ label, onRemove }: { label: string; onRemove: () => void }) {
-  return (
-    <button
-      onClick={onRemove}
-      className="flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1.5 font-body text-[12px] font-medium text-accent transition-colors hover:bg-accent/20"
-    >
-      {label}
-      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-      </svg>
-    </button>
-  );
-}
 
 interface BrandProductsProps {
   products: ProductWithBrand[];
