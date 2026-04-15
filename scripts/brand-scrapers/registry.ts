@@ -19,7 +19,7 @@ import { pact } from "./locators/pact.js";
 import { pyneAndSmith } from "./locators/pyne-and-smith.js";
 import { unboundMerino } from "./locators/unbound-merino.js";
 
-export const locators: Record<string, Locator> = {
+const locators: Record<string, Locator> = {
   "beaumont-organic": beaumontOrganic,
   "gil-rodriguez": gilRodriguez,
   "jungmaven": jungmaven,
@@ -34,5 +34,3 @@ export const locators: Record<string, Locator> = {
 export function getLocator(slug: string): Locator {
   return locators[slug] ?? defaultLocator;
 }
-
-export { defaultLocator };

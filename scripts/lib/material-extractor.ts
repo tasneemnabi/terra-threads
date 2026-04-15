@@ -642,26 +642,6 @@ export function extractMaterialsFromText(text: string): ExtractedMaterials | nul
   return extractFromCombinedText(text);
 }
 
-/**
- * Extract materials for a single product (regex → LLM fallback).
- * Prefer extractMaterialsBatch for multiple products.
- */
-export async function extractMaterials(product: ShopifyProduct): Promise<ExtractedMaterials> {
-  const regexResult = extractMaterialsRegex(product);
-  if (regexResult) return regexResult;
-
-  if (!process.env.GEMINI_API_KEY) {
-    console.warn(`  No GEMINI_API_KEY — skipping LLM extraction for "${product.title}"`);
-    return { materials: {}, confidence: 0, hasBanned: false, method: "none" };
-  }
-
-  const bodyText = product.body_html ? stripHtml(product.body_html) : "";
-  const tags = product.tags || [];
-  const batch = [{ index: 0, name: product.title, bodyText, tags }];
-  const results = await extractBatchWithLLM(batch);
-  return results.get(0)!;
-}
-
 const LLM_BATCH_SIZE = 10;
 const LLM_DELAY_MS = 4500; // ~13 RPM, well under free tier limits
 

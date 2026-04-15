@@ -61,7 +61,7 @@ export function isAlreadyOptimized(url: string): boolean {
  * and upload to Supabase Storage. Returns the public URL on success, or the
  * original URL on any error.
  */
-export async function optimizeAndUploadImage(
+async function optimizeAndUploadImage(
   supabase: SupabaseClient,
   imageUrl: string,
   productSlug: string,

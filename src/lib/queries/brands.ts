@@ -118,18 +118,3 @@ export async function getBrandBySlug(slug: string): Promise<Brand | null> {
   return data as Brand;
 }
 
-export async function getBrandsByCategory(category: string): Promise<Brand[]> {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("brands")
-    .select("*, products!inner(category)")
-    .eq("products.category", category);
-
-  if (error) {
-    console.error("Error fetching brands by category:", error);
-    throw new Error("Failed to load brands for this category.");
-  }
-
-  return data as Brand[];
-}

@@ -49,13 +49,6 @@ export interface Material {
   is_natural: boolean;
 }
 
-export interface ProductMaterial {
-  id: string;
-  product_id: string;
-  material_id: string;
-  percentage: number;
-}
-
 export interface MaterialInfo {
   material_id: string;
   name: string;

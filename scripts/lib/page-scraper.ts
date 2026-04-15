@@ -19,7 +19,7 @@ function decodeHtmlEntities(str: string): string {
 
 // ─── Types ──────────────────────────────────────────────────────────
 
-export interface ScrapedPage {
+interface ScrapedPage {
   url: string;
   text: string;
   success: boolean;

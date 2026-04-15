@@ -3,7 +3,7 @@ import { isPostHogEnabled } from "./provider";
 
 // --- Event name constants ---
 
-export const EVENTS = {
+const EVENTS = {
   AFFILIATE_CLICK: "affiliate_click",
   PRODUCT_CARD_CLICK: "product_card_click",
   FILTER_CHANGED: "filter_changed",
@@ -26,7 +26,7 @@ export type ProductCardSource =
   | "related"
   | "editorial-picks";
 
-export type FilterPage = "shop" | "brand-page" | "brands-directory";
+type FilterPage = "shop" | "brand-page" | "brands-directory";
 
 export type HomepageSection =
   | "hero"
@@ -36,11 +36,11 @@ export type HomepageSection =
   | "featured-brands"
   | "final-cta";
 
-export type BrandCardSource = "brands-directory";
+type BrandCardSource = "brands-directory";
 
 // --- Payload shapes ---
 
-export interface AffiliateClickPayload {
+interface AffiliateClickPayload {
   brand_name: string;
   brand_slug: string;
   product_slug: string | null;
@@ -54,7 +54,7 @@ export interface AffiliateClickPayload {
   destination_url: string;
 }
 
-export interface ProductCardClickPayload {
+interface ProductCardClickPayload {
   product_slug: string;
   product_name: string;
   brand_name: string;
@@ -67,7 +67,7 @@ export interface ProductCardClickPayload {
   destination: string;
 }
 
-export interface FilterChangedPayload {
+interface FilterChangedPayload {
   page: FilterPage;
   filter_key:
     | "category"
@@ -84,21 +84,21 @@ export interface FilterChangedPayload {
   result_count?: number | null;
 }
 
-export interface SortChangedPayload {
+interface SortChangedPayload {
   page: FilterPage;
   sort_value: string;
   previous_sort: string;
   result_count?: number | null;
 }
 
-export interface SearchResultsLoadedPayload {
+interface SearchResultsLoadedPayload {
   query: string;
   query_length: number;
   result_count: number;
   page: FilterPage;
 }
 
-export interface LoadMorePayload {
+interface LoadMorePayload {
   page: FilterPage;
   next_page: number;
   products_loaded: number;
@@ -106,19 +106,19 @@ export interface LoadMorePayload {
   total_available: number;
 }
 
-export interface FiltersClearedPayload {
+interface FiltersClearedPayload {
   page: FilterPage;
   cleared_filter_count: number;
 }
 
-export interface HomepageCtaClickPayload {
+interface HomepageCtaClickPayload {
   section: HomepageSection;
   cta_text: string;
   destination: string;
   item_name: string | null;
 }
 
-export interface BrandCardClickPayload {
+interface BrandCardClickPayload {
   brand_name: string;
   brand_slug: string;
   is_fully_natural: boolean;
