@@ -93,7 +93,6 @@ const EXPAND_SELECTORS = [
   '.product__accordion button',
   '.accordion__trigger',
   '.collapsible-trigger',
-  'details summary',
   // Tab triggers
   '[role="tab"]:has-text("Material")',
   '[role="tab"]:has-text("Details")',
@@ -106,10 +105,10 @@ async function expandAccordions(page: Page): Promise<void> {
     try {
       const elements = await page.$$(selector);
       for (const el of elements) {
-        if (await el.isVisible()) {
-          await el.click().catch(() => {}); // Ignore click errors
-          await page.waitForTimeout(200);
-        }
+        // Per-click timeout: Playwright's default actionability wait is 30s,
+        // which on pages with many matching elements (e.g. site-wide
+        // accordions in nav/footer) compounds into multi-minute hangs.
+        await el.click({ timeout: 1500 }).catch(() => {});
       }
     } catch {
       // Selector not found — fine, move on
