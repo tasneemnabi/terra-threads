@@ -20,6 +20,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 export const TIMEOUT_PER_PRODUCT_MS = 60_000;    // hard ceiling per product path
 export const TIMEOUT_GEMINI_MS = 30_000;         // per generateContent call
 export const TIMEOUT_SCRAPE_MS = 45_000;         // outer wrap around scrapeProductData
+export const TIMEOUT_IMAGE_PER_PRODUCT_MS = 20_000; // aggregate budget for all image candidates per product
 export const BRAND_WALL_TIME_MS = 15 * 60_000;   // 15 min per brand before we bail
 
 export const DEFAULT_REVIEW_CADENCE_DAYS = 3;

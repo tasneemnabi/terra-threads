@@ -30,6 +30,7 @@ import type { LocatedComposition } from "./brand-scrapers/locators/types.js";
 import {
   BrandRunContext,
   TIMEOUT_PER_PRODUCT_MS,
+  TIMEOUT_IMAGE_PER_PRODUCT_MS,
   BRAND_WALL_TIME_MS,
   DEFAULT_REVIEW_CADENCE_DAYS,
   TimeoutError,
@@ -486,14 +487,41 @@ export async function syncBrand(
       // Optimize images: download, resize to WebP, upload to Supabase Storage.
       // Pass the full pool as a candidate list so failures (404, timeouts)
       // fall through to the next source instead of stranding a broken URL.
+      // Bound the aggregate per-product cost so a single fat-catalog brand
+      // (1000+ products with broken/slow CDN images) can't burn the whole
+      // brand wall-time ceiling on serial 15s fetch retries.
       const imageCandidates = [images.primary, ...images.additional].filter(
         (u): u is string => !!u
       );
+      const imageStartMs = Date.now();
       const optimizedImages = await optimizeProductImages(
         supabase,
         productSlug,
-        imageCandidates
+        imageCandidates,
+        { budgetMs: TIMEOUT_IMAGE_PER_PRODUCT_MS }
       );
+      let imageUrl = optimizedImages.imageUrl;
+      let additionalImages = optimizedImages.additionalImages;
+      if (optimizedImages.budgetExhausted) {
+        if (brandCtx) {
+          await brandCtx.recordProductFailure({
+            stage: "image",
+            url: imageCandidates[0],
+            productRef,
+            startedAt: new Date(imageStartMs),
+            durationMs: Date.now() - imageStartMs,
+            failureType: "timeout",
+            message: `image optimization budget exhausted after ${TIMEOUT_IMAGE_PER_PRODUCT_MS}ms`,
+          });
+        }
+        // Fall back to the raw Shopify CDN URL so the product still has an
+        // image — unoptimized but valid. Without this the product would ship
+        // with image_url=null after a budget trip.
+        if (!imageUrl && imageCandidates.length > 0) {
+          imageUrl = imageCandidates[0];
+          additionalImages = imageCandidates.slice(1);
+        }
+      }
 
       const productData = {
         brand_id: brand.id,
@@ -505,8 +533,8 @@ export async function syncBrand(
         category,
         price,
         currency: "USD",
-        image_url: optimizedImages.imageUrl,
-        additional_images: optimizedImages.additionalImages,
+        image_url: imageUrl,
+        additional_images: additionalImages,
         affiliate_url: productUrl,
         product_type: productType,
         shopify_product_type: shopifyProduct.product_type || null,

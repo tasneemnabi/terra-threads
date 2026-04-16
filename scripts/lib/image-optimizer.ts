@@ -132,15 +132,24 @@ async function optimizeAndUploadImage(
 export async function optimizeProductImages(
   supabase: SupabaseClient,
   slug: string,
-  candidates: string[]
-): Promise<{ imageUrl: string | null; additionalImages: string[] }> {
+  candidates: string[],
+  options: { budgetMs?: number } = {}
+): Promise<{ imageUrl: string | null; additionalImages: string[]; budgetExhausted: boolean }> {
+  const startMs = Date.now();
+  const budgetMs = options.budgetMs ?? Infinity;
   const successful: string[] = [];
   const seen = new Set<string>();
   let storageIndex = 0;
+  let budgetExhausted = false;
 
   for (const candidate of candidates) {
     if (!candidate || seen.has(candidate)) continue;
     seen.add(candidate);
+
+    if (Date.now() - startMs > budgetMs) {
+      budgetExhausted = true;
+      break;
+    }
 
     const result = await optimizeAndUploadImage(
       supabase,
@@ -157,5 +166,6 @@ export async function optimizeProductImages(
   return {
     imageUrl: successful[0] || null,
     additionalImages: successful.slice(1),
+    budgetExhausted,
   };
 }
