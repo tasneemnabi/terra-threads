@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PHProvider } from "@/lib/posthog/provider";
 import { PostHogPageview } from "@/lib/posthog/pageview";
+import { AnalyticsConsent } from "@/components/AnalyticsConsent";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -59,6 +60,7 @@ export default function RootLayout({
           <Header />
           <main className="min-h-screen">{children}</main>
           <Footer />
+          <AnalyticsConsent />
           <Analytics />
         </PHProvider>
       </body>

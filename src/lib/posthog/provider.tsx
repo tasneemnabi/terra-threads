@@ -27,7 +27,8 @@ export function PHProvider({ children }: { children: React.ReactNode }) {
         capture_pageleave: true,
         persistence: "localStorage+cookie",
         person_profiles: "identified_only",
-        respect_dnt: true,
+        respect_dnt: false,
+        opt_out_capturing_by_default: true,
         autocapture: false,
         session_recording: {
           maskAllInputs: true,
