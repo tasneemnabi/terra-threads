@@ -116,6 +116,26 @@ async function expandAccordions(page: Page): Promise<void> {
   }
 }
 
+/**
+ * Wait for the product page to be ready for extraction. Most e-commerce sites
+ * emit JSON-LD product data synchronously in the initial HTML, in which case
+ * waitForSelector resolves immediately. Sites that hydrate it asynchronously
+ * get up to 1.5s; if neither path matches, fall back to a short fixed sleep
+ * so JS-only sites still have a chance to render before extraction.
+ *
+ * Replaces a previous unconditional `waitForTimeout(3000)` that imposed a
+ * 3s floor on every product page across both pipelines.
+ */
+async function waitForProductReady(page: Page): Promise<void> {
+  try {
+    await page.waitForSelector('script[type="application/ld+json"]', { timeout: 1500 });
+    return;
+  } catch {
+    // No JSON-LD within 1.5s — fall through to brief defensive wait.
+  }
+  await page.waitForTimeout(500);
+}
+
 async function extractProductText(page: Page): Promise<string> {
   // Always get the full main/body text — after accordions are expanded,
   // this captures everything including dynamically revealed content.
@@ -143,9 +163,7 @@ export async function scrapePage(url: string, timeoutMs = 30000): Promise<Scrape
     });
 
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: timeoutMs });
-
-    // Wait for dynamic content to render
-    await page.waitForTimeout(3000);
+    await waitForProductReady(page);
 
     // Try to expand accordions/tabs that might contain material info
     await expandAccordions(page);
@@ -303,7 +321,7 @@ export async function scrapeProductData(
     });
 
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: timeoutMs });
-    await page.waitForTimeout(3000);
+    await waitForProductReady(page);
     await expandAccordions(page);
 
     // Capture raw HTML after accordions have been expanded so
