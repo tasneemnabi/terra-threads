@@ -108,6 +108,12 @@ async function main() {
 
   console.log("\n▶ Phase 2: Catalog brands\n");
 
+  // Catalog pipeline is only for brands without a Shopify endpoint. The
+  // scrape_fallback flag is a Shopify-pipeline-internal signal (see
+  // sync-shopify.ts: it scrapes product pages to fill in materials missing
+  // from JSON), not a request to run the catalog pipeline as well — including
+  // it here caused brands like nads to be synced twice per day, where the
+  // catalog pass burned minutes on availability sweeps Shopify just did.
   const { data: catalogBrands, error: catalogError } = await supabase
     .from("brands")
     .select(
@@ -115,7 +121,7 @@ async function main() {
     )
     .eq("sync_enabled", true)
     .not("website_url", "is", null)
-    .or("shopify_domain.is.null,scrape_fallback.eq.true");
+    .is("shopify_domain", null);
 
   if (catalogError) {
     console.error("Failed to fetch catalog brands:", catalogError.message);

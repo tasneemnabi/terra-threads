@@ -320,6 +320,7 @@ export async function syncCatalogBrand(
   const scrapeStart = Date.now();
   let processedCount = 0;
   let aborted = false;
+  let productDbMs = 0;
   await launchBrowser();
   try {
     await runWithConcurrency(newUrls, concurrency, async (url, i) => {
@@ -529,6 +530,7 @@ export async function syncCatalogBrand(
         );
 
         stageReached = "db";
+        const dbStart = Date.now();
         // Check if product already exists (e.g. from a previous partial run)
         const { data: existing } = await supabase
           .from("products")
@@ -623,6 +625,7 @@ export async function syncCatalogBrand(
           );
         }
 
+        productDbMs += Date.now() - dbStart;
         stats.inserted++;
         brandCtx?.bump("inserted");
       };
@@ -665,6 +668,7 @@ export async function syncCatalogBrand(
     await closeBrowser();
   }
   brandCtx?.addStage("scrape_ms", Date.now() - scrapeStart);
+  brandCtx?.addStage("db_ms", productDbMs);
 
   // Update brand sync timestamp
   if (!options.dryRun) {
@@ -871,7 +875,9 @@ async function main() {
   if (dryRun) console.log("DRY RUN — no database writes\n");
   if (discoverOnly) console.log("DISCOVER ONLY — just listing URLs\n");
 
-  // Fetch catalog brands: website_url set, either no shopify_domain or scrape_fallback
+  // Fetch catalog brands: website_url set, no shopify_domain. (scrape_fallback
+  // is a Shopify-pipeline flag, not a request to run the catalog pipeline —
+  // see daily-sync.ts.)
   let query = supabase
     .from("brands")
     .select(
@@ -883,8 +889,7 @@ async function main() {
   if (brandSlug) {
     query = query.eq("slug", brandSlug);
   } else {
-    // Only brands that don't have a working Shopify API
-    query = query.or("shopify_domain.is.null,scrape_fallback.eq.true");
+    query = query.is("shopify_domain", null);
   }
 
   const { data, error } = await query;
