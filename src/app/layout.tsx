@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     title: "FIBER — Natural Fiber Clothing",
     description:
       "Discover clothing made from natural fibers. No polyester, no nylon, no compromise.",
-    url: "https://fiber.clothing",
+    url: "https://wearfiber.co",
     siteName: "FIBER",
     locale: "en_US",
     type: "website",
