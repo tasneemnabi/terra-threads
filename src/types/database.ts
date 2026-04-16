@@ -49,13 +49,6 @@ export interface Material {
   is_natural: boolean;
 }
 
-export interface ProductMaterial {
-  id: string;
-  product_id: string;
-  material_id: string;
-  percentage: number;
-}
-
 export interface MaterialInfo {
   material_id: string;
   name: string;
@@ -88,6 +81,9 @@ export interface BrandWithDetails {
   audience: string[];
 }
 
+export type SortOption = "newest" | "price-asc" | "price-desc";
+export type TierFilter = "all" | "natural" | "nearly";
+
 export interface FilterState {
   category?: string;
   brands?: string[];
@@ -95,8 +91,8 @@ export interface FilterState {
   minPrice?: number;
   maxPrice?: number;
   page?: number;
-  sort?: "newest" | "price-asc" | "price-desc";
-  tier?: "all" | "natural" | "nearly";
+  sort?: SortOption;
+  tier?: TierFilter;
   audience?: string;
   productTypes?: string[];
 }

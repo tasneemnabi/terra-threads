@@ -10,11 +10,8 @@ import {
   isMaterialNatural,
 } from "./curation.js";
 
-/**
- * Ensure a material exists in the database, inserting it if needed.
- * Uses a cache to avoid repeated lookups within a single run.
- */
-export async function ensureMaterialExists(
+// Lookup or insert a material. materialCache scopes memoization to a single run.
+async function ensureMaterialExists(
   supabase: SupabaseClient,
   materialName: string,
   materialCache: Map<string, string>
@@ -61,9 +58,6 @@ export async function ensureMaterialExists(
   return inserted!.id;
 }
 
-/**
- * Sync product-material relationships: delete existing, insert new.
- */
 export async function syncProductMaterials(
   supabase: SupabaseClient,
   productId: string,

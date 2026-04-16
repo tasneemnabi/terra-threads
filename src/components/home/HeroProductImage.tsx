@@ -52,7 +52,6 @@ function CollageImage({
 }
 
 export function HeroProductCollage({ products }: HeroProductCollageProps) {
-  // Track which indices loaded and which failed
   const [loaded, setLoaded] = useState<Set<number>>(new Set());
   const [failed, setFailed] = useState<Set<number>>(new Set());
 
@@ -65,15 +64,14 @@ export function HeroProductCollage({ products }: HeroProductCollageProps) {
     []
   );
 
-  // Successfully loaded products
   const loadedProducts = products
     .map((p, i) => ({ ...p, i }))
     .filter((p) => loaded.has(p.i));
 
   const anyLoaded = loadedProducts.length > 0;
 
-  // Render all images (failed ones hide themselves), but only show
-  // the container once at least one loads
+  // Render all images (failed ones hide themselves) but only show the
+  // container once at least one has loaded, to avoid a flash of empty space.
   return (
     <div
       className={`absolute right-0 top-0 bottom-0 w-[45%] lg:w-[42%] hidden sm:flex items-center justify-center transition-opacity duration-700 ${anyLoaded ? "opacity-100" : "opacity-0"}`}

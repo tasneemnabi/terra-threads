@@ -22,6 +22,23 @@
 import sharp from "sharp";
 import { loadEnv, getSupabaseAdmin } from "./lib/env.js";
 
+// ─── Types ───────────────────────────────────────────────────────────
+
+interface ProductImageRow {
+  id: string;
+  name: string;
+  slug: string;
+  image_url: string | null;
+  additional_images: string[] | null;
+  // `brands!inner` can serialize as array or object depending on inference.
+  brands: { slug: string } | { slug: string }[] | null;
+}
+
+interface ProductUpdateFields {
+  image_url?: string;
+  additional_images?: string[];
+}
+
 // ─── Config ──────────────────────────────────────────────────────────
 
 const BUCKET_NAME = "product-images";
@@ -111,7 +128,7 @@ async function main() {
 
   // ─── 2. Fetch products to process ─────────────────────────────────
 
-  const products: any[] = [];
+  const products: ProductImageRow[] = [];
   const PAGE = 1000;
   let from = 0;
 
@@ -126,7 +143,7 @@ async function main() {
       query = query.eq("brands.slug", brandSlug);
     }
 
-    const { data, error } = await query;
+    const { data, error } = await query.returns<ProductImageRow[]>();
 
     if (error) {
       console.error("Error fetching products:", error.message);
@@ -145,7 +162,7 @@ async function main() {
   const stats = { total: products.length, optimized: 0, skipped: 0, failed: 0 };
   let completed = 0;
 
-  async function processProduct(product: any) {
+  async function processProduct(product: ProductImageRow) {
     const prefix = `[${++completed}/${products.length}]`;
 
     // Collect all image URLs: primary + additional
@@ -215,8 +232,9 @@ async function main() {
         } else {
           newAdditionalUrls[img.index - 1] = publicUrlData.publicUrl;
         }
-      } catch (err: any) {
-        console.error(`${prefix} ERROR ${product.name} image ${img.index}: ${err.message}`);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error(`${prefix} ERROR ${product.name} image ${img.index}: ${message}`);
         hadError = true;
       }
     }
@@ -227,7 +245,7 @@ async function main() {
     );
 
     if (newPrimaryUrl || additionalChanged) {
-      const updateFields: Record<string, any> = {};
+      const updateFields: ProductUpdateFields = {};
       if (newPrimaryUrl) updateFields.image_url = newPrimaryUrl;
       if (additionalChanged) updateFields.additional_images = newAdditionalUrls;
 

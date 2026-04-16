@@ -19,7 +19,7 @@ function decodeHtmlEntities(str: string): string {
 
 // ─── Types ──────────────────────────────────────────────────────────
 
-export interface ScrapedPage {
+interface ScrapedPage {
   url: string;
   text: string;
   success: boolean;
@@ -126,9 +126,6 @@ async function extractProductText(page: Page): Promise<string> {
   return await page.$eval("body", (el) => el.innerText).catch(() => "");
 }
 
-/**
- * Scrape a single product page and return its rendered text content.
- */
 export async function scrapePage(url: string, timeoutMs = 30000): Promise<ScrapedPage> {
   if (!context) throw new Error("Browser not launched — call launchBrowser() first");
 
@@ -314,10 +311,8 @@ export async function scrapeProductData(
     // dynamically revealed content is available for locator plugins.
     const html = await page.content();
 
-    // 1. Try JSON-LD first (most reliable source)
     const jsonLd = await extractJsonLd(page!);
 
-    // 2. Meta tag fallbacks
     const metaContent = async (prop: string): Promise<string | null> => {
       return page!.$eval(
         `meta[property="${prop}"], meta[name="${prop}"]`,

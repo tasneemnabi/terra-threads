@@ -14,11 +14,18 @@ import { getSupabaseAdmin } from "./lib/env";
 const supabase = getSupabaseAdmin();
 const dryRun = !process.argv.includes("--apply");
 
+interface ProductRow {
+  id: string;
+  name: string;
+  product_type: string | null;
+  brands: { audience: string[] | null } | { audience: string[] | null }[] | null;
+}
+
 async function main() {
   console.log(`\n${dryRun ? "DRY RUN" : "APPLYING"} — backfill audience\n`);
 
   // Fetch all approved products with brand audience (paginate past 1000-row limit)
-  const products: any[] = [];
+  const products: ProductRow[] = [];
   const PAGE = 1000;
   let from = 0;
   while (true) {
@@ -26,7 +33,8 @@ async function main() {
       .from("products")
       .select("id, name, product_type, brands!inner(audience)")
       .eq("sync_status", "approved")
-      .range(from, from + PAGE - 1);
+      .range(from, from + PAGE - 1)
+      .returns<ProductRow[]>();
     if (error) {
       console.error("Error fetching products:", error);
       process.exit(1);
@@ -46,7 +54,9 @@ async function main() {
   const updates: { id: string; audience: string }[] = [];
 
   for (const product of products) {
-    const brandAudience = (product.brands as any)?.audience as string[] | undefined;
+    // Supabase types relational joins as array | object depending on FK — normalize here.
+    const brandRel = Array.isArray(product.brands) ? product.brands[0] : product.brands;
+    const brandAudience = brandRel?.audience ?? undefined;
     const audience = classifyAudience(
       product.name,
       undefined, // no tags in DB

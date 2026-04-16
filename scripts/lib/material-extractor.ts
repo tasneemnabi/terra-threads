@@ -45,15 +45,6 @@ function stripHtml(html: string): string {
 
 // ─── Stage 1: Regex extraction ──────────────────────────────────────
 
-/**
- * Regex patterns for common material composition formats:
- * - "95% Organic Cotton, 5% Elastane"
- * - "95% organic cotton / 5% spandex"
- * - "Cotton 95%, Elastane 5%"
- */
-// Material pattern note: split into PCT_THEN_NAME and NAME_THEN_PCT
-// (defined near extractFromText) to avoid alternation cursor issues.
-
 // Fabric construction suffixes to strip before alias lookup
 const CONSTRUCTION_SUFFIXES = new RegExp(
   "\\b(" +
@@ -640,26 +631,6 @@ export function extractMaterialsRegex(product: ShopifyProduct): ExtractedMateria
  */
 export function extractMaterialsFromText(text: string): ExtractedMaterials | null {
   return extractFromCombinedText(text);
-}
-
-/**
- * Extract materials for a single product (regex → LLM fallback).
- * Prefer extractMaterialsBatch for multiple products.
- */
-export async function extractMaterials(product: ShopifyProduct): Promise<ExtractedMaterials> {
-  const regexResult = extractMaterialsRegex(product);
-  if (regexResult) return regexResult;
-
-  if (!process.env.GEMINI_API_KEY) {
-    console.warn(`  No GEMINI_API_KEY — skipping LLM extraction for "${product.title}"`);
-    return { materials: {}, confidence: 0, hasBanned: false, method: "none" };
-  }
-
-  const bodyText = product.body_html ? stripHtml(product.body_html) : "";
-  const tags = product.tags || [];
-  const batch = [{ index: 0, name: product.title, bodyText, tags }];
-  const results = await extractBatchWithLLM(batch);
-  return results.get(0)!;
 }
 
 const LLM_BATCH_SIZE = 10;

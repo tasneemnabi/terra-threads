@@ -1,7 +1,6 @@
 /**
  * Unbound Merino locator.
  *
- * Ported from scripts/fix-unbound-materials.ts::extractFabric Strategy 1:
  * Unbound renders the fabric composition inside a <div class="product-fabric">
  * element on every product page. We try the integer parser first, then fall
  * back to the decimal parser, then the generic fiber-chunk scanner.

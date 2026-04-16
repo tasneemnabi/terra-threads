@@ -1,9 +1,7 @@
 import posthog from "posthog-js";
 import { isPostHogEnabled } from "./provider";
 
-// --- Event name constants ---
-
-export const EVENTS = {
+const EVENTS = {
   AFFILIATE_CLICK: "affiliate_click",
   PRODUCT_CARD_CLICK: "product_card_click",
   FILTER_CHANGED: "filter_changed",
@@ -15,7 +13,7 @@ export const EVENTS = {
   BRAND_CARD_CLICK: "brand_card_click",
 } as const;
 
-// --- Source / page enums (string unions for DX, not runtime checked) ---
+// String unions for DX, not runtime checked.
 
 export type AffiliateSource = "product-page" | "brand-detail" | "brand-detail-empty";
 
@@ -26,7 +24,7 @@ export type ProductCardSource =
   | "related"
   | "editorial-picks";
 
-export type FilterPage = "shop" | "brand-page" | "brands-directory";
+type FilterPage = "shop" | "brand-page" | "brands-directory";
 
 export type HomepageSection =
   | "hero"
@@ -36,11 +34,9 @@ export type HomepageSection =
   | "featured-brands"
   | "final-cta";
 
-export type BrandCardSource = "brands-directory";
+type BrandCardSource = "brands-directory";
 
-// --- Payload shapes ---
-
-export interface AffiliateClickPayload {
+interface AffiliateClickPayload {
   brand_name: string;
   brand_slug: string;
   product_slug: string | null;
@@ -54,7 +50,7 @@ export interface AffiliateClickPayload {
   destination_url: string;
 }
 
-export interface ProductCardClickPayload {
+interface ProductCardClickPayload {
   product_slug: string;
   product_name: string;
   brand_name: string;
@@ -67,7 +63,7 @@ export interface ProductCardClickPayload {
   destination: string;
 }
 
-export interface FilterChangedPayload {
+interface FilterChangedPayload {
   page: FilterPage;
   filter_key:
     | "category"
@@ -84,21 +80,21 @@ export interface FilterChangedPayload {
   result_count?: number | null;
 }
 
-export interface SortChangedPayload {
+interface SortChangedPayload {
   page: FilterPage;
   sort_value: string;
   previous_sort: string;
   result_count?: number | null;
 }
 
-export interface SearchResultsLoadedPayload {
+interface SearchResultsLoadedPayload {
   query: string;
   query_length: number;
   result_count: number;
   page: FilterPage;
 }
 
-export interface LoadMorePayload {
+interface LoadMorePayload {
   page: FilterPage;
   next_page: number;
   products_loaded: number;
@@ -106,27 +102,25 @@ export interface LoadMorePayload {
   total_available: number;
 }
 
-export interface FiltersClearedPayload {
+interface FiltersClearedPayload {
   page: FilterPage;
   cleared_filter_count: number;
 }
 
-export interface HomepageCtaClickPayload {
+interface HomepageCtaClickPayload {
   section: HomepageSection;
   cta_text: string;
   destination: string;
   item_name: string | null;
 }
 
-export interface BrandCardClickPayload {
+interface BrandCardClickPayload {
   brand_name: string;
   brand_slug: string;
   is_fully_natural: boolean;
   source: BrandCardSource;
   destination: string;
 }
-
-// --- Helper: parse domain from URL safely ---
 
 function parseDomain(rawUrl: string): string {
   try {
@@ -136,18 +130,17 @@ function parseDomain(rawUrl: string): string {
   }
 }
 
-// --- Safe capture: no-op when PostHog isn't configured ---
-
-function safeCapture(event: string, properties: object) {
+// No-op when PostHog isn't configured.
+// Generic so each call site keeps its specific payload type; posthog.capture
+// accepts `Properties` (Record<string, any>) so any object literal widens safely.
+function safeCapture<P extends object>(event: string, properties: P) {
   if (!isPostHogEnabled()) return;
   try {
-    posthog.capture(event, properties as Record<string, unknown>);
+    posthog.capture(event, { ...properties });
   } catch {
     // Swallow — analytics should never break user flows
   }
 }
-
-// --- Tracking helpers ---
 
 export function trackAffiliateClick(
   payload: Omit<AffiliateClickPayload, "domain"> & { domain?: string }

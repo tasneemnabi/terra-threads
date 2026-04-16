@@ -13,7 +13,7 @@ import { chromium, type Browser, type BrowserContext, type Page } from "playwrig
 
 // ─── Types ──────────────────────────────────────────────────────────
 
-export interface DiscoveryResult {
+interface DiscoveryResult {
   urls: string[];
   method: "sitemap" | "crawl" | "hybrid";
 }

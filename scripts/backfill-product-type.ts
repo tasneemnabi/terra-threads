@@ -41,12 +41,6 @@ async function main() {
     if (data.length < PAGE) break;
     offset += PAGE;
   }
-  const error = null;
-
-  if (error) {
-    console.error("Error fetching products:", error);
-    process.exit(1);
-  }
 
   console.log(`Found ${products.length} products to classify\n`);
 

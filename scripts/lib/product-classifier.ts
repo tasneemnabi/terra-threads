@@ -3,25 +3,22 @@
  * Derives a normalized product_type from product name + optional Shopify metadata.
  */
 
-export const CANONICAL_PRODUCT_TYPES = [
-  "tops",
-  "leggings",
-  "pants",
-  "shorts",
-  "bras",
-  "dresses",
-  "skirts",
-  "sweaters",
-  "jackets",
-  "bodysuits",
-  "jumpsuits",
-  "underwear",
-  "socks",
-  "loungewear",
-  "swimwear",
-] as const;
-
-export type ProductType = (typeof CANONICAL_PRODUCT_TYPES)[number];
+type ProductType =
+  | "tops"
+  | "leggings"
+  | "pants"
+  | "shorts"
+  | "bras"
+  | "dresses"
+  | "skirts"
+  | "sweaters"
+  | "jackets"
+  | "bodysuits"
+  | "jumpsuits"
+  | "underwear"
+  | "socks"
+  | "loungewear"
+  | "swimwear";
 
 // Non-clothing Shopify `product_type` values. Checked independently of title
 // keywords: Kowtow's leather footwear collabs (e.g. "Artisanal Pump", "Etna
@@ -169,7 +166,7 @@ const SHOPIFY_TYPE_MAP: Record<string, ProductType> = {
  * For these brands we flip to whitelist mode: only products whose name
  * matches a known clothing type are allowed through.
  */
-export const CLOTHING_ONLY_BRANDS = new Set([
+const CLOTHING_ONLY_BRANDS = new Set([
   "magic-linen",
   "beaumont-organic",
   "aya",
@@ -181,16 +178,16 @@ export const CLOTHING_ONLY_BRANDS = new Set([
   "industry-of-all-nations",
 ]);
 
-export function isNonClothing(title: string): boolean {
+function isNonClothing(title: string): boolean {
   return NON_CLOTHING_KEYWORDS.test(title);
 }
 
-export function isNonClothingProductType(productType?: string): boolean {
+function isNonClothingProductType(productType?: string): boolean {
   if (!productType) return false;
   return NON_CLOTHING_PRODUCT_TYPES.test(productType);
 }
 
-export function isAccessory(title: string): boolean {
+function isAccessory(title: string): boolean {
   return ACCESSORY_KEYWORDS.test(title);
 }
 
@@ -264,7 +261,7 @@ export function mapActivewearType(productType: ProductType): string {
 
 // ─── Audience Classification ────────────────────────────────────────
 
-export type Audience = "Women" | "Men" | "Unisex";
+type Audience = "Women" | "Men" | "Unisex";
 
 // Tier 1: Shopify tag patterns (highest confidence)
 const AUDIENCE_TAG_PATTERNS: [Audience, RegExp][] = [

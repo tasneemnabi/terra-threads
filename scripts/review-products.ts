@@ -12,6 +12,20 @@
 import * as readline from "readline";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "./lib/env.js";
+import type { Product } from "../src/types/database.js";
+
+// Supabase joins a !inner relationship as either an object or an array depending
+// on how its type-inference treats the FK — tolerate both and normalize.
+type JoinedBrand = { name: string; slug: string };
+interface ProductWithBrandRow extends Product {
+  brands: JoinedBrand | JoinedBrand[] | null;
+}
+
+interface ProductMaterialRow {
+  product_id: string;
+  percentage: number;
+  materials: { name: string; is_natural: boolean } | { name: string; is_natural: boolean }[] | null;
+}
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
@@ -70,7 +84,7 @@ async function main() {
     query = query.eq("brands.slug", brandSlug);
   }
 
-  const { data: products, error } = await query.limit(50);
+  const { data: products, error } = await query.limit(50).returns<ProductWithBrandRow[]>();
 
   if (error) {
     console.error("Failed to fetch products:", error.message);
@@ -89,13 +103,13 @@ async function main() {
   const { data: allMaterials } = await supabase
     .from("product_materials")
     .select("product_id, percentage, materials(name, is_natural)")
-    .in("product_id", productIds);
+    .in("product_id", productIds)
+    .returns<ProductMaterialRow[]>();
 
   const materialsByProduct = new Map<string, Array<{ name: string; percentage: number; is_natural: boolean }>>();
   for (const pm of allMaterials || []) {
     const list = materialsByProduct.get(pm.product_id) || [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mat = pm.materials as any;
+    const mat = Array.isArray(pm.materials) ? pm.materials[0] : pm.materials;
     if (mat) {
       list.push({ name: mat.name, percentage: pm.percentage, is_natural: mat.is_natural });
     }
@@ -106,8 +120,7 @@ async function main() {
 
   for (let i = 0; i < products.length; i++) {
     const product = products[i];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const brand = (product as any).brands;
+    const brand = Array.isArray(product.brands) ? product.brands[0] : product.brands;
     const materials = materialsByProduct.get(product.id) || [];
 
     console.log(`\n${"─".repeat(60)}`);

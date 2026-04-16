@@ -58,7 +58,7 @@ export async function searchProducts(
 
   if (error) {
     console.error("Error searching products:", error);
-    return [];
+    throw new Error("Failed to search products.");
   }
 
   return data as ProductWithBrand[];
@@ -79,27 +79,6 @@ export async function getProductBySlug(slug: string): Promise<ProductWithBrand |
   }
 
   return data as ProductWithBrand;
-}
-
-export async function getFeaturedProducts(): Promise<ProductWithBrand[]> {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("products_with_materials")
-    .select("*")
-    .eq("is_featured", true)
-    .eq("is_available", true)
-    .not("image_url", "is", null)
-    .gt("price", 0)
-    .order("created_at", { ascending: false })
-    .limit(6);
-
-  if (error) {
-    console.error("Error fetching featured products:", error);
-    throw new Error("Failed to load featured products.");
-  }
-
-  return data as ProductWithBrand[];
 }
 
 function shuffle<T>(arr: T[]): T[] {

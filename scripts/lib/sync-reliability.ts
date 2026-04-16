@@ -13,7 +13,6 @@
  *                              failures as they happen
  */
 
-import { createHash } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 // ─── Constants ──────────────────────────────────────────────────────
@@ -24,7 +23,7 @@ export const TIMEOUT_SCRAPE_MS = 45_000;         // outer wrap around scrapeProd
 export const BRAND_WALL_TIME_MS = 15 * 60_000;   // 15 min per brand before we bail
 
 export const DEFAULT_REVIEW_CADENCE_DAYS = 3;
-export const EXTRACTOR_INPUT_CAP_BYTES = 20 * 1024; // 20 KB of stripped text
+const EXTRACTOR_INPUT_CAP_BYTES = 20 * 1024; // 20 KB of stripped text
 
 // ─── Timeout helper ─────────────────────────────────────────────────
 
@@ -90,15 +89,6 @@ export async function runWithConcurrency<T, R>(
   return results;
 }
 
-// ─── Elapsed-time helper ────────────────────────────────────────────
-
-export function makeStopwatch() {
-  const start = Date.now();
-  return {
-    elapsedMs: () => Date.now() - start,
-  };
-}
-
 // ─── Input cap for the regex extractor ──────────────────────────────
 
 /**
@@ -113,9 +103,9 @@ export function capExtractorInput(text: string): string {
 
 // ─── Run recorder ───────────────────────────────────────────────────
 
-export type SyncPipeline = "shopify" | "catalog";
+type SyncPipeline = "shopify" | "catalog";
 
-export interface BrandStageTimings {
+interface BrandStageTimings {
   fetch_ms?: number;
   discovery_ms?: number;
   availability_ms?: number;
@@ -124,7 +114,7 @@ export interface BrandStageTimings {
   db_ms?: number;
 }
 
-export interface BrandCounters {
+interface BrandCounters {
   fetched_or_discovered?: number;
   approved_availability_checked?: number;
   review_rechecks?: number;
@@ -140,7 +130,7 @@ export interface BrandCounters {
   errors?: number;
 }
 
-export interface BrandRunSnapshot {
+interface BrandRunSnapshot {
   brandId: string | null;
   brandSlug: string;
   pipeline: SyncPipeline;
@@ -153,7 +143,7 @@ export interface BrandRunSnapshot {
   locatorSources: Record<string, number>;
 }
 
-export interface FailureRecord {
+interface FailureRecord {
   brandId: string | null;
   brandSlug: string;
   pipeline: SyncPipeline;
@@ -393,7 +383,7 @@ export async function startRun(
   return data.id as string;
 }
 
-export interface FinishRunArgs {
+interface FinishRunArgs {
   shopifyPhaseMs?: number;
   catalogPhaseMs?: number;
   llmPhaseMs?: number;
@@ -435,12 +425,3 @@ export async function finishRun(
   }
 }
 
-// ─── Hashing (shared) ───────────────────────────────────────────────
-
-/**
- * sha256 of an arbitrary string. Kept here so sync-shopify and sync-catalog
- * don't each define their own (they previously used crypto.createHash inline).
- */
-export function sha256(input: string): string {
-  return createHash("sha256").update(input).digest("hex");
-}

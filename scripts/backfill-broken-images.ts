@@ -36,6 +36,8 @@ interface ProductRow {
   name: string;
   image_url: string | null;
   affiliate_url: string;
+  // `brands!inner` resolves as a single object in Supabase's inferred result,
+  // but the generic .returns<T>() below accepts whichever we declare here.
   brands: { slug: string };
 }
 
@@ -57,13 +59,13 @@ async function main() {
     .not("affiliate_url", "is", null);
   if (brandSlug) query = query.eq("brands.slug", brandSlug);
 
-  const { data: raw, error } = await query;
+  const { data: raw, error } = await query.returns<ProductRow[]>();
   if (error) {
     console.error("fetch error:", error.message);
     process.exit(1);
   }
 
-  const rows = (raw || []) as unknown as ProductRow[];
+  const rows = raw || [];
   const broken = rows.filter(
     (p) => !p.image_url || !isAlreadyOptimized(p.image_url)
   );
