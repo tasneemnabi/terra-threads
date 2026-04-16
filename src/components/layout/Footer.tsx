@@ -12,7 +12,7 @@ const connectLinks = [
 
 export function Footer() {
   return (
-    <footer className="mt-20 border-t border-surface-dark px-5 sm:px-8 lg:px-20 py-[60px]">
+    <footer className="border-t border-surface-dark px-5 sm:px-8 lg:px-20 py-14 sm:py-[60px]">
       <div className="mx-auto flex flex-col gap-12 max-w-[1280px] lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-[280px]">
           <span className="font-display text-[22px] font-bold leading-[28px] tracking-[-0.02em] text-text">

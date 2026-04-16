@@ -4,6 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MobileNav } from "./MobileNav";
 
+const mobileLinks = [
+  { href: "/shop", label: "Shop" },
+  { href: "/shop?audience=Women", label: "Women" },
+  { href: "/shop?audience=Men", label: "Men" },
+  { href: "/shop?category=activewear", label: "Activewear" },
+  { href: "/brands", label: "Brands" },
+];
+
 const shopLinks = [
   { href: "/shop?audience=Women", label: "Women" },
   { href: "/shop?audience=Men", label: "Men" },
@@ -53,7 +61,7 @@ export function Header() {
             ))}
           </nav>
 
-          <MobileNav links={navLinks} />
+          <MobileNav links={mobileLinks} variant="inverted" className="ml-auto" />
         </div>
       </header>
     );
@@ -84,7 +92,7 @@ export function Header() {
           ))}
         </nav>
 
-        <MobileNav links={navLinks} />
+        <MobileNav links={mobileLinks} />
       </div>
     </header>
   );

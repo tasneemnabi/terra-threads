@@ -27,7 +27,7 @@ export function Hero({ products = [] }: HeroProps) {
   }));
 
   return (
-    <section className="relative min-h-[75vh] sm:min-h-[80vh] flex items-end overflow-hidden bg-accent">
+    <section className="relative min-h-[600px] sm:min-h-[80vh] flex items-end overflow-hidden bg-accent pt-[120px] sm:pt-0">
       {/* Texture overlay — subtle background */}
       <div className="absolute inset-0 flex items-center justify-end opacity-15 mix-blend-soft-light">
         <Image
@@ -41,6 +41,12 @@ export function Hero({ products = [] }: HeroProps) {
         />
       </div>
 
+      {/* Soft radial accent — visible on mobile where collage is hidden */}
+      <div
+        aria-hidden
+        className="absolute -top-[20%] -right-[25%] h-[70%] w-[90%] rounded-full bg-white/10 blur-3xl sm:hidden"
+      />
+
       {/* Warm gradient from left for text readability */}
       <div className="absolute inset-0 bg-gradient-to-r from-accent via-accent/85 to-accent/40" />
 
@@ -50,18 +56,18 @@ export function Hero({ products = [] }: HeroProps) {
       )}
 
       {/* Content */}
-      <div className="relative z-10 w-full px-5 sm:px-8 lg:px-20 pb-14 sm:pb-20 lg:pb-24">
+      <div className="relative z-10 w-full px-5 sm:px-8 lg:px-20 pb-12 sm:pb-20 lg:pb-24">
         <div className="mx-auto max-w-[1280px]">
-          <h1 className="animate-fade-up max-w-[800px] font-display text-[44px] leading-[0.98] sm:text-[64px] lg:text-[88px] font-bold tracking-[-0.03em] text-white">
+          <h1 className="animate-fade-up max-w-[800px] font-display text-[48px] leading-[0.98] sm:text-[64px] lg:text-[88px] font-bold tracking-[-0.03em] text-white">
             Clothing without{" "}
             <br className="hidden sm:block" />
             the plastic.
           </h1>
-          <p className="animate-fade-up [--delay:120ms] mt-5 sm:mt-6 max-w-[440px] font-body text-[16px] sm:text-[18px] leading-[26px] text-white/65">
+          <p className="animate-fade-up [--delay:120ms] mt-5 sm:mt-6 max-w-[440px] font-body text-[16px] sm:text-[18px] leading-[26px] text-white/70">
             Merino, cotton, linen, silk. Clothes that breathe, last, and
             never shed microplastics.
           </p>
-          <div className="animate-fade-up [--delay:240ms] mt-8 sm:mt-10 flex flex-col sm:flex-row items-start gap-4">
+          <div className="animate-fade-up [--delay:240ms] mt-8 sm:mt-10 flex flex-col sm:flex-row items-stretch sm:items-start gap-3 sm:gap-4">
             <TrackedLink
               href="/shop"
               section="hero"
@@ -74,7 +80,7 @@ export function Hero({ products = [] }: HeroProps) {
               href="/brands"
               section="hero"
               ctaText="Browse Brands"
-              className="group/arrow inline-flex items-center justify-center px-2 py-3.5 font-body text-[15px] font-medium text-white/60 transition-colors hover:text-white"
+              className="group/arrow inline-flex items-center justify-center px-2 py-3 sm:py-3.5 font-body text-[15px] font-medium text-white/70 transition-colors hover:text-white"
             >
               Browse Brands{" "}
               <span className="inline-block ml-1 transition-transform duration-200 group-hover/arrow:translate-x-1">
