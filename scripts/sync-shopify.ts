@@ -240,6 +240,7 @@ export async function syncBrand(
   let regexHits = 0;
   const zeroMaterialProducts: Array<{ url: string; productId: string; name: string; price: number | null; imageUrl: string | null }> = [];
   let productWorkMs = 0;
+  let productDbMs = 0;
   for (const shopifyProduct of shopifyProducts) {
     // Wall-time ceiling: if this brand has been running too long, bail and
     // let the orchestrator move on to the next brand.
@@ -523,6 +524,7 @@ export async function syncBrand(
         }
       }
 
+      const dbStart = Date.now();
       const productData = {
         brand_id: brand.id,
         name: shopifyProduct.title,
@@ -602,6 +604,7 @@ export async function syncBrand(
         }
       }
 
+      productDbMs += Date.now() - dbStart;
       stats.inserted++;
       brandCtx?.bump("inserted");
     };
@@ -639,6 +642,7 @@ export async function syncBrand(
     }
   }
   brandCtx?.addStage("extract_ms", productWorkMs);
+  brandCtx?.addStage("db_ms", productDbMs);
 
   console.log(`  Regex extracted: ${regexHits}/${shopifyProducts.length}, review: ${stats.flaggedReview}`);
 
