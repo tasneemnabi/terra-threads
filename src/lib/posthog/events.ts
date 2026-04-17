@@ -28,7 +28,7 @@ type FilterPage = "shop" | "brand-page" | "brands-directory";
 
 export type HomepageSection =
   | "hero"
-  | "shop-by-category"
+  | "shop-by-audience"
   | "editorial-picks"
   | "browse-by-fiber"
   | "featured-brands"

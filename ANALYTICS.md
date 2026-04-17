@@ -56,7 +56,7 @@ The plan below keeps the implementation simple, keeps revenue events first, and 
 | `src/components/brand/BrandsContent.tsx` | Track brands-directory filters |
 | `src/components/brand/BrandCard.tsx` | Fire `brand_card_click` |
 | `src/components/home/Hero.tsx` | Replace CTA links with `TrackedLink` |
-| `src/components/home/ShopByCategory.tsx` | Replace links with `TrackedLink` |
+| `src/components/home/ShopByAudience.tsx` | Replace links with `TrackedLink` |
 | `src/components/home/EditorialPicks.tsx` | Track "See all" and product clicks |
 | `src/components/home/BrowseByFiber.tsx` | Replace links with `TrackedLink` |
 | `src/components/home/FeaturedBrands.tsx` | Replace links with `TrackedLink` |
@@ -217,7 +217,7 @@ Rules:
 
 Allowed `section` values:
 - `hero`
-- `shop-by-category`
+- `shop-by-audience`
 - `editorial-picks`
 - `browse-by-fiber`
 - `featured-brands`
@@ -312,7 +312,7 @@ Create `TrackedLink` for internal navigations where explicit event metadata matt
 
 Use it in:
 - `Hero.tsx`
-- `ShopByCategory.tsx`
+- `ShopByAudience.tsx`
 - `EditorialPicks.tsx`
 - `BrowseByFiber.tsx`
 - `FeaturedBrands.tsx`
