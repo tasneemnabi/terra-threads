@@ -1,22 +1,45 @@
 import Image from "next/image";
 import { TrackedLink } from "@/components/ui/TrackedLink";
 
-interface AudienceItem {
-  audience: string;
-  image_url: string;
+interface Entry {
+  label: string;
+  meta: string;
+  href: string;
+  image?: string;
 }
 
-interface ShopByAudienceProps {
-  audiences: AudienceItem[];
-}
+const ENTRIES: Entry[] = [
+  {
+    label: "Women",
+    meta: "Shop the edit",
+    href: "/shop?audience=Women",
+    image:
+      "https://sawrpcmtbsrgtnzhjmho.supabase.co/storage/v1/object/public/product-images/magic-linen-a-line-linen-dress-chiloe-in-black/0.webp",
+  },
+  {
+    label: "Men",
+    meta: "Shop the edit",
+    href: "/shop?audience=Men",
+    image:
+      "https://cdn.shopify.com/s/files/1/0640/8454/1699/files/mens-linen-shirt-bedarra-in-black-1.jpg?v=1741878376",
+  },
+  {
+    label: "New arrivals",
+    meta: "Latest this week",
+    href: "/shop?sort=newest",
+  },
+  {
+    label: "100% Natural",
+    meta: "Zero synthetics",
+    href: "/shop?tier=natural",
+  },
+];
 
-export function ShopByAudience({ audiences }: ShopByAudienceProps) {
-  if (audiences.length === 0) return null;
-
+export function ShopByAudience() {
   return (
-    <section className="py-14 sm:py-20">
-      <div className="px-5 sm:px-8 lg:px-20">
-        <div className="mx-auto max-w-[1280px] flex items-end justify-between mb-5 sm:mb-6">
+    <section className="px-5 sm:px-8 lg:px-20 py-14 sm:py-20">
+      <div className="mx-auto max-w-[1280px]">
+        <div className="flex items-end justify-between mb-5 sm:mb-6">
           <h2 className="font-display text-[26px] sm:text-[28px] font-semibold leading-tight tracking-[-0.01em] text-text">
             Start somewhere good.
           </h2>
@@ -32,34 +55,54 @@ export function ShopByAudience({ audiences }: ShopByAudienceProps) {
             </span>
           </TrackedLink>
         </div>
-      </div>
 
-      <div className="px-5 sm:px-8 lg:px-20">
-        <div className="mx-auto max-w-[1280px] grid grid-cols-2 gap-3 sm:gap-4">
-          {audiences.map((item, i) => (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+          {ENTRIES.map((entry, i) => (
             <TrackedLink
-              key={item.audience}
-              href={`/shop?audience=${encodeURIComponent(item.audience)}`}
+              key={entry.label}
+              href={entry.href}
               section="shop-by-audience"
-              ctaText={item.audience}
-              itemName={item.audience}
-              className="group relative aspect-[4/5] md:aspect-[5/4] overflow-hidden rounded-lg"
+              ctaText={entry.label}
+              itemName={entry.label}
+              className="group relative aspect-[4/5] md:aspect-square overflow-hidden rounded-lg bg-surface"
             >
-              <Image
-                src={item.image_url}
-                alt={item.audience}
-                fill
-                unoptimized
-                className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.05]"
-                sizes="(min-width: 1024px) 620px, (min-width: 640px) 45vw, 50vw"
-                priority={i < 2}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-transparent" />
-              <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7">
-                <p className="font-display text-[24px] sm:text-[32px] lg:text-[36px] font-semibold text-white leading-tight tracking-[-0.01em] drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)] transition-transform duration-300 ease-out group-hover:-translate-y-0.5">
-                  {item.audience}
-                </p>
-              </div>
+              {entry.image ? (
+                <>
+                  <Image
+                    src={entry.image}
+                    alt={entry.label}
+                    fill
+                    unoptimized
+                    className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+                    sizes="(min-width: 768px) 25vw, 50vw"
+                    priority={i < 2}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
+                    <p className="font-display text-[18px] sm:text-[20px] font-semibold text-white leading-tight tracking-[-0.01em] drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]">
+                      {entry.label}
+                    </p>
+                    <p className="mt-0.5 font-body text-[12px] sm:text-[13px] text-white/80">
+                      {entry.meta}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-5 transition-colors duration-200 group-hover:bg-surface-dark/30">
+                  <p className="font-display text-[18px] sm:text-[20px] font-semibold text-text leading-tight tracking-[-0.01em]">
+                    {entry.label}
+                  </p>
+                  <p className="mt-0.5 font-body text-[12px] sm:text-[13px] text-secondary">
+                    {entry.meta}
+                  </p>
+                  <span className="mt-3 inline-flex items-center gap-1 font-body text-[12px] font-medium text-accent">
+                    Shop{" "}
+                    <span className="inline-block transition-transform duration-200 group-hover:translate-x-0.5">
+                      &rarr;
+                    </span>
+                  </span>
+                </div>
+              )}
             </TrackedLink>
           ))}
         </div>
