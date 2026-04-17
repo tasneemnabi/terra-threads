@@ -55,6 +55,7 @@ export async function getBrandsWithDetails(): Promise<BrandWithDetails[]> {
       )
     `
     )
+    .eq("sync_enabled", true)
     .order("name")
     .returns<BrandWithProductsRow[]>();
 
@@ -65,9 +66,10 @@ export async function getBrandsWithDetails(): Promise<BrandWithDetails[]> {
 
   const rows = data || [];
   const result = rows.map((brand) => {
-    // Only count visible products (sync_status is null or 'approved')
+    // Only count live products. Per curation policy, sync statuses are
+    // approved (live) / review (needs work) / rejected (hidden).
     const products = (brand.products || []).filter(
-      (p) => p.sync_status == null || p.sync_status === "approved"
+      (p) => p.sync_status === "approved"
     );
 
     // Prefer brand-level metadata; fall back to product-derived if empty

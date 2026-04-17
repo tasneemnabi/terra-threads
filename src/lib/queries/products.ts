@@ -90,6 +90,25 @@ function shuffle<T>(arr: T[]): T[] {
   return copy;
 }
 
+// Dedup key that collapses DB-level product duplicates (same brand re-ingesting
+// a product under a fresh slug) into a single visual card. Keep this in sync
+// wherever we surface cards to the user.
+function productDedupeKey(p: Pick<ProductWithBrand, "brand_slug" | "name">): string {
+  return `${p.brand_slug}::${p.name.trim().toLowerCase()}`;
+}
+
+function dedupeProducts(products: ProductWithBrand[]): ProductWithBrand[] {
+  const seen = new Set<string>();
+  const out: ProductWithBrand[] = [];
+  for (const p of products) {
+    const key = productDedupeKey(p);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(p);
+  }
+  return out;
+}
+
 export async function getHeroProducts(limit = 8): Promise<ProductWithBrand[]> {
   const supabase = await createClient();
 
@@ -135,7 +154,7 @@ export async function getHeroProducts(limit = 8): Promise<ProductWithBrand[]> {
     ? interleaved
     : shuffle(rows);
 
-  return result.slice(0, limit);
+  return dedupeProducts(result).slice(0, limit);
 }
 
 export async function getHomepageProducts(limit = 6): Promise<ProductWithBrand[]> {
@@ -158,10 +177,18 @@ export async function getHomepageProducts(limit = 6): Promise<ProductWithBrand[]
     throw new Error("Failed to load homepage products.");
   }
 
+  // De-dupe by (brand_slug, name) to hide DB-level duplicates that render as
+  // visibly repeated cards (e.g. same product re-ingested under a new slug).
+  const seen = new Set<string>();
+
   // Pick at most 2 products per brand to create variety
   const result: ProductWithBrand[] = [];
   const brandCount = new Map<string, number>();
   for (const product of data as ProductWithBrand[]) {
+    const dedupeKey = productDedupeKey(product);
+    if (seen.has(dedupeKey)) continue;
+    seen.add(dedupeKey);
+
     const count = brandCount.get(product.brand_slug) ?? 0;
     if (count < 2) {
       result.push(product);
@@ -208,6 +235,8 @@ export async function getRelatedProducts(
 ): Promise<ProductWithBrand[]> {
   const supabase = await createClient();
 
+  // Over-fetch so dedup can still return `limit` results after collapsing
+  // same-product duplicates.
   const { data, error } = await supabase
     .from("products_with_materials")
     .select("*")
@@ -216,14 +245,14 @@ export async function getRelatedProducts(
     .neq("id", productId)
     .not("image_url", "is", null)
     .gt("price", 0)
-    .limit(limit);
+    .limit(limit * 5);
 
   if (error) {
     console.error("Error fetching related products:", error);
     throw new Error("Failed to load related products.");
   }
 
-  return data as ProductWithBrand[];
+  return dedupeProducts(data as ProductWithBrand[]).slice(0, limit);
 }
 
 export async function getDistinctCategories(): Promise<string[]> {
