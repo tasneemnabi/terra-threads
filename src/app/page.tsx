@@ -4,22 +4,8 @@ import { EditorialPicks } from "@/components/home/EditorialPicks";
 
 import { FiberFactsShowcase } from "@/components/home/FiberFactsShowcase";
 import { BrowseByFiber } from "@/components/home/BrowseByFiber";
-import { FinalCTA } from "@/components/home/FinalCTA";
 import { getHomepageProducts, getHeroProducts } from "@/lib/queries/products";
 
-
-const AUDIENCE_IMAGES = [
-  {
-    audience: "Women",
-    image_url:
-      "https://sawrpcmtbsrgtnzhjmho.supabase.co/storage/v1/object/public/product-images/magic-linen-a-line-linen-dress-chiloe-in-black/0.webp",
-  },
-  {
-    audience: "Men",
-    image_url:
-      "https://cdn.shopify.com/s/files/1/0640/8454/1699/files/mens-linen-shirt-bedarra-in-black-1.jpg?v=1741878376",
-  },
-];
 
 export default async function HomePage() {
   const [heroProducts, products] = await Promise.all([
@@ -27,14 +13,26 @@ export default async function HomePage() {
     getHomepageProducts(8),
   ]);
 
+  // Prefer a multi-material product for the Fiber Facts showcase so the label
+  // has something interesting to break down — a single "100% Cotton" entry
+  // undersells the transparency pitch. Priority:
+  //   1) blends that include a stretch fibre (elastane / spandex) — "nearly natural"
+  //   2) any product with 2+ materials
+  //   3) fall back to the first product
+  const showcaseProduct =
+    products.find((p) =>
+      p.materials.some((m) => /elastane|spandex/i.test(m.name))
+    ) ??
+    products.find((p) => p.materials.length >= 2) ??
+    products[0];
+
   return (
     <>
       <Hero products={heroProducts} />
-      <ShopByAudience audiences={AUDIENCE_IMAGES} />
+      <ShopByAudience />
       <EditorialPicks products={products} />
-      {products[0] && <FiberFactsShowcase product={products[0]} />}
+      {showcaseProduct && <FiberFactsShowcase product={showcaseProduct} />}
       <BrowseByFiber />
-      <FinalCTA />
     </>
   );
 }
