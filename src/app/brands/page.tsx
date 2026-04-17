@@ -52,6 +52,18 @@ export default async function BrandsPage() {
             product on Fiber is. We do the filtering so you can shop with
             confidence.
           </p>
+          {/* Fiber-pill legend */}
+          <p className="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-body text-[14px] leading-[20px] text-muted">
+            <span className="flex items-center gap-2">
+              <span aria-hidden className="inline-block h-2 w-2 rounded-full bg-natural" />
+              Green = 100% natural
+            </span>
+            <span aria-hidden className="text-muted-light">·</span>
+            <span className="flex items-center gap-2">
+              <span aria-hidden className="inline-block h-2 w-2 rounded-full bg-accent" />
+              Rose = nearly natural
+            </span>
+          </p>
         </div>
       </section>
 

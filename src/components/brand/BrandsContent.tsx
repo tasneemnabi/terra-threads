@@ -11,6 +11,52 @@ interface BrandsContentProps {
   brands: BrandWithDetails[];
 }
 
+type SortOption = "az" | "most-products" | "natural-first";
+const SORT_LABELS: Record<SortOption, string> = {
+  az: "A–Z",
+  "most-products": "Most products",
+  "natural-first": "100% Natural first",
+};
+const SORT_ORDER: SortOption[] = ["az", "most-products", "natural-first"];
+
+type FiberFamily = "linen" | "cotton" | "wool" | "multi";
+const FAMILY_ORDER: FiberFamily[] = ["linen", "cotton", "wool", "multi"];
+const FAMILY_META: Record<
+  FiberFamily,
+  { number: string; label: string; title: string }
+> = {
+  linen: { number: "01", label: "Linen", title: "The Linen Houses" },
+  cotton: { number: "02", label: "Cotton", title: "The Cotton Specialists" },
+  wool: { number: "03", label: "Wool", title: "The Wool Specialists" },
+  multi: { number: "04", label: "Multi-Fiber", title: "Multi-Fiber" },
+};
+
+const LINEN_KEYS = ["linen", "flax", "hemp"];
+const COTTON_KEYS = ["cotton"];
+const WOOL_KEYS = ["wool", "merino", "cashmere", "alpaca", "mohair", "yak", "lambswool"];
+
+function classifyBrand(brand: BrandWithDetails): FiberFamily {
+  const fibers = brand.fiber_types.map((f) => f.toLowerCase());
+  if (fibers.length === 0) return "multi";
+  // Consider "dominant" as: only one fiber family represented OR first fiber.
+  const countIn = (keys: string[]) =>
+    fibers.filter((f) => keys.some((k) => f.includes(k))).length;
+  const linenCount = countIn(LINEN_KEYS);
+  const cottonCount = countIn(COTTON_KEYS);
+  const woolCount = countIn(WOOL_KEYS);
+  const total = fibers.length;
+
+  // A brand is a specialist if >=60% of its fibers fall in one family, or it only has one fiber that matches.
+  const threshold = Math.max(1, Math.ceil(total * 0.6));
+  if (linenCount >= threshold && linenCount >= cottonCount && linenCount >= woolCount)
+    return "linen";
+  if (cottonCount >= threshold && cottonCount >= linenCount && cottonCount >= woolCount)
+    return "cotton";
+  if (woolCount >= threshold && woolCount >= linenCount && woolCount >= cottonCount)
+    return "wool";
+  return "multi";
+}
+
 function AccordionSection({
   label,
   children,
@@ -76,6 +122,8 @@ export function BrandsContent({ brands }: BrandsContentProps) {
   const selectedFiber = searchParams.get("fiber") || null;
   const selectedCategory = searchParams.get("category") || null;
   const selectedAudience = searchParams.get("audience") || null;
+  const sortParam = searchParams.get("sort") as SortOption | null;
+  const sort: SortOption = sortParam && SORT_ORDER.includes(sortParam) ? sortParam : "az";
 
   // Update URL params without full navigation
   const setParam = useCallback(
@@ -140,6 +188,27 @@ export function BrandsContent({ brands }: BrandsContentProps) {
       }),
     });
   };
+  const setTier = (t: TierFilter) => {
+    setParam("tier", t === "all" ? null : t);
+    trackFilterChanged({
+      page: "brands-directory",
+      filter_key: "tier",
+      action: t === "all" ? "remove" : "replace",
+      ui_value: t,
+      query_value: t === "all" ? null : t,
+      active_filter_count: countActiveDirectory({
+        tier: t,
+        fiber: selectedFiber,
+        category: selectedCategory,
+        audience: selectedAudience,
+      }),
+    });
+  };
+
+  const setSort = (s: SortOption) => {
+    setParam("sort", s === "az" ? null : s);
+  };
+
   const setSelectedAudience = (a: string | null) => {
     const prev = selectedAudience;
     setParam("audience", a);
@@ -202,7 +271,7 @@ export function BrandsContent({ brands }: BrandsContentProps) {
 
   // Filter brands
   const filtered = useMemo(() => {
-    return brands.filter((b) => {
+    const result = brands.filter((b) => {
       if (tier === "natural" && !b.is_fully_natural) return false;
       if (tier === "nearly" && b.is_fully_natural) return false;
       if (selectedFiber && !b.fiber_types.includes(selectedFiber)) return false;
@@ -212,7 +281,61 @@ export function BrandsContent({ brands }: BrandsContentProps) {
         return false;
       return true;
     });
-  }, [brands, tier, selectedFiber, selectedCategory, selectedAudience]);
+    const sorted = [...result];
+    if (sort === "az") {
+      sorted.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sort === "most-products") {
+      sorted.sort(
+        (a, b) =>
+          (b.product_count ?? 0) - (a.product_count ?? 0) ||
+          a.name.localeCompare(b.name)
+      );
+    } else if (sort === "natural-first") {
+      sorted.sort((a, b) => {
+        if (a.is_fully_natural !== b.is_fully_natural)
+          return a.is_fully_natural ? -1 : 1;
+        return a.name.localeCompare(b.name);
+      });
+    }
+    return sorted;
+  }, [brands, tier, selectedFiber, selectedCategory, selectedAudience, sort]);
+
+  // Tier counts (respect other filters but ignore tier)
+  const tierCounts = useMemo(() => {
+    const base = brands.filter((b) => {
+      if (selectedFiber && !b.fiber_types.includes(selectedFiber)) return false;
+      if (selectedCategory && !b.categories.includes(selectedCategory))
+        return false;
+      if (selectedAudience && !b.audience.includes(selectedAudience))
+        return false;
+      return true;
+    });
+    return {
+      all: base.length,
+      natural: base.filter((b) => b.is_fully_natural).length,
+      nearly: base.filter((b) => !b.is_fully_natural).length,
+    };
+  }, [brands, selectedFiber, selectedCategory, selectedAudience]);
+
+  // Group filtered brands by fiber family
+  const grouped = useMemo(() => {
+    const map: Record<FiberFamily, BrandWithDetails[]> = {
+      linen: [],
+      cotton: [],
+      wool: [],
+      multi: [],
+    };
+    for (const b of filtered) {
+      map[classifyBrand(b)].push(b);
+    }
+    return map;
+  }, [filtered]);
+
+  // Whether to show grouped layout — only when there are enough brands across
+  // multiple groups to justify the section headings. If a filter narrows us
+  // down to a single group, just show one grid.
+  const populatedGroups = FAMILY_ORDER.filter((k) => grouped[k].length > 0);
+  const useGrouping = populatedGroups.length >= 2;
 
 
   return (
@@ -266,9 +389,9 @@ export function BrandsContent({ brands }: BrandsContentProps) {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
               </svg>
               Filter &amp; Sort
-              {activeFilterCount > 0 && (
+              {(activeFilterCount > 0 || sort !== "az") && (
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[11px] font-semibold text-background">
-                  {activeFilterCount}
+                  {activeFilterCount + (sort !== "az" ? 1 : 0)}
                 </span>
               )}
             </button>
@@ -309,7 +432,30 @@ export function BrandsContent({ brands }: BrandsContentProps) {
 
             {/* Accordion sections */}
             <div className="flex-1 overflow-y-auto px-8">
-              <AccordionSection label="For" defaultOpen={!!selectedAudience}>
+              <AccordionSection label="Sort" defaultOpen={true}>
+                <div className="flex flex-col gap-0.5">
+                  {SORT_ORDER.map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setSort(s)}
+                      className={`flex items-center justify-between rounded-md px-3 py-2.5 text-left font-body text-[14px] transition-colors ${
+                        sort === s
+                          ? "bg-surface font-medium text-text"
+                          : "text-secondary hover:bg-surface/60 hover:text-text"
+                      }`}
+                    >
+                      {SORT_LABELS[s]}
+                      {sort === s && (
+                        <svg className="h-4 w-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </AccordionSection>
+
+              <AccordionSection label="For" defaultOpen={true}>
                 <div className="flex flex-col gap-0.5">
                   {allAudiences.map((aud) => (
                     <button
@@ -334,7 +480,7 @@ export function BrandsContent({ brands }: BrandsContentProps) {
                 </div>
               </AccordionSection>
 
-              <AccordionSection label="Fiber" defaultOpen={!!selectedFiber}>
+              <AccordionSection label="Fiber" defaultOpen={true}>
                 <div className="flex flex-col gap-0.5">
                   {allFibers.map((fiber) => (
                     <button
@@ -359,7 +505,7 @@ export function BrandsContent({ brands }: BrandsContentProps) {
                 </div>
               </AccordionSection>
 
-              <AccordionSection label="Category" defaultOpen={!!selectedCategory}>
+              <AccordionSection label="Category" defaultOpen={true}>
                 <div className="flex flex-col gap-0.5">
                   {allCategories.map((cat) => (
                     <button
@@ -406,33 +552,109 @@ export function BrandsContent({ brands }: BrandsContentProps) {
         </div>
       )}
 
+      {/* Tier quick-filter chips */}
+      <section className="px-5 sm:px-8 lg:px-20 pt-6">
+        <div className="mx-auto max-w-[1280px]">
+          <div className="flex flex-wrap items-center gap-2">
+            {(
+              [
+                { key: "all" as TierFilter, label: "All", count: tierCounts.all },
+                {
+                  key: "natural" as TierFilter,
+                  label: "100% Natural",
+                  count: tierCounts.natural,
+                },
+                {
+                  key: "nearly" as TierFilter,
+                  label: "Nearly Natural",
+                  count: tierCounts.nearly,
+                },
+              ]
+            ).map((chip) => {
+              const active = tier === chip.key;
+              return (
+                <button
+                  key={chip.key}
+                  onClick={() => setTier(chip.key)}
+                  aria-pressed={active}
+                  className={`rounded-full px-4 py-2 font-body text-[13px] font-medium transition-colors ${
+                    active
+                      ? "bg-accent text-background"
+                      : "border border-surface-dark text-text hover:bg-surface/60"
+                  }`}
+                >
+                  {chip.label}{" "}
+                  <span
+                    className={
+                      active
+                        ? "text-background/75"
+                        : "text-muted"
+                    }
+                  >
+                    ({chip.count})
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
       {/* Brand grid */}
       <section className="px-5 sm:px-8 lg:px-20 pt-8 pb-20">
         <div className="mx-auto max-w-[1280px]">
-          <p className="mb-8 font-body text-[14px] leading-[18px] text-muted">
-            {filtered.length} brand{filtered.length !== 1 ? "s" : ""}
-          </p>
-
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-8 lg:grid-cols-3">
-            {filtered.map((brand, i) => (
-              <BrandCard key={brand.id} brand={brand} priority={i < 6} />
-            ))}
-            {filtered.length === 0 && (
-              <div className="col-span-full flex flex-col items-center gap-4 py-16">
-                <p className="font-body text-[16px] text-secondary">
-                  No brands match the selected filters.
-                </p>
-                {hasActiveFilters && (
-                  <button
-                    onClick={clearAllFilters}
-                    className="rounded-full border border-surface-dark px-5 py-2.5 font-body text-[14px] font-medium text-text transition-colors hover:bg-surface"
-                  >
-                    Clear all filters
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
+          {filtered.length === 0 ? (
+            <div className="flex flex-col items-center gap-4 py-16">
+              <p className="font-body text-[16px] text-secondary">
+                No brands match the selected filters.
+              </p>
+              {hasActiveFilters && (
+                <button
+                  onClick={clearAllFilters}
+                  className="rounded-full border border-surface-dark px-5 py-2.5 font-body text-[14px] font-medium text-text transition-colors hover:bg-surface"
+                >
+                  Clear all filters
+                </button>
+              )}
+            </div>
+          ) : useGrouping ? (
+            <div className="flex flex-col gap-14">
+              {populatedGroups.map((key, gi) => {
+                const meta = FAMILY_META[key];
+                const list = grouped[key];
+                return (
+                  <div key={key} className="flex flex-col gap-5">
+                    <div className="flex flex-col gap-1">
+                      <p className="font-body text-[12px] font-medium uppercase leading-[16px] tracking-[0.08em] text-muted">
+                        {meta.number} &middot; {meta.label}
+                      </p>
+                      <h2 className="font-display text-[22px] font-medium tracking-[-0.01em] text-text">
+                        {meta.title}
+                        <span className="ml-2 font-body text-[14px] font-normal text-muted">
+                          {list.length}
+                        </span>
+                      </h2>
+                    </div>
+                    <div className="grid grid-cols-2 gap-5 sm:gap-6 lg:grid-cols-4">
+                      {list.map((brand, i) => (
+                        <BrandCard
+                          key={brand.id}
+                          brand={brand}
+                          priority={gi === 0 && i < 4}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-5 sm:gap-6 lg:grid-cols-4">
+              {filtered.map((brand, i) => (
+                <BrandCard key={brand.id} brand={brand} priority={i < 6} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </>

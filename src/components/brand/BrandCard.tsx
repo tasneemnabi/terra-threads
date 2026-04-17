@@ -46,7 +46,7 @@ export function BrandCard({ brand, priority = false }: BrandCardProps) {
     <Link
       href={`/brand/${brand.slug}`}
       onClick={handleClick}
-      className="group relative flex flex-col gap-5 rounded-[14px] border border-surface-dark bg-white p-7 shadow-[0_2px_8px_rgba(140,120,100,0.07)] transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/30 hover:shadow-lg"
+      className="group relative flex flex-col gap-4 rounded-[14px] border border-surface-dark bg-white p-5 transition-colors duration-200 hover:border-accent/30 hover:bg-surface/20"
     >
       {/* Top row: Logo + Name */}
       <div className="flex items-center gap-3">
@@ -54,20 +54,20 @@ export function BrandCard({ brand, priority = false }: BrandCardProps) {
           <Image
             src={logoUrl}
             alt={`${brand.name} logo`}
-            width={48}
-            height={48}
+            width={40}
+            height={40}
             className="shrink-0 rounded-[10px]"
             unoptimized
             {...(priority && { priority: true })}
           />
         )}
-        <h2 className="font-display text-[28px] font-semibold leading-[32px] tracking-[-0.02em] text-text">
+        <h2 className="font-display text-[20px] font-semibold leading-[24px] tracking-[-0.01em] text-text">
           {brand.name}
         </h2>
       </div>
 
       {/* Fiber type pills */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5">
         {brand.fiber_types.map((fiber) => (
           <span key={fiber} className={fiberPillClasses(fiber)}>
             {fiber}
@@ -76,8 +76,8 @@ export function BrandCard({ brand, priority = false }: BrandCardProps) {
       </div>
 
       {/* Bottom metadata */}
-      <div className="mt-auto flex items-center justify-between border-t border-muted-light pt-3">
-        <p className="font-body text-[13px] leading-[18px] text-secondary">
+      <div className="mt-auto flex items-center justify-between gap-3 border-t border-muted-light pt-3">
+        <p className="min-w-0 truncate font-body text-[12px] leading-[16px] text-secondary">
           {metaParts.join(" \u00B7 ")}
         </p>
         <svg
