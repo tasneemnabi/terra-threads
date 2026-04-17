@@ -48,29 +48,39 @@ export function BrowseByFiber() {
 
         {/* Mobile: 2×2 grid of image tiles */}
         <div className="mt-8 grid grid-cols-2 gap-3 lg:hidden">
-          {fibers.map((fiber) => (
-            <TrackedLink
-              key={fiber.name}
-              href={`/shop?fiber=${encodeURIComponent(fiber.param)}`}
-              section="browse-by-fiber"
-              ctaText={`Shop ${fiber.shortName}`}
-              itemName={fiber.name}
-              className="group relative aspect-square rounded-xl overflow-hidden flex flex-col justify-end"
-            >
-              <Image
-                src={fiber.image}
-                alt={`${fiber.name} texture`}
-                fill
-                unoptimized
-                className="object-cover transition-transform duration-500 group-active:scale-[1.03]"
-                sizes="50vw"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent" />
-              <h3 className="relative px-4 pb-4 font-display text-[18px] font-semibold leading-tight tracking-[-0.01em] text-white">
-                {fiber.name}
-              </h3>
-            </TrackedLink>
-          ))}
+          {fibers.map((fiber) => {
+            const lowContrast =
+              fiber.name === "Organic Cotton" || fiber.name === "Linen";
+            return (
+              <TrackedLink
+                key={fiber.name}
+                href={`/shop?fiber=${encodeURIComponent(fiber.param)}`}
+                section="browse-by-fiber"
+                ctaText={`Shop ${fiber.shortName}`}
+                itemName={fiber.name}
+                className="group relative aspect-square rounded-xl overflow-hidden flex flex-col justify-end"
+              >
+                <Image
+                  src={fiber.image}
+                  alt={`${fiber.name} texture`}
+                  fill
+                  unoptimized
+                  className="object-cover transition-transform duration-500 group-active:scale-[1.03]"
+                  sizes="50vw"
+                />
+                <div
+                  className={`absolute inset-0 bg-gradient-to-t to-transparent ${
+                    lowContrast
+                      ? "from-black/80 via-black/30"
+                      : "from-black/65 via-black/15"
+                  }`}
+                />
+                <h3 className="relative px-4 pb-4 font-display text-[18px] font-semibold leading-tight tracking-[-0.01em] text-white">
+                  {fiber.name}
+                </h3>
+              </TrackedLink>
+            );
+          })}
         </div>
 
         <TrackedLink
