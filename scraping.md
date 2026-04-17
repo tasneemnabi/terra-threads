@@ -11,11 +11,11 @@ Companion docs — keep them in sync when changing the pipeline:
 
 ## Curation Rules
 
-- **100% Natural**: zero synthetic fibers — listed as top tier
-- **Nearly Natural**: up to 10% elastane/spandex allowed, rest must be natural or plant-derived
-- **Banned**: polyester, nylon, acrylic, polypropylene in any amount → product rejected
-- Semi-synthetics (Tencel, lyocell, modal, viscose) are treated as natural
-- Non-clothing items (home goods, accessories, gift cards) are filtered out automatically
+- **100% Natural**: literally only natural fibers — cotton, linen, hemp, wool, silk, cashmere, alpaca, and the like. No semi-synthetics, no synthetics, no blends.
+- **Nearly Natural**: anything that isn't 100% natural but still passes curation — contains semi-synthetics (Tencel, lyocell, modal, viscose, rayon, cupro) and/or up to 10% elastane/spandex. Banned synthetics still disqualify.
+- **Banned**: polyester, nylon, acrylic, polypropylene in any amount → product rejected outright.
+- Semi-synthetics (Tencel, lyocell, modal, viscose) count as **non-natural** for tiering — products containing them land in Nearly Natural, not 100% Natural. Materials table: `is_natural = false` for these.
+- Non-clothing items (home goods, accessories, gift cards) are filtered out automatically.
 
 ## Two Sync Pipelines
 
