@@ -111,13 +111,16 @@ export default async function ProductPage({ params }: Props) {
               {product.name}
             </h1>
 
+            {/* Fiber Facts Label — the centerpiece, elevated above price */}
+            <FiberFactsLabel
+              materials={product.materials}
+              brandName={product.brand_name}
+            />
+
             {/* Price */}
-            <p className="font-body text-2xl font-bold text-text">
+            <p className="font-display text-[28px] font-medium tracking-tight tabular-nums text-text">
               {formatPrice(product.price, product.currency)}
             </p>
-
-            {/* Fiber Facts Label — the centerpiece */}
-            <FiberFactsLabel materials={product.materials} />
 
             {/* CTA */}
             {product.affiliate_url && (
@@ -135,16 +138,17 @@ export default async function ProductPage({ params }: Props) {
               />
             )}
 
-            <p className="font-body text-xs text-muted-light">
-              We may earn a commission when you shop through our links.
-            </p>
-
             {/* Description */}
             {product.description && (
               <p className="font-body text-base leading-relaxed text-secondary">
                 {product.description}
               </p>
             )}
+
+            {/* Commission disclaimer — smallest, bottom */}
+            <p className="font-body text-xs text-muted-light">
+              We may earn a commission when you shop through our links.
+            </p>
           </div>
         </div>
 
