@@ -8,34 +8,44 @@ interface Entry {
   image?: string;
 }
 
-const ENTRIES: Entry[] = [
-  {
-    label: "Women",
-    meta: "Shop the edit",
-    href: "/shop?audience=Women",
-    image:
-      "https://sawrpcmtbsrgtnzhjmho.supabase.co/storage/v1/object/public/product-images/magic-linen-a-line-linen-dress-chiloe-in-black/0.webp",
-  },
-  {
-    label: "Men",
-    meta: "Shop the edit",
-    href: "/shop?audience=Men",
-    image:
-      "https://cdn.shopify.com/s/files/1/0640/8454/1699/files/mens-linen-shirt-bedarra-in-black-1.jpg?v=1741878376",
-  },
-  {
-    label: "New arrivals",
-    meta: "Latest this week",
-    href: "/shop?sort=newest",
-  },
-  {
-    label: "100% Natural",
-    meta: "Zero synthetics",
-    href: "/shop?tier=natural",
-  },
-];
+interface ShopByAudienceProps {
+  newArrivalImage?: string | null;
+  naturalImage?: string | null;
+}
 
-export function ShopByAudience() {
+export function ShopByAudience({
+  newArrivalImage,
+  naturalImage,
+}: ShopByAudienceProps = {}) {
+  const ENTRIES: Entry[] = [
+    {
+      label: "Women",
+      meta: "Shop the edit",
+      href: "/shop?audience=Women",
+      image:
+        "https://sawrpcmtbsrgtnzhjmho.supabase.co/storage/v1/object/public/product-images/magic-linen-a-line-linen-dress-chiloe-in-black/0.webp",
+    },
+    {
+      label: "Men",
+      meta: "Shop the edit",
+      href: "/shop?audience=Men",
+      image:
+        "https://cdn.shopify.com/s/files/1/0640/8454/1699/files/mens-linen-shirt-bedarra-in-black-1.jpg?v=1741878376",
+    },
+    {
+      label: "New arrivals",
+      meta: "Latest this week",
+      href: "/shop?sort=newest",
+      image: newArrivalImage ?? undefined,
+    },
+    {
+      label: "100% Natural",
+      meta: "Zero synthetics",
+      href: "/shop?tier=natural",
+      image: naturalImage ?? undefined,
+    },
+  ];
+
   return (
     <section className="px-5 sm:px-8 lg:px-20 py-14 sm:py-20">
       <div className="mx-auto max-w-[1280px]">
@@ -72,7 +82,6 @@ export function ShopByAudience() {
                     src={entry.image}
                     alt={entry.label}
                     fill
-                    unoptimized
                     className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
                     sizes="(min-width: 768px) 25vw, 50vw"
                     priority={i < 2}

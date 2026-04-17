@@ -4,13 +4,18 @@ import { EditorialPicks } from "@/components/home/EditorialPicks";
 
 import { FiberFactsShowcase } from "@/components/home/FiberFactsShowcase";
 import { BrowseByFiber } from "@/components/home/BrowseByFiber";
-import { getHomepageProducts, getHeroProducts } from "@/lib/queries/products";
+import {
+  getHomepageProducts,
+  getHeroProducts,
+  getAudienceTileImages,
+} from "@/lib/queries/products";
 
 
 export default async function HomePage() {
-  const [heroProducts, products] = await Promise.all([
+  const [heroProducts, products, audienceTileImages] = await Promise.all([
     getHeroProducts(8),
     getHomepageProducts(8),
+    getAudienceTileImages(),
   ]);
 
   // Prefer a multi-material product for the Fiber Facts showcase so the label
@@ -29,7 +34,10 @@ export default async function HomePage() {
   return (
     <>
       <Hero products={heroProducts} />
-      <ShopByAudience />
+      <ShopByAudience
+        newArrivalImage={audienceTileImages.newArrivalImage}
+        naturalImage={audienceTileImages.naturalImage}
+      />
       <EditorialPicks products={products} />
       {showcaseProduct && <FiberFactsShowcase product={showcaseProduct} />}
       <BrowseByFiber />
