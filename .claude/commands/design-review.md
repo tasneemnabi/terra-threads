@@ -134,7 +134,7 @@ check console errors, then evaluate against the checklist.
 - Letter-spacing matches design system (-0.03em display, -0.01em headings, 0.08em caption labels)
 
 **3. Color & Contrast**
-- Palette matches design system (#FAF7F2 bg, #A3535A accent, #475658 secondary, etc.)
+- Palette matches design system (#FAF7F2 bg, #B5636A accent, #475658 secondary, etc.)
 - No off-palette colors sneaking in
 - WCAG AA: body text 4.5:1, large text 3:1, UI components 3:1
 - Semantic colors consistent (success=green, error=red)
