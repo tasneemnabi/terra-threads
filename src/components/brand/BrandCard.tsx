@@ -46,7 +46,7 @@ export function BrandCard({ brand, priority = false }: BrandCardProps) {
     <Link
       href={`/brand/${brand.slug}`}
       onClick={handleClick}
-      className="group relative flex flex-col gap-4 rounded-[14px] border border-surface-dark bg-white p-5 transition-colors duration-200 hover:border-accent/30 hover:bg-surface/20"
+      className="group relative flex flex-col gap-4 rounded-[14px] border border-surface-dark bg-background p-5 transition-colors duration-200 hover:border-accent/30 hover:bg-surface/30"
     >
       {/* Top row: Logo + Name */}
       <div className="flex items-center gap-3">

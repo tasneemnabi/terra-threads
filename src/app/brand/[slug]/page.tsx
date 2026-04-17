@@ -172,7 +172,7 @@ export default async function BrandPage({ params }: Props) {
                 <Link
                   key={sister.id}
                   href={`/brand/${sister.slug}`}
-                  className="group flex flex-col gap-3 rounded-[14px] border border-surface-dark bg-white p-5 transition-colors hover:border-muted"
+                  className="group flex flex-col gap-3 rounded-[14px] border border-surface-dark bg-background p-5 transition-colors hover:border-muted hover:bg-surface/30"
                 >
                   <div className="flex items-center gap-3">
                     <BrandLogo
