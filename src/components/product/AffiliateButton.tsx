@@ -47,7 +47,28 @@ export function AffiliateButton({
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
+      {/* Confidence band — above the CTA */}
+      {!soldOut && (
+        <div className="flex items-center justify-center gap-2 font-body text-sm text-text">
+          <span
+            aria-hidden
+            className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-accent/10 text-accent"
+          >
+            <svg
+              className="h-2.5 w-2.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={3}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </span>
+          <span>Vetted for plastic-free materials.</span>
+        </div>
+      )}
+
       <a
         href={destinationUrl}
         target="_blank"
@@ -55,13 +76,13 @@ export function AffiliateButton({
         onClick={handleClick}
         className={
           soldOut
-            ? "inline-flex w-full items-center justify-center gap-2 rounded-lg border border-surface-dark bg-surface px-6 py-3.5 text-base font-medium text-muted transition-all hover:bg-surface-dark focus:outline-none focus:ring-2 focus:ring-text/50"
-            : "inline-flex w-full items-center justify-center gap-2 rounded-lg bg-text px-6 py-3.5 text-base font-medium text-background transition-all hover:bg-secondary hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-text/50"
+            ? "group inline-flex w-full items-center justify-center gap-2 rounded-lg border border-surface-dark bg-surface px-6 py-3.5 text-base font-medium text-muted transition-colors duration-300 hover:bg-surface-dark focus:outline-none focus:ring-2 focus:ring-text/50 active:scale-[0.98]"
+            : "group inline-flex w-full items-center justify-center gap-2 rounded-lg bg-text px-6 py-3.5 text-base font-medium text-background transition-colors duration-300 hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-text/50 active:scale-[0.98]"
         }
       >
         {soldOut ? `View at ${brandName}` : `Shop at ${brandName}`}
         <svg
-          className="h-4 w-4"
+          className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -76,7 +97,7 @@ export function AffiliateButton({
       </a>
       {domain && (
         <p className="text-center font-body text-xs text-muted">
-          You&apos;ll be taken to {domain} to complete your purchase
+          Continue to {brandName} to check out — we don&apos;t sell direct.
         </p>
       )}
     </div>
