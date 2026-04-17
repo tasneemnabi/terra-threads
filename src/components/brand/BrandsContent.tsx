@@ -19,44 +19,6 @@ const SORT_LABELS: Record<SortOption, string> = {
 };
 const SORT_ORDER: SortOption[] = ["az", "most-products", "natural-first"];
 
-type FiberFamily = "linen" | "cotton" | "wool" | "multi";
-const FAMILY_ORDER: FiberFamily[] = ["linen", "cotton", "wool", "multi"];
-const FAMILY_META: Record<
-  FiberFamily,
-  { number: string; label: string; title: string }
-> = {
-  linen: { number: "01", label: "Linen", title: "The Linen Houses" },
-  cotton: { number: "02", label: "Cotton", title: "The Cotton Specialists" },
-  wool: { number: "03", label: "Wool", title: "The Wool Specialists" },
-  multi: { number: "04", label: "Multi-Fiber", title: "Multi-Fiber" },
-};
-
-const LINEN_KEYS = ["linen", "flax", "hemp"];
-const COTTON_KEYS = ["cotton"];
-const WOOL_KEYS = ["wool", "merino", "cashmere", "alpaca", "mohair", "yak", "lambswool"];
-
-function classifyBrand(brand: BrandWithDetails): FiberFamily {
-  const fibers = brand.fiber_types.map((f) => f.toLowerCase());
-  if (fibers.length === 0) return "multi";
-  // Consider "dominant" as: only one fiber family represented OR first fiber.
-  const countIn = (keys: string[]) =>
-    fibers.filter((f) => keys.some((k) => f.includes(k))).length;
-  const linenCount = countIn(LINEN_KEYS);
-  const cottonCount = countIn(COTTON_KEYS);
-  const woolCount = countIn(WOOL_KEYS);
-  const total = fibers.length;
-
-  // A brand is a specialist if >=60% of its fibers fall in one family, or it only has one fiber that matches.
-  const threshold = Math.max(1, Math.ceil(total * 0.6));
-  if (linenCount >= threshold && linenCount >= cottonCount && linenCount >= woolCount)
-    return "linen";
-  if (cottonCount >= threshold && cottonCount >= linenCount && cottonCount >= woolCount)
-    return "cotton";
-  if (woolCount >= threshold && woolCount >= linenCount && woolCount >= cottonCount)
-    return "wool";
-  return "multi";
-}
-
 function AccordionSection({
   label,
   children,
@@ -316,27 +278,6 @@ export function BrandsContent({ brands }: BrandsContentProps) {
       nearly: base.filter((b) => !b.is_fully_natural).length,
     };
   }, [brands, selectedFiber, selectedCategory, selectedAudience]);
-
-  // Group filtered brands by fiber family
-  const grouped = useMemo(() => {
-    const map: Record<FiberFamily, BrandWithDetails[]> = {
-      linen: [],
-      cotton: [],
-      wool: [],
-      multi: [],
-    };
-    for (const b of filtered) {
-      map[classifyBrand(b)].push(b);
-    }
-    return map;
-  }, [filtered]);
-
-  // Whether to show grouped layout — only when there are enough brands across
-  // multiple groups to justify the section headings. If a filter narrows us
-  // down to a single group, just show one grid.
-  const populatedGroups = FAMILY_ORDER.filter((k) => grouped[k].length > 0);
-  const useGrouping = populatedGroups.length >= 2;
-
 
   return (
     <>
@@ -617,39 +558,8 @@ export function BrandsContent({ brands }: BrandsContentProps) {
                 </button>
               )}
             </div>
-          ) : useGrouping ? (
-            <div className="flex flex-col gap-14">
-              {populatedGroups.map((key, gi) => {
-                const meta = FAMILY_META[key];
-                const list = grouped[key];
-                return (
-                  <div key={key} className="flex flex-col gap-5">
-                    <div className="flex flex-col gap-1">
-                      <p className="font-body text-[12px] font-medium uppercase leading-[16px] tracking-[0.08em] text-muted">
-                        {meta.number} &middot; {meta.label}
-                      </p>
-                      <h2 className="font-display text-[22px] font-medium tracking-[-0.01em] text-text">
-                        {meta.title}
-                        <span className="ml-2 font-body text-[14px] font-normal text-muted">
-                          {list.length}
-                        </span>
-                      </h2>
-                    </div>
-                    <div className="grid grid-cols-2 gap-5 sm:gap-6 lg:grid-cols-4">
-                      {list.map((brand, i) => (
-                        <BrandCard
-                          key={brand.id}
-                          brand={brand}
-                          priority={gi === 0 && i < 4}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
           ) : (
-            <div className="grid grid-cols-2 gap-5 sm:gap-6 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-5 sm:gap-6 md:grid-cols-3">
               {filtered.map((brand, i) => (
                 <BrandCard key={brand.id} brand={brand} priority={i < 6} />
               ))}
