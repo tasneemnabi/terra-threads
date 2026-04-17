@@ -3,6 +3,7 @@ import { isAllNatural } from "@/lib/utils";
 
 interface FiberFactsLabelProps {
   materials: MaterialInfo[];
+  brandName?: string;
 }
 
 // Earthy tones for naturals, rose for synthetics (draws attention to the exception)
@@ -19,12 +20,32 @@ function getSegmentColor(mat: MaterialInfo, naturalIndex: number) {
   return NATURAL_COLORS[naturalIndex % NATURAL_COLORS.length];
 }
 
-export function FiberFactsLabel({ materials }: FiberFactsLabelProps) {
+export function FiberFactsLabel({ materials, brandName }: FiberFactsLabelProps) {
   if (!materials || materials.length === 0) {
     return (
-      <div className="rounded-xl bg-white px-5 py-4 text-center shadow-sm ring-1 ring-surface-dark/30">
-        <p className="font-body text-sm text-muted">
-          Material composition not yet verified
+      <div className="rounded-xl bg-white px-5 py-5 shadow-sm ring-1 ring-surface-dark/30">
+        <h3 className="font-display text-base font-semibold tracking-[-0.01em] text-text">
+          Fiber Facts
+        </h3>
+        <p className="mt-2 font-body text-sm leading-relaxed text-muted">
+          Material composition not yet verified.
+        </p>
+        <p className="mt-1 inline-flex items-center gap-1.5 font-body text-sm leading-relaxed text-secondary">
+          <span>
+            {brandName
+              ? `We're checking with ${brandName}. Tap through to see material details on their site.`
+              : "We're checking with the brand. Tap through to see material details on their site."}
+          </span>
+          <svg
+            aria-hidden
+            className="h-3.5 w-3.5 shrink-0 text-muted"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M9 7h8v8" />
+          </svg>
         </p>
       </div>
     );
