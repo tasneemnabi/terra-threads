@@ -1,5 +1,6 @@
 import type { MaterialInfo } from "@/types/database";
 import { isAllNatural } from "@/lib/utils";
+import { TierDot } from "@/components/ui/TierDot";
 
 interface FiberFactsLabelProps {
   materials: MaterialInfo[];
@@ -23,7 +24,7 @@ function getSegmentColor(mat: MaterialInfo, naturalIndex: number) {
 export function FiberFactsLabel({ materials, brandName }: FiberFactsLabelProps) {
   if (!materials || materials.length === 0) {
     return (
-      <div className="rounded-xl bg-white px-5 py-5 shadow-sm ring-1 ring-surface-dark/30">
+      <div className="rounded-xl bg-background px-5 py-5 shadow-sm ring-1 ring-surface-dark/30">
         <h3 className="font-display text-base font-semibold tracking-[-0.01em] text-text">
           Fiber Facts
         </h3>
@@ -57,7 +58,7 @@ export function FiberFactsLabel({ materials, brandName }: FiberFactsLabelProps) 
   const allNatural = isAllNatural(materials);
 
   return (
-    <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-surface-dark/30">
+    <div className="rounded-xl bg-background p-5 shadow-sm ring-1 ring-surface-dark/30">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="font-display text-base font-semibold tracking-[-0.01em] text-text">
@@ -70,11 +71,7 @@ export function FiberFactsLabel({ materials, brandName }: FiberFactsLabelProps) 
               : "bg-accent/10 text-accent"
           }`}
         >
-          <span
-            className={`h-1.5 w-1.5 rounded-full ${
-              allNatural ? "bg-natural" : "bg-accent"
-            }`}
-          />
+          <TierDot tier={allNatural ? "natural" : "nearly"} size={6} />
           {allNatural ? "100% Natural" : "Nearly Natural"}
         </span>
       </div>

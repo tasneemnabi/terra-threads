@@ -9,6 +9,7 @@ import {
   FIBER_GROUPS,
   SORT_LABELS,
 } from "@/components/filters/primitives";
+import { TierDot } from "@/components/ui/TierDot";
 import { formatCategory, isAllNatural } from "@/lib/utils";
 import {
   trackFilterChanged,
@@ -422,10 +423,7 @@ export function BrandProducts({ products }: BrandProductsProps) {
               : "text-text hover:text-natural-dark"
           }`}
         >
-          <span
-            aria-hidden
-            className="inline-block h-[7px] w-[7px] rounded-full bg-natural"
-          />
+          <TierDot tier="natural" />
           {tierCounts.natural.toLocaleString()} 100% Natural
         </button>
         {tierCounts.nearly > 0 && (
@@ -443,10 +441,7 @@ export function BrandProducts({ products }: BrandProductsProps) {
                   : "text-text hover:text-accent"
               }`}
             >
-              <span
-                aria-hidden
-                className="inline-block h-[7px] w-[7px] rounded-full bg-accent"
-              />
+              <TierDot tier="nearly" />
               {tierCounts.nearly.toLocaleString()} Nearly Natural
             </button>
           </>
