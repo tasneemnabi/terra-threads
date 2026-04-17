@@ -903,18 +903,17 @@ export function ShopContent({
 
           {/* Content column */}
           <div className="min-w-0 flex-1">
-            {/* Count + sort row */}
-            <div className="flex items-center justify-between pb-4 pt-4">
-              <p className="font-body text-[14px] text-secondary">
+            {/* Count + sort row — demoted: smaller, muted, tighter */}
+            <div className="flex items-center justify-between pb-3 pt-3">
+              <p className="font-body text-[13px] text-muted">
                 {isPending || isSearching ? (
-                  "Loading..."
+                  "Loading…"
                 ) : isSearchActive ? (
                   <>
-                    {searchResults.length} result{searchResults.length !== 1 ? "s" : ""} for &ldquo;{debouncedSearch}&rdquo;
+                    {searchResults.length.toLocaleString()} result{searchResults.length !== 1 ? "s" : ""} for &ldquo;{debouncedSearch}&rdquo;
                   </>
                 ) : (
                   <>
-                    Showing {products.length.toLocaleString()} of{" "}
                     {totalCount.toLocaleString()} product{totalCount !== 1 ? "s" : ""}
                   </>
                 )}
@@ -924,10 +923,10 @@ export function ShopContent({
                   onClick={() => setSortOpen(!sortOpen)}
                   aria-haspopup="listbox"
                   aria-expanded={sortOpen}
-                  className="flex items-center gap-1.5 font-body text-[14px] text-secondary transition-colors hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:rounded-md"
+                  className="flex items-center gap-1.5 font-body text-[13px] text-muted transition-colors hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:rounded-md"
                 >
                   Sort by{" "}
-                  <span className="font-medium">{SORT_LABELS[sort]}</span>
+                  <span className="font-medium text-text">{SORT_LABELS[sort]}</span>
                   <svg
                     className={`h-3.5 w-3.5 transition-transform duration-200 ${sortOpen ? "rotate-180" : ""}`}
                     fill="none"
