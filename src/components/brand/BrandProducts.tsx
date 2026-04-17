@@ -9,14 +9,14 @@ import {
   FIBER_GROUPS,
   SORT_LABELS,
 } from "@/components/filters/primitives";
-import { formatCategory } from "@/lib/utils";
+import { formatCategory, isAllNatural } from "@/lib/utils";
 import {
   trackFilterChanged,
   trackFiltersCleared,
   trackLoadMore,
   trackSortChanged,
 } from "@/lib/posthog/events";
-import type { ProductWithBrand, SortOption } from "@/types/database";
+import type { ProductWithBrand, SortOption, TierFilter } from "@/types/database";
 
 const PAGE_SIZE = 24;
 
@@ -29,6 +29,7 @@ export function BrandProducts({ products }: BrandProductsProps) {
   const [selectedFibers, setSelectedFibers] = useState<string[]>([]);
   const [minPrice, setMinPrice] = useState<number | undefined>();
   const [maxPrice, setMaxPrice] = useState<number | undefined>();
+  const [selectedTier, setSelectedTier] = useState<TierFilter>("all");
   const [sort, setSort] = useState<SortOption>("newest");
   const [sortOpen, setSortOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
@@ -82,10 +83,26 @@ export function BrandProducts({ products }: BrandProductsProps) {
   );
   const allFiberFamilies = useMemo(() => fiberGroups.flatMap((g) => g.families), [fiberGroups]);
 
+  // Tier counts across the full product list (stable across filters)
+  const tierCounts = useMemo(() => {
+    let natural = 0;
+    let nearly = 0;
+    for (const p of products) {
+      if (isAllNatural(p.materials)) natural++;
+      else nearly++;
+    }
+    return { natural, nearly, total: products.length };
+  }, [products]);
+
   // Filter + sort
   const filtered = useMemo(() => {
     let result = products;
 
+    if (selectedTier === "natural") {
+      result = result.filter((p) => isAllNatural(p.materials));
+    } else if (selectedTier === "nearly") {
+      result = result.filter((p) => !isAllNatural(p.materials));
+    }
     if (selectedCategory) {
       result = result.filter((p) => p.category === selectedCategory);
     }
@@ -108,10 +125,25 @@ export function BrandProducts({ products }: BrandProductsProps) {
     }
 
     return result;
-  }, [products, selectedCategory, selectedFibers, minPrice, maxPrice, sort]);
+  }, [products, selectedTier, selectedCategory, selectedFibers, minPrice, maxPrice, sort]);
+
+  // Category counts reflecting the current tier filter (so the pill counts
+  // stay honest when you narrow by 100% Natural / Nearly Natural).
+  const categoryCounts = useMemo(() => {
+    const base = products.filter((p) => {
+      if (selectedTier === "natural") return isAllNatural(p.materials);
+      if (selectedTier === "nearly") return !isAllNatural(p.materials);
+      return true;
+    });
+    const counts = new Map<string, number>();
+    for (const p of base) {
+      if (p.category) counts.set(p.category, (counts.get(p.category) || 0) + 1);
+    }
+    return { counts, total: base.length };
+  }, [products, selectedTier]);
 
   // Reset pagination when filters change
-  useEffect(() => { setShown(PAGE_SIZE); }, [selectedCategory, selectedFibers, minPrice, maxPrice, sort]);
+  useEffect(() => { setShown(PAGE_SIZE); }, [selectedTier, selectedCategory, selectedFibers, minPrice, maxPrice, sort]);
 
   const visible = filtered.slice(0, shown);
   const hasMore = shown < filtered.length;
@@ -172,6 +204,7 @@ export function BrandProducts({ products }: BrandProductsProps) {
   };
 
   const hasActiveFilters =
+    selectedTier !== "all" ||
     selectedCategory !== null ||
     selectedFibers.length > 0 ||
     minPrice !== undefined ||
@@ -183,7 +216,8 @@ export function BrandProducts({ products }: BrandProductsProps) {
       fibers: selectedFibers,
       min: minPrice,
       max: maxPrice,
-    });
+    }) + (selectedTier !== "all" ? 1 : 0);
+    setSelectedTier("all");
     setSelectedCategory(null);
     setSelectedFibers([]);
     setMinPrice(undefined);
@@ -191,6 +225,26 @@ export function BrandProducts({ products }: BrandProductsProps) {
     if (before > 0) {
       trackFiltersCleared({ page: "brand-page", cleared_filter_count: before });
     }
+  };
+
+  const handleTier = (next: TierFilter) => {
+    const prev = selectedTier;
+    if (prev === next) return;
+    setSelectedTier(next);
+    trackFilterChanged({
+      page: "brand-page",
+      filter_key: "tier",
+      action: next === "all" ? "remove" : prev === "all" ? "add" : "replace",
+      ui_value: next,
+      query_value: next === "all" ? null : next,
+      active_filter_count:
+        countActiveBrandFilters({
+          category: selectedCategory,
+          fibers: selectedFibers,
+          min: minPrice,
+          max: maxPrice,
+        }) + (next !== "all" ? 1 : 0),
+    });
   };
 
   const handleSort = (value: SortOption) => {
@@ -226,6 +280,12 @@ export function BrandProducts({ products }: BrandProductsProps) {
 
   // Active filter chips
   const activeChips: { label: string; onRemove: () => void }[] = [];
+  if (selectedTier !== "all") {
+    activeChips.push({
+      label: selectedTier === "natural" ? "100% Natural" : "Nearly Natural",
+      onRemove: () => handleTier("all"),
+    });
+  }
   if (selectedCategory) {
     activeChips.push({ label: formatCategory(selectedCategory), onRemove: () => setSelectedCategory(null) });
   }
@@ -325,8 +385,118 @@ export function BrandProducts({ products }: BrandProductsProps) {
     </>
   );
 
+  const tierPillBase =
+    "inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 font-body text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50";
+  const tierPillClass = (active: boolean) =>
+    `${tierPillBase} ${
+      active
+        ? "border-accent bg-accent text-background"
+        : "border-surface-dark bg-transparent text-text hover:border-muted"
+    }`;
+
   return (
     <>
+      {/* Curation tier strip */}
+      <div className="mb-5 flex flex-wrap items-center gap-x-5 gap-y-2 font-body text-[15px] leading-[22px] tracking-[0.01em] text-text">
+        <button
+          type="button"
+          onClick={() => handleTier("all")}
+          aria-pressed={selectedTier === "all"}
+          className={`transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:rounded-md ${
+            selectedTier === "all" ? "text-text font-medium" : "text-muted hover:text-text"
+          }`}
+        >
+          {tierCounts.total.toLocaleString()}{" "}
+          product{tierCounts.total !== 1 ? "s" : ""}
+        </button>
+        <span aria-hidden className="text-muted-light">·</span>
+        <button
+          type="button"
+          onClick={() =>
+            handleTier(selectedTier === "natural" ? "all" : "natural")
+          }
+          aria-pressed={selectedTier === "natural"}
+          className={`inline-flex items-center gap-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:rounded-md ${
+            selectedTier === "natural"
+              ? "text-natural-dark font-medium"
+              : "text-text hover:text-natural-dark"
+          }`}
+        >
+          <span
+            aria-hidden
+            className="inline-block h-[7px] w-[7px] rounded-full bg-natural"
+          />
+          {tierCounts.natural.toLocaleString()} 100% Natural
+        </button>
+        {tierCounts.nearly > 0 && (
+          <>
+            <span aria-hidden className="text-muted-light">·</span>
+            <button
+              type="button"
+              onClick={() =>
+                handleTier(selectedTier === "nearly" ? "all" : "nearly")
+              }
+              aria-pressed={selectedTier === "nearly"}
+              className={`inline-flex items-center gap-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:rounded-md ${
+                selectedTier === "nearly"
+                  ? "text-accent font-medium"
+                  : "text-text hover:text-accent"
+              }`}
+            >
+              <span
+                aria-hidden
+                className="inline-block h-[7px] w-[7px] rounded-full bg-accent"
+              />
+              {tierCounts.nearly.toLocaleString()} Nearly Natural
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Category pill row */}
+      {categories.length > 1 && (
+        <div className="mb-6 -mx-1 flex flex-nowrap gap-2 overflow-x-auto px-1 pb-1 scrollbar-hide">
+          <button
+            type="button"
+            onClick={() => selectedCategory !== null && toggleCategory(selectedCategory)}
+            aria-pressed={selectedCategory === null}
+            className={tierPillClass(selectedCategory === null)}
+          >
+            All
+            <span
+              className={`font-body text-[12px] tabular-nums ${
+                selectedCategory === null ? "text-background/70" : "text-muted"
+              }`}
+            >
+              {categoryCounts.total.toLocaleString()}
+            </span>
+          </button>
+          {categories.map((cat) => {
+            const active = selectedCategory === cat;
+            const count = categoryCounts.counts.get(cat) ?? 0;
+            if (count === 0) return null;
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => toggleCategory(cat)}
+                aria-pressed={active}
+                className={tierPillClass(active)}
+              >
+                {formatCategory(cat)}
+                <span
+                  className={`font-body text-[12px] tabular-nums ${
+                    active ? "text-background/70" : "text-muted"
+                  }`}
+                >
+                  {count.toLocaleString()}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Top bar: mobile filter button + sort dropdown */}
       <div className="flex items-center justify-between">
         {/* Mobile filter toggle */}
