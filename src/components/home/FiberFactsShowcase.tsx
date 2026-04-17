@@ -35,7 +35,7 @@ export function FiberFactsShowcase({ product }: FiberFactsShowcaseProps) {
               </h2>
               <p className="mt-4 sm:mt-5 max-w-[440px] mx-auto lg:mx-0 font-body text-[15px] sm:text-[17px] leading-[26px] sm:leading-[28px] text-background/70">
                 No &ldquo;sustainable blend&rdquo; hand-waving. Full material
-                breakdowns on every product — fiber by fiber, percent by
+                breakdowns on every product, fiber by fiber, percent by
                 percent.
               </p>
 
