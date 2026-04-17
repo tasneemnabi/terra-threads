@@ -20,7 +20,7 @@ export default async function ShopPage({
   const params = await searchParams;
 
   const initialFilters: FilterState = {
-    category: typeof params.category === "string" ? params.category : undefined,
+    categories: typeof params.category === "string" ? params.category.split(",").filter(Boolean) : undefined,
     brands: typeof params.brand === "string" ? params.brand.split(",").filter(Boolean) : undefined,
     materials: typeof params.fiber === "string" ? params.fiber.split(",").filter(Boolean) : undefined,
     minPrice: typeof params.minPrice === "string" ? Number(params.minPrice) : undefined,
@@ -32,12 +32,16 @@ export default async function ShopPage({
     page: 1,
   };
 
+  // Product-type suboptions only make sense when exactly one category is selected.
+  const singleCategory =
+    initialFilters.categories?.length === 1 ? initialFilters.categories[0] : null;
+
   const [{ products: rawProducts, totalCount }, brands, categories, materials, productTypes] = await Promise.all([
     getFilteredProducts(initialFilters),
     getAllBrands(),
     getDistinctCategories(),
     getAllMaterials(),
-    initialFilters.category ? getProductTypesForCategory(initialFilters.category) : Promise.resolve([]),
+    singleCategory ? getProductTypesForCategory(singleCategory) : Promise.resolve([]),
   ]);
 
   // Interleave brands on default sort so no single brand dominates the top

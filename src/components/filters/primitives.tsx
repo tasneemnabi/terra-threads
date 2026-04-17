@@ -57,10 +57,10 @@ export function FilterCheckbox({
       role="checkbox"
       aria-checked={checked}
       onClick={onChange}
-      className="group/cb flex items-center gap-2.5 rounded-md px-1 py-1 text-left transition-colors hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:rounded-md"
+      className="group/cb flex w-full items-center gap-3 rounded-md px-2 py-3 text-left transition-colors hover:bg-surface/60 active:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 lg:gap-2.5 lg:py-2"
     >
       <div
-        className={`flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-[3px] border transition-all duration-150 ${
+        className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[4px] border transition-all duration-150 ${
           checked
             ? "border-accent bg-accent"
             : "border-muted-light group-hover/cb:border-muted"
@@ -68,7 +68,7 @@ export function FilterCheckbox({
       >
         {checked && (
           <svg
-            className="h-2.5 w-2.5 text-background"
+            className="h-3 w-3 text-background"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -82,7 +82,7 @@ export function FilterCheckbox({
           </svg>
         )}
       </div>
-      <span className={`font-body text-[13px] transition-colors ${checked ? "font-medium text-text" : "text-text group-hover/cb:text-secondary"}`}>
+      <span className={`font-body text-[14px] transition-colors lg:text-[13px] ${checked ? "font-medium text-text" : "text-text group-hover/cb:text-secondary"}`}>
         {label}
       </span>
     </button>
@@ -123,7 +123,7 @@ export function AccordionFilter({
           )}
         </svg>
       </button>
-      {open && <div className="flex flex-col gap-1.5 pb-4">{children}</div>}
+      {open && <div className="flex flex-col pb-3 lg:pb-4 lg:gap-0.5">{children}</div>}
     </div>
   );
 }

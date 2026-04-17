@@ -36,7 +36,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
   const [{ products, totalCount }, brands, materials] = await Promise.all([
     getFilteredProducts({
-      category: slug,
+      categories: [slug],
       brands: brandParam ? brandParam.split(",") : undefined,
       materials: fiberParam ? fiberParam.split(",") : undefined,
       minPrice: minPriceParam ? Number(minPriceParam) : undefined,

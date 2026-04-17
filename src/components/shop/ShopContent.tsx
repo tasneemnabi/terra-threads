@@ -114,7 +114,7 @@ const PRODUCT_TYPE_LABELS: Record<string, string> = {
 };
 
 function countActiveFilters(f: {
-  category?: string | null;
+  categories?: string[];
   audience?: string | null;
   productTypes?: string[];
   brands?: string[];
@@ -124,7 +124,7 @@ function countActiveFilters(f: {
   maxPrice?: number;
 }): number {
   let n = 0;
-  if (f.category) n++;
+  if (f.categories?.length) n += f.categories.length;
   if (f.audience) n++;
   if (f.productTypes?.length) n++;
   if (f.brands?.length) n++;
@@ -229,7 +229,10 @@ export function ShopContent({
 
   // Read filter state from URL
   const tier = (searchParams.get("tier") as TierFilter) || "all";
-  const selectedCategory = searchParams.get("category") || null;
+  const selectedCategories = useMemo(
+    () => searchParams.get("category")?.split(",").filter(Boolean) ?? [],
+    [searchParams]
+  );
   const selectedAudience = searchParams.get("audience") || null;
   const selectedProductTypes = useMemo(
     () => searchParams.get("type")?.split(",").filter(Boolean) ?? [],
@@ -249,7 +252,7 @@ export function ShopContent({
 
   const currentFilters = useMemo<Omit<FilterState, "page">>(
     () => ({
-      category: selectedCategory || undefined,
+      categories: selectedCategories.length ? selectedCategories : undefined,
       audience: selectedAudience || undefined,
       productTypes: selectedProductTypes.length ? selectedProductTypes : undefined,
       brands: selectedBrands.length ? selectedBrands : undefined,
@@ -259,7 +262,7 @@ export function ShopContent({
       sort,
       tier,
     }),
-    [selectedCategory, selectedAudience, selectedProductTypes, selectedBrands, selectedFibers, minPrice, maxPrice, sort, tier]
+    [selectedCategories, selectedAudience, selectedProductTypes, selectedBrands, selectedFibers, minPrice, maxPrice, sort, tier]
   );
 
   const nonBrandFilters = useMemo(() => {
@@ -361,7 +364,7 @@ export function ShopContent({
   );
 
   const currentCountBase = {
-    category: selectedCategory ?? undefined,
+    categories: selectedCategories,
     audience: selectedAudience ?? undefined,
     productTypes: selectedProductTypes,
     brands: selectedBrands,
@@ -380,23 +383,29 @@ export function ShopContent({
       previous_sort: sort,
     });
   };
-  const setCategory = (c: string | null) => {
-    const prev = selectedCategory;
-    setParams({ category: c, type: null });
-    if (c) {
-      fetchProductTypes(c).then(setProductTypes);
+  const toggleCategory = (c: string) => {
+    const wasSelected = selectedCategories.includes(c);
+    const next = wasSelected
+      ? selectedCategories.filter((x) => x !== c)
+      : [...selectedCategories, c];
+    // Subcategory product types only apply when exactly one category is selected.
+    // Clear the `type` URL param whenever the category set changes so stale
+    // subcategories don't linger.
+    setParams({ category: next.length ? next.join(",") : null, type: null });
+    if (next.length === 1) {
+      fetchProductTypes(next[0]).then(setProductTypes);
     } else {
       setProductTypes([]);
     }
     trackFilterChanged({
       page: "shop",
       filter_key: "category",
-      action: c === null ? "remove" : prev && prev !== c ? "replace" : "add",
-      ui_value: c ? formatCategory(c) : prev ? formatCategory(prev) : null,
+      action: wasSelected ? "remove" : "add",
+      ui_value: formatCategory(c),
       query_value: c,
       active_filter_count: countActiveFilters({
         ...currentCountBase,
-        category: c ?? undefined,
+        categories: next,
         productTypes: [],
       }),
     });
@@ -512,7 +521,7 @@ export function ShopContent({
 
   const hasActiveFilters =
     selectedAudience !== null ||
-    selectedCategory !== null ||
+    selectedCategories.length > 0 ||
     selectedProductTypes.length > 0 ||
     selectedFibers.length > 0 ||
     selectedBrands.length > 0 ||
@@ -525,8 +534,8 @@ export function ShopContent({
   if (selectedAudience) {
     activeChips.push({ label: selectedAudience, onRemove: () => setAudience(null) });
   }
-  if (selectedCategory) {
-    activeChips.push({ label: formatCategory(selectedCategory), onRemove: () => setCategory(null) });
+  for (const cat of selectedCategories) {
+    activeChips.push({ label: formatCategory(cat), onRemove: () => toggleCategory(cat) });
   }
   for (const pt of selectedProductTypes) {
     activeChips.push({ label: PRODUCT_TYPE_LABELS[pt] || formatCategory(pt), onRemove: () => toggleProductType(pt) });
@@ -578,25 +587,44 @@ export function ShopContent({
   const isSearchActive = searchResults !== null;
   const displayProducts = isSearchActive ? searchResults : products;
 
-  // All natural fiber members (for tier sync)
+  // Fiber members auto-synced by each tier pill.
+  // Natural → every natural family. Nearly Natural → natural + spandex (the only
+  // synthetic allowed by the curation policy).
   const allNaturalMembers = useMemo(
     () => fiberGroups.find((g) => g.heading === "Natural")?.families.flatMap((f) => f.members) ?? [],
     [fiberGroups]
   );
+  const allSyntheticMembers = useMemo(
+    () => fiberGroups.find((g) => g.heading === "Synthetic")?.families.flatMap((f) => f.members) ?? [],
+    [fiberGroups]
+  );
+  const nearlyMembers = useMemo(
+    () => [...allNaturalMembers, ...allSyntheticMembers],
+    [allNaturalMembers, allSyntheticMembers]
+  );
 
-  // When "100% Natural" tier pill is clicked, auto-select all natural fiber checkboxes;
-  // when leaving "natural" tier, clear the auto-selected fibers
+  // Keep the fabric checkboxes visually in sync with the tier pill.
   const prevTierRef = useRef(tier);
   useEffect(() => {
-    if (tier === "natural" && prevTierRef.current !== "natural" && allNaturalMembers.length > 0) {
-      const merged = [...new Set([...selectedFibers, ...allNaturalMembers])];
-      setParams({ fiber: merged.join(",") });
-    } else if (tier !== "natural" && prevTierRef.current === "natural") {
-      const remaining = selectedFibers.filter((f) => !allNaturalMembers.includes(f));
-      setParams({ fiber: remaining.length ? remaining.join(",") : null });
-    }
+    const prevTier = prevTierRef.current;
     prevTierRef.current = tier;
-  }, [tier, allNaturalMembers, selectedFibers, setParams]);
+    if (prevTier === tier) return;
+
+    const autoFor = (t: TierFilter) =>
+      t === "natural" ? allNaturalMembers : t === "nearly" ? nearlyMembers : [];
+    const prevAuto = autoFor(prevTier);
+    const nextAuto = autoFor(tier);
+    if (prevAuto.length === 0 && nextAuto.length === 0) return;
+
+    const filtered = selectedFibers.filter((f) => !prevAuto.includes(f));
+    const merged = [...new Set([...filtered, ...nextAuto])];
+    const unchanged =
+      merged.length === selectedFibers.length &&
+      merged.every((f) => selectedFibers.includes(f));
+    if (unchanged) return;
+
+    setParams({ fiber: merged.length ? merged.join(",") : null });
+  }, [tier, allNaturalMembers, nearlyMembers, selectedFibers, setParams]);
 
   const sidebarContent = (
     <>
@@ -644,29 +672,35 @@ export function ShopContent({
         </AccordionFilter>
       )}
 
-      {/* Category */}
-      <AccordionFilter title="Category" defaultOpen={selectedCategory !== null}>
-        {categories.map((cat) => (
-          <div key={cat}>
-            <FilterCheckbox
-              label={formatCategory(cat)}
-              checked={selectedCategory === cat}
-              onChange={() => setCategory(selectedCategory === cat ? null : cat)}
-            />
-            {selectedCategory === cat && productTypes.length > 0 && (
-              <div className="ml-6 mt-0.5 mb-1 flex flex-col gap-0.5">
-                {productTypes.map((pt) => (
-                  <FilterCheckbox
-                    key={pt}
-                    label={PRODUCT_TYPE_LABELS[pt] || formatCategory(pt)}
-                    checked={selectedProductTypes.includes(pt)}
-                    onChange={() => toggleProductType(pt)}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
+      {/* Category — multi-select. Subcategories only render when exactly
+          one category is chosen, since product types are scoped per-category. */}
+      <AccordionFilter title="Category" defaultOpen={selectedCategories.length > 0}>
+        {categories.map((cat) => {
+          const isChecked = selectedCategories.includes(cat);
+          const showSubs =
+            isChecked && selectedCategories.length === 1 && productTypes.length > 0;
+          return (
+            <div key={cat}>
+              <FilterCheckbox
+                label={formatCategory(cat)}
+                checked={isChecked}
+                onChange={() => toggleCategory(cat)}
+              />
+              {showSubs && (
+                <div className="ml-6 mt-0.5 mb-1 flex flex-col gap-0.5">
+                  {productTypes.map((pt) => (
+                    <FilterCheckbox
+                      key={pt}
+                      label={PRODUCT_TYPE_LABELS[pt] || formatCategory(pt)}
+                      checked={selectedProductTypes.includes(pt)}
+                      onChange={() => toggleProductType(pt)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </AccordionFilter>
 
       {/* Brand */}
@@ -763,46 +797,74 @@ export function ShopContent({
               )}
             </div>
 
-            {/* Tier pills */}
-            <div className="flex items-center gap-1.5">
-              {(Object.entries(TIER_LABELS) as [TierFilter, string][]).map(([value, label]) => (
-                <button
-                  key={value}
-                  onClick={() => {
-                    const prev = tier;
-                    setParams({ tier: value === "all" ? null : value });
-                    trackFilterChanged({
-                      page: "shop",
-                      filter_key: "tier",
-                      action:
-                        value === "all"
-                          ? "remove"
-                          : prev === "all"
-                            ? "add"
-                            : "replace",
-                      ui_value: label,
-                      query_value: value,
-                      active_filter_count: countActiveFilters({
-                        ...currentCountBase,
-                        tier: value,
-                      }),
-                    });
-                  }}
-                  title={TIER_DESCRIPTIONS[value]}
-                  className={`rounded-full px-3 py-1.5 font-body text-[12px] font-medium transition-colors ${
-                    tier === value
-                      ? "bg-text text-background"
-                      : "bg-surface text-secondary hover:bg-surface-dark hover:text-text"
-                  }`}
+            {/* Tier pills + mobile filter button */}
+            <div className="flex items-center justify-between gap-3 sm:justify-start sm:gap-4">
+              <div className="flex items-center gap-1.5">
+                {(Object.entries(TIER_LABELS) as [TierFilter, string][]).map(([value, label]) => (
+                  <button
+                    key={value}
+                    onClick={() => {
+                      const prev = tier;
+                      setParams({ tier: value === "all" ? null : value });
+                      trackFilterChanged({
+                        page: "shop",
+                        filter_key: "tier",
+                        action:
+                          value === "all"
+                            ? "remove"
+                            : prev === "all"
+                              ? "add"
+                              : "replace",
+                        ui_value: label,
+                        query_value: value,
+                        active_filter_count: countActiveFilters({
+                          ...currentCountBase,
+                          tier: value,
+                        }),
+                      });
+                    }}
+                    title={TIER_DESCRIPTIONS[value]}
+                    className={`rounded-full px-3 py-1.5 font-body text-[12px] font-medium transition-colors ${
+                      tier === value
+                        ? "bg-text text-background"
+                        : "bg-surface text-secondary hover:bg-surface-dark hover:text-text"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {/* Mobile-only: inline pill filter button */}
+              <button
+                onClick={() => setFilterOpen(true)}
+                aria-label="Open filters"
+                className="flex shrink-0 items-center gap-1.5 rounded-full border border-surface-dark bg-background px-3.5 py-1.5 font-body text-[13px] font-medium text-text transition-colors hover:bg-surface sm:hidden"
+              >
+                <svg
+                  className="h-3.5 w-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
                 >
-                  {label}
-                </button>
-              ))}
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75"
+                  />
+                </svg>
+                Filters
+                {activeChips.length > 0 && (
+                  <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold text-background">
+                    {activeChips.length}
+                  </span>
+                )}
+              </button>
             </div>
           </div>
 
-          {/* Mobile filter toggle */}
-          <div className="mt-3 lg:hidden">
+          {/* Tablet filter toggle (sm to lg, where sidebar is still hidden but no mobile pill) */}
+          <div className="mt-3 hidden sm:block lg:hidden">
             <button
               onClick={() => setFilterOpen(true)}
               className="flex items-center gap-1.5 font-body text-[14px] font-medium text-text transition-colors hover:text-secondary"
@@ -991,14 +1053,14 @@ export function ShopContent({
         </div>
       </section>
 
-      {/* Mobile slide-out filter panel (from left) */}
+      {/* Mobile slide-out filter panel (from right) */}
       {filterOpen && (
-        <div className="fixed inset-0 z-50 flex justify-start lg:hidden" role="dialog" aria-modal="true" aria-label="Filters">
+        <div className="fixed inset-0 z-50 flex justify-end lg:hidden" role="dialog" aria-modal="true" aria-label="Filters">
           <div
             className="absolute inset-0 bg-text/20"
             onClick={() => setFilterOpen(false)}
           />
-          <div className="relative flex h-full w-full max-w-[320px] flex-col bg-white shadow-2xl animate-in slide-in-from-left duration-200">
+          <div className="relative flex h-full w-full max-w-[320px] flex-col bg-white shadow-2xl animate-in slide-in-from-right duration-200">
             <div className="flex items-center justify-between border-b border-surface-dark px-6 py-5">
               <h2 className="font-display text-[18px] font-semibold tracking-[-0.01em] text-text">
                 Filters

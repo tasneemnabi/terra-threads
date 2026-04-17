@@ -85,7 +85,7 @@ export type SortOption = "newest" | "price-asc" | "price-desc";
 export type TierFilter = "all" | "natural" | "nearly";
 
 export interface FilterState {
-  category?: string;
+  categories?: string[];
   brands?: string[];
   materials?: string[];
   minPrice?: number;

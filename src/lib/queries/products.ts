@@ -12,7 +12,7 @@ export async function getFilteredProducts(
   const offset = limitOverride ? 0 : ((filters.page || 1) - 1) * PAGE_SIZE;
 
   const { data, error } = await supabase.rpc("filter_products", {
-    p_category: filters.category || null,
+    p_category: filters.categories?.length ? filters.categories : null,
     p_brand_slugs: filters.brands?.length ? filters.brands : null,
     p_material_names: filters.materials?.length ? filters.materials : null,
     p_min_price: filters.minPrice ?? null,
@@ -267,7 +267,7 @@ export async function getAvailableBrandSlugs(
   const supabase = await createClient();
 
   const { data, error } = await supabase.rpc("get_available_brands", {
-    p_category: filters.category || null,
+    p_category: filters.categories?.length ? filters.categories : null,
     p_material_names: filters.materials?.length ? filters.materials : null,
     p_min_price: filters.minPrice ?? null,
     p_max_price: filters.maxPrice ?? null,
