@@ -9,16 +9,38 @@ export const BANNED_MATERIALS = ["polyester", "nylon", "acrylic", "polypropylene
 const SYNTHETIC_STRETCH = ["elastane", "spandex", "lycra"];
 const MAX_SYNTHETIC_PERCENT = 10;
 
-/** Materials already in the database (from seed.sql) */
+/**
+ * Materials already in the database (from seed.sql).
+ *
+ * Curation policy (2026-04-17): semi-synthetic / regenerated-cellulose fibers
+ * (Tencel, Lyocell, Modal, Viscose, Rayon, Cupro, Bamboo rayon, Acetate) are
+ * NOT natural — they land products in the "Nearly Natural" tier, not the
+ * "100% Natural" tier. Keep this in sync with `materials.is_natural` in DB.
+ */
 export const KNOWN_MATERIALS: Record<string, { is_natural: boolean; id: string }> = {
   "Merino Wool": { is_natural: true, id: "a1000000-0000-0000-0000-000000000001" },
   "Organic Cotton": { is_natural: true, id: "a1000000-0000-0000-0000-000000000002" },
   "Cashmere": { is_natural: true, id: "a1000000-0000-0000-0000-000000000003" },
   "Hemp": { is_natural: true, id: "a1000000-0000-0000-0000-000000000004" },
-  "Tencel Lyocell": { is_natural: true, id: "a1000000-0000-0000-0000-000000000005" },
+  "Tencel Lyocell": { is_natural: false, id: "a1000000-0000-0000-0000-000000000005" },
   "Silk": { is_natural: true, id: "a1000000-0000-0000-0000-000000000006" },
   "Spandex": { is_natural: false, id: "a1000000-0000-0000-0000-000000000007" },
 };
+
+/**
+ * Canonical names of semi-synthetic / regenerated-cellulose fibers. They're
+ * allowed under the Nearly Natural tier but are NOT natural for tier
+ * classification — mirrors `materials.is_natural = false` in DB.
+ */
+export const SEMI_SYNTHETIC_MATERIALS = new Set([
+  "Tencel Lyocell",
+  "Bamboo Lyocell",
+  "Modal",
+  "Viscose",
+  "Rayon",
+  "Cupro",
+  "Acetate",
+]);
 
 /**
  * Trusted canonical material names — the only names we allow in the DB.
@@ -79,6 +101,7 @@ function isBannedMaterial(name: string): boolean {
 
 export function isMaterialNatural(name: string): boolean {
   if (KNOWN_MATERIALS[name]) return KNOWN_MATERIALS[name].is_natural;
+  if (SEMI_SYNTHETIC_MATERIALS.has(name)) return false;
   return !isSyntheticStretch(name) && !isBannedMaterial(name);
 }
 
