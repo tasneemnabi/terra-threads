@@ -202,18 +202,16 @@ export async function getHomepageProducts(limit = 6): Promise<ProductWithBrand[]
 
 // Image URLs for the homepage "Shop by audience" tiles that don't have
 // editorially chosen artwork. We pick from the live catalogue so the tiles
-// refresh as new products land. Two tiles:
-//   - newArrivalImage: first image of the most-recently-created product
-//   - naturalImage:    first image of the most-recent product whose
-//                      material composition is 100% natural (no synthetics)
-export async function getAudienceTileImages(): Promise<{
+// refresh as new products land. Pass `excludeImageUrls` to avoid repeating
+// whatever is already on the page (e.g., the "Just landed" grid).
+export async function getAudienceTileImages(
+  excludeImageUrls: string[] = []
+): Promise<{
   newArrivalImage: string | null;
   naturalImage: string | null;
 }> {
   const supabase = await createClient();
 
-  // Over-fetch so we can filter client-side for the 100%-natural tier
-  // without needing a separate RPC. 80 rows is plenty for an always-hit.
   const { data, error } = await supabase
     .from("products_with_materials")
     .select("image_url,materials")
@@ -231,11 +229,12 @@ export async function getAudienceTileImages(): Promise<{
   }
 
   type Row = { image_url: string | null; materials: MaterialInfo[] };
-  const rows = (data ?? []) as Row[];
+  const excluded = new Set(excludeImageUrls.filter(Boolean));
+  const rows = ((data ?? []) as Row[]).filter(
+    (r) => r.image_url && !excluded.has(r.image_url)
+  );
 
   const newArrivalImage = rows[0]?.image_url ?? null;
-  // Skip the newest row to avoid showing identical images on the "New arrivals"
-  // and "100% Natural" tiles when the newest product happens to be all-natural.
   const naturalRow = rows
     .slice(1)
     .find(

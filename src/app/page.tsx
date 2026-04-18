@@ -12,11 +12,16 @@ import {
 
 
 export default async function HomePage() {
-  const [heroProducts, products, audienceTileImages] = await Promise.all([
+  const [heroProducts, products] = await Promise.all([
     getHeroProducts(8),
     getHomepageProducts(8),
-    getAudienceTileImages(),
   ]);
+
+  // Exclude images already visible in the "Just landed" grid so the audience
+  // tiles above don't mirror the products below.
+  const audienceTileImages = await getAudienceTileImages(
+    products.map((p) => p.image_url).filter((u): u is string => Boolean(u))
+  );
 
   // Prefer a multi-material product for the Fiber Facts showcase so the label
   // has something interesting to break down — a single "100% Cotton" entry
