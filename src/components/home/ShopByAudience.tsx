@@ -86,7 +86,7 @@ export function ShopByAudience({
                     sizes="(min-width: 768px) 25vw, 50vw"
                     priority={i < 2}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                   <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
                     <p className="font-display text-[18px] sm:text-[20px] font-semibold text-white leading-tight tracking-[-0.01em] drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]">
                       {entry.label}
